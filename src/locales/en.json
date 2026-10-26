@@ -6438,7 +6438,7 @@
         "exportLines": "Export lines (CSV)",
         "edit": "Edit",
         "delete": "Delete",
-        "resumeDraft": "Resume editing"
+        "resumePreparation": "Resume the call in preparation"
       },
       "searchPlaceholder": "Search a call or a fund",
       "queues": {
@@ -6450,8 +6450,7 @@
         "overdue": "Overdue, not settled",
         "fundsMetric": "Funds",
         "perFund": "{{count}} per fund",
-        "clickToFilter": "Click a queue to filter",
-        "draft": "Drafts"
+        "clickToFilter": "Click a queue to filter"
       },
       "filters": {
         "funds": "Funds",
@@ -6504,9 +6503,7 @@
         "exportComingSoon": "{{action}}: coming soon in the mockup.",
         "editComingSoon": "Editing a call comes with the creation wizard.",
         "deleted": "{{name}} is deleted.",
-        "created": "{{name}} is created with {{count}} lines. Notices are being generated.",
-        "draftSaved": "{{name}} is saved as a draft. It has no effect on other calls or on subscriptions.",
-        "draftDeleted": "The draft {{name}} is deleted."
+        "created": "{{name}} is created with {{count}} lines. Notices are being generated."
       },
       "scenario": {
         "label": "Demo scenario",
@@ -6524,15 +6521,12 @@
         "sending": "Sending in progress",
         "alreadyNotified": "Call already notified",
         "nothingToRelaunch": "No line to remind",
-        "missingRight": "Missing right, please contact your internal administrator",
-        "draft": "Draft call: complete it before notifying or exporting it"
+        "missingRight": "Missing right, please contact your internal administrator"
       },
       "deleteDialog": {
         "title": "Delete {{name}}?",
         "description": "The call and its investor lines in {{fund}} will be deleted. This cannot be undone.",
-        "confirm": "Delete the call",
-        "draftTitle": "Delete the draft {{name}}?",
-        "draftDescription": "The draft created no lines and no notices: deleting it has no effect on the subscriptions of {{fund}}."
+        "confirm": "Delete the call"
       },
       "detail": {
         "header": {
@@ -6804,7 +6798,7 @@
         "create": "Create the call",
         "creating": "Creating",
         "createBlocked": "Creation blocked: fix the issues listed in the Check step.",
-        "nothingSaved": "Draft: no lines or notices before creation. Calculated total: {{amount}}.",
+        "nothingSaved": "Simulation: nothing is saved before creation. Calculated total: {{amount}}.",
         "errors": {
           "fund": "Choose a fund.",
           "name": "Enter a name.",
@@ -6823,9 +6817,10 @@
         },
         "abandon": {
           "title": "Abandon the creation?",
-          "description": "Nothing has been saved. The details entered will be lost.",
+          "description": "The pending preparation will be erased. No call has been created.",
           "confirm": "Abandon",
-          "cancel": "Keep editing"
+          "cancel": "Keep editing",
+          "keep": "Keep the preparation"
         },
         "info": {
           "fund": "Fund",
@@ -6989,8 +6984,8 @@
             "combined": "This line will be grouped in a combined notice."
           }
         },
-        "saveAndExit": "Save and exit",
-        "deleteDraft": "Delete the draft"
+        "resumeLater": "Resume later",
+        "autosaved": "Entry saved automatically, visible only to you. No call exists until it is created."
       },
       "progress": {
         "notices": "{{done}} / {{total}} available",
@@ -7009,8 +7004,14 @@
         "notified": "Notified",
         "partiallyNotified": "Partially notified",
         "publishedWithoutSending": "Published without email",
-        "readyToNotify": "Ready to notify",
-        "draft": "Draft"
+        "readyToNotify": "Ready to notify"
+      },
+      "pendingWizard": {
+        "title": "You have a call in preparation: {{name}}",
+        "description": "{{fund}}, step {{step}}, saved on {{date}}. This preparation is visible only to you and has no effect on calls or subscriptions.",
+        "noFund": "Fund not chosen",
+        "resume": "Resume",
+        "discard": "Abandon"
       }
     }
   },
@@ -7104,7 +7105,7 @@
       "pageStateBanner": {
         "title": "Page state banner",
         "description": "Banner placed under the header of a detail page to explain why the page behaves differently. Built on Alert.",
-        "variants": "Archived (\"Unarchive\" action), locked by support (date and reason), mirror fund (link to the master fund), notices being sent (blocked actions), read-only for lack of right.",
+        "variants": "Archived (\"Unarchive\" action), locked by support (date and reason), mirror fund (link to the master fund), notices being sent (blocked actions), read-only for lack of right, pending preparation owned by the user (Resume, Abandon).",
         "states": "Action available, action in progress (button disabled with spinner), action unavailable (disabled, reason on hover).",
         "exampleLabel": "The five variants",
         "exampleHint": "click \"Unarchive\"; hover the second button to read the reason",

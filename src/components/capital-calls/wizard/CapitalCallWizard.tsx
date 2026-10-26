@@ -1,15 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, Check, Loader2, PencilLine, RefreshCw, Save, Trash2, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Clock, Loader2, RefreshCw, X } from 'lucide-react';
 
 import { useTranslation } from '../../../utils/languageContext';
 import type { Fund } from '../../../utils/fundGenerator';
-import type {
-  CapitalCall,
-  CapitalCallAttachment,
-  CapitalCallDraftProgress,
-  CapitalCallShare,
-  LinkedDistribution,
-} from '../../../utils/capitalCallGenerator';
+import type { CapitalCallAttachment, CapitalCallShare, LinkedDistribution } from '../../../utils/capitalCallGenerator';
+import { CapitalCallWizardSession, sessionDate } from '../../../utils/capitalCallWizardSession';
 import {
   ShareInput,
   WizardSubscription,
@@ -30,13 +25,13 @@ import { ConfirmDialog } from '../../ui/confirm-dialog';
 import { DisabledReason } from '../../ui/disabled-reason';
 import { PageHeader } from '../../ui/page-header';
 import { WizardPageFooter, WizardStepsBar } from '../../ui/wizard-steps';
-import { StatusBadge } from '../../StatusBadge';
 import { InfoErrors, InfoValues, WizardInfoStep } from './WizardInfoStep';
 import { AmountsMode, WizardAmountsStep } from './WizardAmountsStep';
 import { WizardControlStep } from './WizardControlStep';
 
 const K = 'funds.capitalCalls.wizard';
-const STEPS = ['info', 'amounts', 'control'] as const;
+export const WIZARD_STEPS = ['info', 'amounts', 'control'] as const;
+const STEPS = WIZARD_STEPS;
 const CREATION_DELAY = 1200;
 
 export interface CapitalCallDraft {
@@ -57,28 +52,32 @@ export interface CapitalCallDraft {
 
 interface CapitalCallWizardProps {
   funds: Fund[];
-  /** Brouillon repris depuis le listing ; absent pour un nouvel appel. */
-  draftCall: CapitalCall | null;
+  /** Préparation en attente de l'utilisateur, reprise là où elle a été laissée. */
+  session: CapitalCallWizardSession | null;
   /** Démonstration : une souscription est activée entre la simulation et la création. */
   subscriptionActivatedMeanwhile: boolean;
-  /** Enregistre le brouillon (création à la première étape, mise à jour ensuite) et renvoie son identifiant. */
-  onSaveDraft: (id: number | null, draft: CapitalCallDraft, progress: CapitalCallDraftProgress) => number;
-  onCreate: (id: number | null, draft: CapitalCallDraft) => void;
-  onDeleteDraft: (id: number) => void;
+  /** Sauvegarde automatique de la saisie dans la session de l'utilisateur. */
+  onSessionChange: (session: CapitalCallWizardSession) => void;
+  /** Abandon ou création : la session est effacée. */
+  onSessionClear: () => void;
+  onCreate: (draft: CapitalCallDraft) => void;
   onExit: () => void;
 }
 
-const infoFromCall = (call: CapitalCall): InfoValues => ({
-  fundId: call.fundId,
-  name: call.name,
-  dueDate: call.dueDate,
-  noticeDate: call.noticeDate ?? undefined,
-  publication: call.publication,
-  message: call.message,
-  attachments: [call.attachments[0] ?? null, call.attachments[1] ?? null],
-  forecastId: call.forecast?.id ?? null,
-  distributionIds: call.compensations.map(item => item.id),
-});
+const infoFromSession = (session: CapitalCallWizardSession, funds: Fund[]): InfoValues => {
+  const inScope = funds.some(item => item.id === session.fundId);
+  return {
+    fundId: inScope ? session.fundId : null,
+    name: session.name,
+    dueDate: sessionDate(session.dueDate),
+    noticeDate: sessionDate(session.noticeDate),
+    publication: session.publication,
+    message: session.message,
+    attachments: session.attachments,
+    forecastId: inScope ? session.forecastId : null,
+    distributionIds: inScope ? session.distributionIds : [],
+  };
+};
 
 const emptyInfo = (): InfoValues => ({
   fundId: null,
@@ -94,28 +93,28 @@ const emptyInfo = (): InfoValues => ({
 
 export function CapitalCallWizard({
   funds,
-  draftCall,
+  session,
   subscriptionActivatedMeanwhile,
-  onSaveDraft,
+  onSessionChange,
+  onSessionClear,
   onCreate,
-  onDeleteDraft,
   onExit,
 }: CapitalCallWizardProps) {
   const { t, lang } = useTranslation();
-  const [draftId, setDraftId] = useState<number | null>(draftCall?.id ?? null);
-  const [step, setStep] = useState(draftCall?.draft?.step ?? 0);
-  const [info, setInfo] = useState<InfoValues>(() => (draftCall ? infoFromCall(draftCall) : emptyInfo()));
+  const [info, setInfo] = useState<InfoValues>(() => (session ? infoFromSession(session, funds) : emptyInfo()));
+  // Sans fonds valide, la reprise repart de la première étape.
+  const [step, setStep] = useState(() => (session && info.fundId !== null && info.dueDate ? session.step : 0));
   const [infoErrors, setInfoErrors] = useState<InfoErrors>({});
-  const [mode, setMode] = useState<AmountsMode>(draftCall?.draft?.mode ?? 'perShare');
-  const [amountToRaise, setAmountToRaise] = useState(draftCall?.draft?.amountToRaise ?? '');
+  const [mode, setMode] = useState<AmountsMode>(session?.mode ?? 'perShare');
+  const [amountToRaise, setAmountToRaise] = useState(session?.amountToRaise ?? '');
   const [inputs, setInputs] = useState<Record<string, ShareInput>>(() => {
-    const draftFund = draftCall ? funds.find(item => item.id === draftCall.fundId) : undefined;
+    const sessionFund = funds.find(item => item.id === info.fundId);
     return Object.fromEntries(
-      (draftFund?.shareClasses ?? []).map(item => [item.name, draftCall?.draft?.inputs[item.name] ?? emptyShareInput()]),
+      (sessionFund?.shareClasses ?? []).map(item => [item.name, session?.inputs[item.name] ?? emptyShareInput()]),
     );
   });
-  /** Saisie du brouillon repris, appliquée une seule fois quand les parts du fonds sont connues. */
-  const restoredInputs = useRef<Record<string, ShareInput> | null>(draftCall?.draft?.inputs ?? null);
+  /** Saisie de la session reprise, appliquée une seule fois quand les parts du fonds sont connues. */
+  const restoredInputs = useRef<Record<string, ShareInput> | null>(session?.inputs ?? null);
   const [amountErrors, setAmountErrors] = useState<Record<string, string>>({});
   const [lateActivation, setLateActivation] = useState(false);
   const [suspended, setSuspended] = useState<number | null>(null);
@@ -262,28 +261,33 @@ export function CapitalCallWizard({
     };
   };
 
-  /** Le brouillon n'a ni ligne ni avis : il ne pèse sur aucun autre appel ni sur les souscriptions. */
-  const saveDraft = (nextStep: number) => {
-    const total = settings && info.dueDate ? simulateCall(subscriptions, inputs, info.dueDate, settings).total : 0;
-    const draft = buildDraft(total, 0);
-    if (!draft) return null;
-    const id = onSaveDraft(draftId, draft, { step: nextStep, mode, amountToRaise, inputs });
-    setDraftId(id);
-    return id;
-  };
-
   const goTo = (nextStep: number) => {
     setSuspended(null);
     setStep(nextStep);
-    saveDraft(nextStep);
   };
 
-  const saveAndExit = () => {
-    if (!validateInfo()) {
-      setStep(0);
-      return;
-    }
-    saveDraft(step);
+  useEffect(() => {
+    if (!dirty || creating) return;
+    onSessionChange({
+      step,
+      fundId: info.fundId,
+      name: info.name,
+      dueDate: info.dueDate?.toISOString() ?? null,
+      noticeDate: info.noticeDate?.toISOString() ?? null,
+      publication: info.publication,
+      message: info.message,
+      attachments: info.attachments,
+      forecastId: info.forecastId,
+      distributionIds: info.distributionIds,
+      mode,
+      amountToRaise,
+      inputs,
+      savedAt: new Date().toISOString(),
+    });
+  }, [step, info, mode, amountToRaise, inputs, dirty, creating]);
+
+  const abandon = () => {
+    onSessionClear();
     onExit();
   };
 
@@ -301,8 +305,13 @@ export function CapitalCallWizard({
     setCreating(true);
     window.setTimeout(() => {
       const draft = buildDraft(simulation.total, simulation.lines.length);
-      setCreating(false);
-      if (draft) onCreate(draftId, draft);
+      if (!draft) {
+        setCreating(false);
+        return;
+      }
+      // L'assistant reste en création jusqu'à la sortie : la sauvegarde automatique ne recrée pas la session.
+      onSessionClear();
+      onCreate(draft);
     }, CREATION_DELAY);
   };
 
@@ -313,27 +322,8 @@ export function CapitalCallWizard({
     <>
       <PageHeader
         hideBackButton
-        title={
-          <span className="inline-flex items-center gap-3">
-            {info.name.trim() || t(`${K}.title`)}
-            {draftId !== null && (
-              <StatusBadge label={t('funds.capitalCalls.callStates.draft')} variant="outline" icon={PencilLine} />
-            )}
-          </span>
-        }
+        title={info.name.trim() || t(`${K}.title`)}
         subtitle={fund ? fund.name : t(`${K}.subtitle`)}
-        tertiaryActions={
-          draftId !== null
-            ? [
-                {
-                  label: t(`${K}.deleteDraft`),
-                  icon: <Trash2 className="h-4 w-4" />,
-                  destructive: true,
-                  onClick: () => onDeleteDraft(draftId),
-                },
-              ]
-            : undefined
-        }
       />
 
       <WizardStepsBar steps={STEPS.map((_, index) => stepLabel(index))} current={step} ariaLabel={t(`${K}.stepsLabel`)} />
@@ -430,17 +420,19 @@ export function CapitalCallWizard({
 
       <WizardPageFooter
         start={
-          draftId !== null ? (
-            <Button variant="ghost" size="sm" className="h-9" onClick={saveAndExit} disabled={creating}>
-              <Save className="mr-1 h-4 w-4" />
-              {t(`${K}.saveAndExit`)}
-            </Button>
-          ) : (
+          <>
             <Button variant="ghost" size="sm" className="h-9" onClick={requestClose} disabled={creating}>
               <X className="mr-1 h-4 w-4" />
               {t(`${K}.cancel`)}
             </Button>
-          )
+            {dirty && (
+              <Button variant="outline" size="sm" className="h-9" onClick={onExit} disabled={creating}>
+                <Clock className="mr-1 h-4 w-4" />
+                {t(`${K}.resumeLater`)}
+              </Button>
+            )}
+            {dirty && <span className="text-xs text-muted-foreground">{t(`${K}.autosaved`)}</span>}
+          </>
         }
         end={
           <>
@@ -491,7 +483,7 @@ export function CapitalCallWizard({
         destructive
         onConfirm={() => {
           setConfirmClose(false);
-          onExit();
+          abandon();
         }}
       />
     </>

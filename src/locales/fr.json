@@ -6438,7 +6438,7 @@
         "exportLines": "Exporter les lignes (CSV)",
         "edit": "Modifier",
         "delete": "Supprimer",
-        "resumeDraft": "Reprendre la saisie"
+        "resumePreparation": "Reprendre l'appel en préparation"
       },
       "searchPlaceholder": "Rechercher un appel ou un fonds",
       "queues": {
@@ -6450,8 +6450,7 @@
         "overdue": "Échus non soldés",
         "fundsMetric": "Fonds",
         "perFund": "{{count}} par fonds",
-        "clickToFilter": "Cliquez sur une file pour filtrer",
-        "draft": "Brouillons"
+        "clickToFilter": "Cliquez sur une file pour filtrer"
       },
       "filters": {
         "funds": "Fonds",
@@ -6504,9 +6503,7 @@
         "exportComingSoon": "{{action}} : bientôt disponible dans la maquette.",
         "editComingSoon": "La modification d'un appel arrive avec l'assistant de création.",
         "deleted": "{{name}} est supprimé.",
-        "created": "{{name}} est créé avec {{count}} lignes. Les avis sont en génération.",
-        "draftSaved": "{{name}} est enregistré en brouillon. Il n'a aucun effet sur les autres appels ni sur les souscriptions.",
-        "draftDeleted": "Le brouillon {{name}} est supprimé."
+        "created": "{{name}} est créé avec {{count}} lignes. Les avis sont en génération."
       },
       "scenario": {
         "label": "Scénario de démonstration",
@@ -6524,15 +6521,12 @@
         "sending": "Envoi en cours",
         "alreadyNotified": "Appel déjà notifié",
         "nothingToRelaunch": "Aucune ligne à relancer",
-        "missingRight": "Droit manquant, rapprochez-vous de votre administrateur interne",
-        "draft": "Appel en brouillon : terminez sa création avant de le notifier ou de l'exporter"
+        "missingRight": "Droit manquant, rapprochez-vous de votre administrateur interne"
       },
       "deleteDialog": {
         "title": "Supprimer {{name}} ?",
         "description": "L'appel et ses lignes investisseurs du fonds {{fund}} seront supprimés. Cette action est définitive.",
-        "confirm": "Supprimer l'appel",
-        "draftTitle": "Supprimer le brouillon {{name}} ?",
-        "draftDescription": "Le brouillon n'a créé ni ligne ni avis : sa suppression n'a aucun effet sur les souscriptions du fonds {{fund}}."
+        "confirm": "Supprimer l'appel"
       },
       "detail": {
         "header": {
@@ -6804,7 +6798,7 @@
         "create": "Créer l'appel",
         "creating": "Création en cours",
         "createBlocked": "Création bloquée : corrigez les points signalés à l'étape Contrôle.",
-        "nothingSaved": "Brouillon : aucune ligne ni avis avant la création. Total calculé : {{amount}}.",
+        "nothingSaved": "Simulation : rien n'est enregistré avant la création. Total calculé : {{amount}}.",
         "errors": {
           "fund": "Choisissez un fonds.",
           "name": "Saisissez un nom.",
@@ -6823,9 +6817,10 @@
         },
         "abandon": {
           "title": "Abandonner la création ?",
-          "description": "Rien n'a été enregistré. Les informations saisies seront perdues.",
+          "description": "La préparation en attente sera effacée. Aucun appel n'a été créé.",
           "confirm": "Abandonner",
-          "cancel": "Continuer la saisie"
+          "cancel": "Continuer la saisie",
+          "keep": "Garder la préparation"
         },
         "info": {
           "fund": "Fonds",
@@ -6989,8 +6984,8 @@
             "combined": "Cette ligne sera regroupée dans un avis combiné."
           }
         },
-        "saveAndExit": "Enregistrer et quitter",
-        "deleteDraft": "Supprimer le brouillon"
+        "resumeLater": "Reprendre plus tard",
+        "autosaved": "Saisie sauvegardée automatiquement, visible par vous seul. Aucun appel n'existe avant la création."
       },
       "progress": {
         "notices": "{{done}} / {{total}} disponibles",
@@ -7009,8 +7004,14 @@
         "notified": "Notifié",
         "partiallyNotified": "Partiellement notifié",
         "publishedWithoutSending": "Publié sans envoi",
-        "readyToNotify": "Prêt à notifier",
-        "draft": "Brouillon"
+        "readyToNotify": "Prêt à notifier"
+      },
+      "pendingWizard": {
+        "title": "Vous avez un appel en préparation : {{name}}",
+        "description": "{{fund}}, étape {{step}}, sauvegardé le {{date}}. Cette préparation est visible par vous seul et n'a aucun effet sur les appels ni sur les souscriptions.",
+        "noFund": "Fonds non choisi",
+        "resume": "Reprendre",
+        "discard": "Abandonner"
       }
     }
   },
@@ -7104,7 +7105,7 @@
       "pageStateBanner": {
         "title": "Bandeau d'état de page",
         "description": "Bandeau placé sous l'en-tête d'une page de détail pour dire pourquoi la page se comporte autrement. Construit sur Alert.",
-        "variants": "Archivé (action \"Désarchiver\"), verrouillé par le support (date et motif), fonds miroir (lien vers le fonds maître), envoi d'avis en cours (actions bloquées), lecture seule faute de droit.",
+        "variants": "Archivé (action \"Désarchiver\"), verrouillé par le support (date et motif), fonds miroir (lien vers le fonds maître), envoi d'avis en cours (actions bloquées), lecture seule faute de droit, préparation en attente propre à l'utilisateur (Reprendre, Abandonner).",
         "states": "Action disponible, action en cours (bouton désactivé avec chargement), action indisponible (désactivée, motif au survol).",
         "exampleLabel": "Les cinq variantes",
         "exampleHint": "cliquez sur \"Désarchiver\" ; survolez le second bouton pour lire le motif",

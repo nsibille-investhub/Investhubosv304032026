@@ -9,7 +9,6 @@ import {
   List,
   Loader2,
   Pencil,
-  PencilLine,
   Plus,
   Send,
   ShieldX,
@@ -24,11 +23,16 @@ import type { Fund } from '../../utils/fundGenerator';
 import {
   CAPITAL_CALL_ORIGINS,
   CapitalCall,
-  CapitalCallDraftProgress,
   distinctNoticeDate,
   generateCapitalCalls,
 } from '../../utils/capitalCallGenerator';
 import { getDetailIdFromHash, onHashChange } from '../../utils/routing';
+import {
+  CapitalCallWizardSession,
+  clearWizardSession,
+  readWizardSession,
+  writeWizardSession,
+} from '../../utils/capitalCallWizardSession';
 import { CapitalCallLine, expireStaleNotices, generateCapitalCallLines } from '../../utils/capitalCallLines';
 import { CALL_STATES, CallSummary, summarizeCall } from '../../utils/capitalCallSummary';
 import {
@@ -49,11 +53,12 @@ import { StatusBadge } from '../StatusBadge';
 import { CALL_STATE_VARIANT } from './CapitalCallSummaryWidgets';
 import { FilterCard, FilterCardGroup } from '../ui/filter-card';
 import { PageHeader } from '../ui/page-header';
+import { PageStateBanner } from '../ui/page-state-banner';
 import { DataPagination } from '../ui/data-pagination';
 import { Button } from '../ui/button';
 import { ConfirmDialog } from '../ui/confirm-dialog';
 import { CapitalCallDetailPage } from './CapitalCallDetailPage';
-import { CapitalCallDraft, CapitalCallWizard } from './wizard/CapitalCallWizard';
+import { CapitalCallDraft, CapitalCallWizard, WIZARD_STEPS } from './wizard/CapitalCallWizard';
 
 const K = 'funds.capitalCalls';
 
@@ -102,9 +107,9 @@ const DEFAULT_COLUMNS: ColumnKey[] = [
 ];
 const COLUMNS_STORAGE_KEY = 'investhub-columns-capital-calls-v3';
 
-type Queue = 'all' | 'draft' | 'noticesFailed' | 'toNotify' | 'sending' | 'overdue';
+type Queue = 'all' | 'noticesFailed' | 'toNotify' | 'sending' | 'overdue';
 
-/** Identifiant d'URL de l'assistant pour un nouvel appel, avant l'enregistrement du brouillon. */
+/** Identifiant d'URL de l'assistant de création. */
 const NEW_CALL_ID = 'new';
 
 
@@ -212,6 +217,9 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
   const [visibleColumns, setVisibleColumns] = useState<ColumnKey[]>(readStoredColumns);
   const [allCalls, setAllCalls] = useState<CapitalCall[]>(() => generateCapitalCalls(funds));
   const [pendingDelete, setPendingDelete] = useState<CapitalCall | null>(null);
+  /** Une seule préparation en attente par utilisateur, comme une session d'envoi en masse. */
+  const [wizardSession, setWizardSession] = useState<CapitalCallWizardSession | null>(() => readWizardSession(CURRENT_USER));
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
   const timers = useRef<number[]>([]);
   const rights = SCENARIO_RIGHTS[scenario];
 
@@ -245,9 +253,7 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
   const [linesOverrides, setLinesOverrides] = useState<Record<number, CapitalCallLine[]>>({});
   const linesByCall = useMemo(() => {
     const map = new Map<number, CapitalCallLine[]>();
-    allCalls.forEach(call =>
-      map.set(call.id, call.draft ? [] : linesOverrides[call.id] ?? expireStaleNotices(generateCapitalCallLines(call))),
-    );
+    allCalls.forEach(call => map.set(call.id, linesOverrides[call.id] ?? expireStaleNotices(generateCapitalCallLines(call))));
     return map;
   }, [allCalls, linesOverrides]);
   const summaries = useMemo(
@@ -258,7 +264,6 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
   const today = new Date();
   const inQueue = (call: CapitalCall, id: Queue) => {
     const summary = summaryOf(call);
-    if (id === 'draft') return Boolean(call.draft);
     if (id === 'noticesFailed') return summary.noticesFailed > 0;
     if (id === 'toNotify') return summary.toNotify > 0;
     if (id === 'sending') return call.sending;
@@ -340,6 +345,10 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
     () => new Intl.DateTimeFormat(lang, { day: '2-digit', month: '2-digit', year: 'numeric' }),
     [lang],
   );
+  const dateTimeFormat = useMemo(
+    () => new Intl.DateTimeFormat(lang, { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+    [lang],
+  );
   const money = (call: CapitalCall) =>
     new Intl.NumberFormat(lang, { style: 'currency', currency: call.currency, maximumFractionDigits: 0 }).format(
       call.calledAmount,
@@ -407,8 +416,7 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
         setPendingDelete(call);
         break;
       case 'edit':
-        if (call.draft) window.location.hash = `#/capital-calls/${call.id}`;
-        else toast.info(t(`${K}.toast.editComingSoon`));
+        toast.info(t(`${K}.toast.editComingSoon`));
         break;
       default:
         toast.info(t(`${K}.toast.exportComingSoon`, { action: t(`${K}.actions.${action}`) }));
@@ -426,63 +434,48 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
       return;
     }
     setAllCalls(prev => prev.filter(item => item.id !== current.id));
-    toast.success(t(current.draft ? `${K}.toast.draftDeleted` : `${K}.toast.deleted`, { name: current.name }));
-    if (selectedId === String(current.id)) window.location.hash = '#/capital-calls';
+    toast.success(t(`${K}.toast.deleted`, { name: current.name }));
   };
 
-  const callFromDraft = (id: number, draft: CapitalCallDraft, createdAt: Date, createdBy: string): CapitalCall => ({
-    id,
-    fundId: draft.fund.id,
-    fundName: draft.fund.name,
-    currency: draft.currency,
-    name: draft.name,
-    dueDate: draft.dueDate,
-    noticeDate: draft.noticeDate,
-    calledAmount: draft.calledAmount,
-    origin: 'backOffice',
-    compensations: draft.compensations,
-    forecast: draft.forecast,
-    shares: draft.shares,
-    message: draft.message,
-    attachments: draft.attachments,
-    createdAt,
-    createdBy,
-    sending: false,
-    lines: draft.lines,
-    notifiedLines: 0,
-    linesToRelaunch: 0,
-    publication: draft.publication,
-  });
-
-  const nextCallId = () => allCalls.reduce((max, call) => Math.max(max, call.id), 0) + 1;
-
-  /** Brouillon enregistré dès la première étape : sans ligne, il reste hors des files et des souscriptions. */
-  const saveDraft = (draftId: number | null, draft: CapitalCallDraft, progress: CapitalCallDraftProgress) => {
-    const existing = draftId === null ? undefined : allCalls.find(call => call.id === draftId);
-    const id = existing?.id ?? nextCallId();
+  const createCall = (draft: CapitalCallDraft) => {
+    const id = allCalls.reduce((max, call) => Math.max(max, call.id), 0) + 1;
     const call: CapitalCall = {
-      ...callFromDraft(id, draft, existing?.createdAt ?? new Date(), existing?.createdBy ?? CURRENT_USER),
-      draft: progress,
-    };
-    setAllCalls(prev => (existing ? prev.map(item => (item.id === id ? call : item)) : [call, ...prev]));
-    if (!existing) {
-      toast.success(t(`${K}.toast.draftSaved`, { name: call.name }));
-      window.history.replaceState(null, '', `#/capital-calls/${id}`);
-      setSelectedId(String(id));
-    }
-    return id;
-  };
-
-  const createCall = (draftId: number | null, draft: CapitalCallDraft) => {
-    const existing = draftId === null ? undefined : allCalls.find(call => call.id === draftId);
-    const id = existing?.id ?? nextCallId();
-    const call: CapitalCall = {
-      ...callFromDraft(id, draft, existing?.createdAt ?? new Date(), existing?.createdBy ?? CURRENT_USER),
+      id,
+      fundId: draft.fund.id,
+      fundName: draft.fund.name,
+      currency: draft.currency,
+      name: draft.name,
+      dueDate: draft.dueDate,
+      noticeDate: draft.noticeDate,
+      calledAmount: draft.calledAmount,
+      origin: 'backOffice',
+      compensations: draft.compensations,
+      forecast: draft.forecast,
+      shares: draft.shares,
+      message: draft.message,
+      attachments: draft.attachments,
+      createdAt: new Date(),
+      createdBy: CURRENT_USER,
+      sending: false,
+      lines: draft.lines,
+      notifiedLines: 0,
+      linesToRelaunch: 0,
+      publication: draft.publication,
       justCreated: true,
     };
-    setAllCalls(prev => (existing ? prev.map(item => (item.id === id ? call : item)) : [call, ...prev]));
+    setAllCalls(prev => [call, ...prev]);
     toast.success(t(`${K}.toast.created`, { name: call.name, count: call.lines }));
     window.location.hash = `#/capital-calls/${id}`;
+  };
+
+  const updateWizardSession = (session: CapitalCallWizardSession) => {
+    setWizardSession(session);
+    writeWizardSession(CURRENT_USER, session);
+  };
+
+  const discardWizardSession = () => {
+    setWizardSession(null);
+    clearWizardSession(CURRENT_USER);
   };
 
   const exitWizard = () => {
@@ -538,20 +531,19 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
       label: t(`${K}.columns.calledAmount`),
       sortable: true,
       align: 'right',
-      render: call => (call.draft && call.calledAmount === 0 ? empty : <span className="text-sm">{money(call)}</span>),
+      render: call => <span className="text-sm">{money(call)}</span>,
     },
     lines: {
       key: 'lines',
       label: t(`${K}.columns.lines`),
       sortable: true,
       align: 'right',
-      render: call => (call.draft ? empty : <span className="text-sm">{summaryOf(call).lines}</span>),
+      render: call => <span className="text-sm">{summaryOf(call).lines}</span>,
     },
     notices: {
       key: 'notices',
       label: t(`${K}.columns.notices`),
       render: call => {
-        if (call.draft) return empty;
         const summary = summaryOf(call);
         return (
           <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-sm tabular-nums">
@@ -571,7 +563,6 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
       key: 'notification',
       label: t(`${K}.columns.notification`),
       render: call => {
-        if (call.draft) return empty;
         const summary = summaryOf(call);
         return (
           <span className="whitespace-nowrap text-sm tabular-nums">
@@ -586,7 +577,6 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
       key: 'settlement',
       label: t(`${K}.columns.settlement`),
       render: call => {
-        if (call.draft) return empty;
         const summary = summaryOf(call);
         return (
           <span className="flex flex-col whitespace-nowrap text-sm tabular-nums">
@@ -614,15 +604,7 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
           <StatusBadge
             label={t(`${K}.callStates.${state}`)}
             variant={CALL_STATE_VARIANT[state]}
-            icon={
-              state === 'sending' || state === 'noticesGenerating'
-                ? Loader2
-                : state === 'noticesFailed'
-                  ? AlertTriangle
-                  : state === 'draft'
-                    ? PencilLine
-                    : undefined
-            }
+            icon={state === 'sending' || state === 'noticesGenerating' ? Loader2 : state === 'noticesFailed' ? AlertTriangle : undefined}
           />
         );
       },
@@ -672,8 +654,8 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
     render: call => (
       <TableRowActions
         actions={ROW_ACTIONS.map(({ action, icon, separatorBefore }) => ({
-          label: t(call.draft && action === 'edit' ? `${K}.actions.resumeDraft` : `${K}.actions.${action}`),
-          icon: call.draft && action === 'edit' ? PencilLine : icon,
+          label: t(`${K}.actions.${action}`),
+          icon,
           intent: action === 'delete' ? 'danger' : 'neutral',
           separatorBefore,
           disabledReason: blockerReason(call, action) ?? undefined,
@@ -751,34 +733,28 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
     <ConfirmDialog
       open={Boolean(pendingDelete)}
       onOpenChange={open => !open && setPendingDelete(null)}
-      title={t(pendingDelete?.draft ? `${K}.deleteDialog.draftTitle` : `${K}.deleteDialog.title`, { name: pendingDelete?.name ?? '' })}
-      description={t(pendingDelete?.draft ? `${K}.deleteDialog.draftDescription` : `${K}.deleteDialog.description`, {
-        fund: pendingDelete?.fundName ?? '',
-      })}
+      title={t(`${K}.deleteDialog.title`, { name: pendingDelete?.name ?? '' })}
+      description={t(`${K}.deleteDialog.description`, { fund: pendingDelete?.fundName ?? '' })}
       confirmLabel={t(`${K}.deleteDialog.confirm`)}
       destructive
       onConfirm={confirmDelete}
     />
   );
 
-  if (creatingCall || (selectedCall?.draft && selectedInScope)) {
+  if (creatingCall) {
     if (!rights.manage) return deniedPage(t(`${K}.blockers.missingRight`));
     return (
       <div className="flex min-h-screen flex-1 flex-col bg-muted">
         {scenarioBar}
         <CapitalCallWizard
           funds={funds.filter(fund => scopeFundIds.has(fund.id))}
-          draftCall={creatingCall ? null : selectedCall ?? null}
+          session={wizardSession}
           subscriptionActivatedMeanwhile={scenario === 'subscriptionActivated'}
-          onSaveDraft={saveDraft}
+          onSessionChange={updateWizardSession}
+          onSessionClear={discardWizardSession}
           onCreate={createCall}
-          onDeleteDraft={id => {
-            const draft = allCalls.find(call => call.id === id);
-            if (draft) setPendingDelete(draft);
-          }}
           onExit={exitWizard}
         />
-        {deleteDialog}
       </div>
     );
   }
@@ -810,7 +786,7 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
         title={t(`${K}.title`)}
         subtitle={t(`${K}.subtitle`)}
         primaryAction={{
-          label: t(`${K}.actions.new`),
+          label: wizardSession ? t(`${K}.actions.resumePreparation`) : t(`${K}.actions.new`),
           icon: <Plus className="h-4 w-4" />,
           onClick: () => {
             window.location.hash = `#/capital-calls/${NEW_CALL_ID}`;
@@ -821,10 +797,42 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
 
       {deleteDialog}
 
+      <ConfirmDialog
+        open={confirmDiscard}
+        onOpenChange={setConfirmDiscard}
+        title={t(`${K}.wizard.abandon.title`)}
+        description={t(`${K}.wizard.abandon.description`)}
+        confirmLabel={t(`${K}.wizard.abandon.confirm`)}
+        cancelLabel={t(`${K}.wizard.abandon.keep`)}
+        destructive
+        onConfirm={() => {
+          setConfirmDiscard(false);
+          discardWizardSession();
+        }}
+      />
+
       <div className="flex flex-1 flex-col gap-4 px-6 py-6">
-        <FilterCardGroup title={t(`${K}.queues.label`)} hint={t(`${K}.queues.clickToFilter`)} columns={6}>
+        {wizardSession && rights.manage && (
+          <PageStateBanner
+            variant="pendingWizard"
+            title={t(`${K}.pendingWizard.title`, {
+              name: wizardSession.name.trim() || t(`${K}.wizard.title`),
+            })}
+            description={t(`${K}.pendingWizard.description`, {
+              fund: funds.find(fund => fund.id === wizardSession.fundId)?.name ?? t(`${K}.pendingWizard.noFund`),
+              step: t(`${K}.wizard.steps.${WIZARD_STEPS[wizardSession.step] ?? WIZARD_STEPS[0]}`),
+              date: dateTimeFormat.format(new Date(wizardSession.savedAt)),
+            })}
+            resumeLabel={t(`${K}.pendingWizard.resume`)}
+            discardLabel={t(`${K}.pendingWizard.discard`)}
+            onResume={() => {
+              window.location.hash = `#/capital-calls/${NEW_CALL_ID}`;
+            }}
+            onDiscard={() => setConfirmDiscard(true)}
+          />
+        )}
+        <FilterCardGroup title={t(`${K}.queues.label`)} hint={t(`${K}.queues.clickToFilter`)} columns={5}>
             {queueCard('all', List, scopedCalls)}
-            {queueCard('draft', PencilLine, scopedCalls.filter(call => inQueue(call, 'draft')))}
             {queueCard('noticesFailed', AlertTriangle, scopedCalls.filter(call => inQueue(call, 'noticesFailed')))}
             {queueCard('toNotify', Send, scopedCalls.filter(call => inQueue(call, 'toNotify')))}
             {queueCard('sending', Loader2, scopedCalls.filter(call => inQueue(call, 'sending')))}

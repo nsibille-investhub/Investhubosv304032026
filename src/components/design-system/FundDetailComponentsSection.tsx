@@ -487,6 +487,19 @@ function PageStateBannerDemo() {
         blockedActions={[t(`${d}.blockedDelete`), t(`${d}.blockedNav`), t(`${d}.blockedArchive`)]}
       />
       <PageStateBanner variant="readOnly" />
+      <PageStateBanner
+        variant="pendingWizard"
+        title={t('funds.capitalCalls.pendingWizard.title', { name: t('funds.capitalCalls.wizard.title') })}
+        description={t('funds.capitalCalls.pendingWizard.description', {
+          fund: t(`${d}.masterName`),
+          step: t('funds.capitalCalls.wizard.steps.amounts'),
+          date: '26/10/2026 10:42',
+        })}
+        resumeLabel={t('funds.capitalCalls.pendingWizard.resume')}
+        discardLabel={t('funds.capitalCalls.pendingWizard.discard')}
+        onResume={() => undefined}
+        onDiscard={() => undefined}
+      />
     </div>
   );
 }
