@@ -1475,7 +1475,8 @@
           "dossierReopened": "File reopened",
           "partnerValidated": "File validated by the partner",
           "reviewHandedOff": "File handed over to the next analyst",
-          "finalValidation": "Final validation"
+          "finalValidation": "Final validation",
+          "dossierTakenOver": "File taken over"
         },
         "origin": {
           "investor": "Investor",
@@ -1741,8 +1742,28 @@
           "effects": "The subscription goes back to the Reopened status and to the Onboarding step. A compliance validation already given is withdrawn. The risk profile and answers already reviewed are kept.",
           "effectsPartner": "The partner validation is withdrawn. The subscription status does not change and the investor is not contacted.",
           "emptyReason": "Select at least one item or type a message.",
-          "confirm": "Reopen and send the email"
-        }
+          "confirm": "Reopen and send the email",
+          "modeTitle": "Who corrects the file?",
+          "modes": {
+            "investor": "The investor corrects",
+            "investorPartner": "The partner corrects",
+            "operator": "I correct it myself",
+            "investorHint": "The investor receives an email listing the items to correct and resumes their journey. The subscription moves to the Reopened status.",
+            "investorHintPartner": "The partner receives an email and reviews the file again before the investor.",
+            "operatorHint": "Takeover: you correct answers and replace documents from the file. Nobody is notified."
+          },
+          "titleOperator": "Take over the file",
+          "subtitleOperator": "You correct the selected items yourself, without contacting the investor.",
+          "notePlaceholder": "Optional internal note, visible in the audit trail",
+          "noEmailTitle": "No email sent",
+          "noEmailDescription": "Neither the investor nor the distributor is notified. No webhook is sent and the reopen counter does not change.",
+          "documentsOperator": "{{count}} flagged document(s) stay in the file: replace them from the Supporting documents section.",
+          "effectsOperator": "The file goes back to the Onboarding step and a compliance validation already given is withdrawn. The status does not move to Reopened. Proceed to validation once corrections are done.",
+          "confirmOperator": "Take over"
+        },
+        "takeoverAuditSummary": "{{count}} item(s) to be corrected by the management team, without notification",
+        "takeoverToast": "File taken over",
+        "takeoverToastDesc": "{{count}} item(s) to correct. No email sent."
       }
     },
     "table": {
@@ -2112,6 +2133,11 @@
         "title": "File reopened for correction by {{author}} on {{date}}",
         "descriptionOne": "{{count}} item to correct was sent to {{recipient}}. The file stays at the Onboarding step until it is submitted again.",
         "descriptionMany": "{{count}} items to correct were sent to {{recipient}}. The file stays at the Onboarding step until it is submitted again."
+      },
+      "takenOver": {
+        "title": "File taken over by {{author}} on {{date}}",
+        "descriptionOne": "{{count}} item to be corrected by the management team. No email was sent: the investor is not contacted.",
+        "descriptionMany": "{{count}} items to be corrected by the management team. No email was sent: the investor is not contacted."
       }
     }
   },

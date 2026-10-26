@@ -22,6 +22,7 @@ import {
   Send,
   TextCursorInput,
   XCircle,
+  UserCog,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
@@ -60,6 +61,7 @@ const AUDIT_ICONS: Record<SubscriptionAuditEventType, typeof History> = {
   mandateCreated: Landmark,
   investorReminded: BellRing,
   dossierReopened: RefreshCw,
+  dossierTakenOver: UserCog,
   partnerValidated: Handshake,
   reviewHandedOff: Forward,
   finalValidation: ShieldCheck,

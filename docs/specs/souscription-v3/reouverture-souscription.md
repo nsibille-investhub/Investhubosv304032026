@@ -1,13 +1,13 @@
 # Souscription v3 : Rouvrir une souscription pour correction
 
-**Type** : Epic + 7 stories · **Programme** : Souscription V3 (IC-4938) · **Liens** : IC-5261 (contrôle du dossier), IC-5241 (communications), IC-5248 (réouverture et reprise en main), IC-5210 (statuts)
+**Type** : Epic + 8 stories · **Programme** : Souscription V3 (IC-4938) · **Liens** : IC-5261 (contrôle du dossier), IC-5241 (communications), IC-5248 (réouverture et reprise en main), IC-5210 (statuts)
 **Module** : Investhub Onboarding · **Composant** : Souscriptions
 
 > En tant qu'opérateur back-office, je veux renvoyer une souscription à l'investisseur avec la liste précise des réponses et des pièces à corriger, afin d'obtenir un dossier complet sans échanges hors plateforme.
 
 Objectif : **iso V1**. Source de vérité : pages WIH "Ré-ouverture d'une souscription" (433618946), "Souscriptions - Sous-modules et règles métier" (931266561, sous-module 6) et "Déclencheurs détaillés - Souscription et onboarding" (942178305, gabarit `reopen`). Les écarts volontaires avec la V1 sont listés en section 3.
 
-Maquette : bouton **Rouvrir pour correction** dans l'en-tête du détail d'une souscription (`SubscriptionDetailPage`), modale `SubscriptionReopenDialog`, bandeau `PageStateBanner variant="reopened"`, statut **Rouvert**. Le bouton de démonstration **Simuler la nouvelle soumission** rejoue le retour de l'investisseur.
+Maquette : bouton **Rouvrir pour correction** dans l'en-tête du détail d'une souscription (`SubscriptionDetailPage`), modale `SubscriptionReopenDialog` avec le choix **Qui corrige le dossier ?** (l'investisseur, ou je corrige moi-même), bandeaux `PageStateBanner variant="reopened"` et `variant="takenOver"`, statut **Rouvert**. Le bouton de démonstration **Simuler la nouvelle soumission** rejoue le retour de l'investisseur.
 
 ---
 
@@ -39,7 +39,7 @@ La maquette V3 sait invalider une réponse ou une pièce, mais rien ne renvoie l
 | --- | --- |
 | L'opérateur reste toujours sur la fiche après la réouverture. `Stay on subscription page` est sans objet | Comportement du détail V3 pour toutes les actions |
 | La modale affiche le destinataire effectif et le gabarit avant l'envoi | IC-5244 |
-| La réouverture silencieuse n'est pas portée | En V3 le back-office modifie directement une réponse ou une pièce (IC-5248, reprise en main). À confirmer, voir section 5 |
+| La réouverture silencieuse (`reopenQuest`) devient la reprise en main, choisie dans la même modale | IC-5248 : deux actions distinctes et nommées, une seule notifie. La reprise en main porte en plus la liste des éléments à corriger et une note interne, absentes en V1 |
 | Libellé "Rouvrir pour correction" pour l'action sur la souscription | Lever la confusion avec "Rouvrir le KYC" de l'étape Conformité, voir section 5 |
 
 ---
@@ -98,6 +98,43 @@ And le commentaire de la pièce reprend son motif de refus
 Given aucun élément coché et aucun message
 When l'opérateur veut confirmer
 Then le bouton est grisé avec le motif "Sélectionnez au moins un élément ou saisissez un message"
+```
+
+### Story 2 bis : Reprendre la main sur le dossier sans notifier
+
+**En tant qu'** opérateur back-office
+**Je veux** corriger moi-même les éléments pointés sans solliciter l'investisseur
+**Afin de** traiter une erreur de saisie ou une pièce reçue hors plateforme sans email de correction
+
+Équivalent V3 de la réouverture silencieuse V1 (`reopenQuest`). Lien IC-5248.
+
+Règles métier
+
+- Premier choix de la modale, "Qui corrige le dossier ?" : **L'investisseur corrige** (réouverture pour correction, stories 2 à 4) ou **Je corrige moi-même** (reprise en main). Le partenaire remplace l'investisseur dans le libellé quand le dossier lui revient (story 5).
+- Reprise en main : mêmes éléments proposés et présélectionnés, commentaire par élément remplacé par une note interne facultative. Pas de message général, pas d'email.
+- Effets : complétion et statut remis en onboarding, validation de conformité retirée, étape Onboarding, sections des éléments pointés dépliées.
+- Pas d'indicateur de réouverture, pas de statut "Rouvert", pas d'incrément du compteur, pas de webhook, pas de ligne au journal des communications.
+- Les pièces pointées ne sont jamais supprimées, quel que soit `Keep docs at subscription reopen` : l'opérateur les remplace depuis la section Pièces justificatives.
+- Journal : événement "Dossier repris en main" avec l'auteur et la liste des éléments et des notes.
+- Bandeau d'état à l'étape Onboarding : auteur, date, nombre d'éléments, mention qu'aucun email n'a été envoyé. Il disparaît au passage à la validation.
+- La modale annonce explicitement "Aucun email envoyé" à la place du bloc destinataire.
+
+```
+Given une souscription avec 1 réponse invalidée et 1 pièce refusée
+When l'opérateur choisit "Je corrige moi-même" et confirme "Reprendre la main"
+Then aucun email n'est envoyé et aucun webhook n'est émis
+And le compteur de réouvertures ne change pas
+And le statut n'est pas "Rouvert"
+And la pièce refusée reste au dossier
+And la piste d'audit contient "Dossier repris en main"
+
+Given un dossier repris en main
+When l'opérateur passe à la validation
+Then le bandeau de reprise en main disparaît
+
+Given la matrice des notifications
+When l'administrateur en consulte les événements
+Then la reprise en main n'y figure pas
 ```
 
 ### Story 3 : Appliquer les effets de la réouverture sur le dossier
@@ -245,7 +282,7 @@ And les éléments corrigés repassent à contrôler côté back-office
 ## 5. Questions ouvertes
 
 1. **Libellé.** "Rouvrir le KYC" désigne aujourd'hui, dans l'étape Conformité, la réouverture des décisions de conformité. L'atelier Souscription v3 appelle "réouverture KYC" la réouverture de la souscription. Proposition : "Rouvrir pour correction" pour la souscription, "Rouvrir les décisions" pour la conformité.
-2. **Réouverture silencieuse.** La V1 permet de remettre le dossier en onboarding sans email. La reprise en main de IC-5248 la remplace-t-elle entièrement ?
+2. **Reprise en main et compteur.** La maquette ne compte pas la reprise en main dans le nombre de réouvertures (iso `reopenQuest`). Question restée ouverte dans IC-5248. Autre option : deux actions séparées dans l'en-tête plutôt qu'un choix dans la modale.
 3. **Validation pendant la réouverture.** La V1 laisse valider un dossier rouvert non resoumis (règle 4.5). On garde, ou on bloque avec un motif tant que l'investisseur n'a pas resoumis ?
 4. **Suppression des pièces.** Le comportement par défaut de la V1 supprime les pièces pointées. Pour la piste d'audit, faut-il plutôt les archiver ?
 5. **Réouverture par le partenaire depuis son portail.** Hors de cette epic (portail distributeur). En V1 elle remet la validation partenaire à 0 et n'écrit qu'au distributeur.

@@ -1475,7 +1475,8 @@
           "dossierReopened": "Dossier rouvert",
           "partnerValidated": "Dossier validé par le partenaire",
           "reviewHandedOff": "Dossier transmis à l'analyste suivant",
-          "finalValidation": "Validation finale"
+          "finalValidation": "Validation finale",
+          "dossierTakenOver": "Dossier repris en main"
         },
         "origin": {
           "investor": "Investisseur",
@@ -1741,8 +1742,28 @@
           "effects": "La souscription repasse au statut Rouvert et revient à l'étape Onboarding. Une validation de conformité déjà donnée est retirée. Le profil de risque et les réponses déjà contrôlées sont conservés.",
           "effectsPartner": "La validation du partenaire est retirée. Le statut de la souscription ne change pas et l'investisseur n'est pas recontacté.",
           "emptyReason": "Sélectionnez au moins un élément ou saisissez un message.",
-          "confirm": "Rouvrir et envoyer l'email"
-        }
+          "confirm": "Rouvrir et envoyer l'email",
+          "modeTitle": "Qui corrige le dossier ?",
+          "modes": {
+            "investor": "L'investisseur corrige",
+            "investorPartner": "Le partenaire corrige",
+            "operator": "Je corrige moi-même",
+            "investorHint": "L'investisseur reçoit un email avec les points à corriger et reprend son parcours. La souscription passe au statut Rouvert.",
+            "investorHintPartner": "Le partenaire reçoit un email et refait son contrôle avant l'investisseur.",
+            "operatorHint": "Reprise en main : vous corrigez les réponses et remplacez les pièces depuis le dossier. Personne n'est notifié."
+          },
+          "titleOperator": "Reprendre la main sur le dossier",
+          "subtitleOperator": "Vous corrigez vous-même les éléments sélectionnés, sans solliciter l'investisseur.",
+          "notePlaceholder": "Note interne facultative, visible dans la piste d'audit",
+          "noEmailTitle": "Aucun email envoyé",
+          "noEmailDescription": "Ni l'investisseur ni le distributeur ne sont notifiés. Aucun webhook n'est émis et le compteur de réouvertures ne change pas.",
+          "documentsOperator": "{{count}} pièce(s) pointée(s) reste(nt) dans le dossier : remplacez-la(les) depuis la section Pièces justificatives.",
+          "effectsOperator": "Le dossier revient à l'étape Onboarding et une validation de conformité déjà donnée est retirée. Le statut ne passe pas à Rouvert. Repassez à la validation une fois les corrections faites.",
+          "confirmOperator": "Reprendre la main"
+        },
+        "takeoverAuditSummary": "{{count}} élément(s) à corriger par l'équipe de gestion, sans notification",
+        "takeoverToast": "Dossier repris en main",
+        "takeoverToastDesc": "{{count}} élément(s) à corriger. Aucun email envoyé."
       }
     },
     "table": {
@@ -2112,6 +2133,11 @@
         "title": "Dossier rouvert pour correction par {{author}}, le {{date}}",
         "descriptionOne": "{{count}} élément à corriger a été envoyé à {{recipient}}. Le dossier reste à l'étape Onboarding jusqu'à sa nouvelle soumission.",
         "descriptionMany": "{{count}} éléments à corriger ont été envoyés à {{recipient}}. Le dossier reste à l'étape Onboarding jusqu'à sa nouvelle soumission."
+      },
+      "takenOver": {
+        "title": "Dossier repris en main par {{author}}, le {{date}}",
+        "descriptionOne": "{{count}} élément à corriger par l'équipe de gestion. Aucun email n'a été envoyé : l'investisseur n'est pas sollicité.",
+        "descriptionMany": "{{count}} éléments à corriger par l'équipe de gestion. Aucun email n'a été envoyé : l'investisseur n'est pas sollicité."
       }
     }
   },

@@ -494,6 +494,7 @@ function PageStateBannerDemo() {
         itemCount={2}
         recipient="investisseur@example.com"
       />
+      <PageStateBanner variant="takenOver" author="Jean Dupont" date="26/10/2026 09:12" itemCount={2} />
     </div>
   );
 }
@@ -1032,7 +1033,8 @@ export function FundDetailComponentsSection() {
 <PageStateBanner variant="sendingNotices" blockedActions={[...]} />
 <PageStateBanner variant="readOnly" />
 <PageStateBanner variant="delegatedReview" partner={name} validatedBy={author} date={date} />
-<PageStateBanner variant="reopened" author={author} date={date} itemCount={2} recipient={email} />`}
+<PageStateBanner variant="reopened" author={author} date={date} itemCount={2} recipient={email} />
+<PageStateBanner variant="takenOver" author={author} date={date} itemCount={2} />`}
       >
         <Example label={t(`${K}.pageStateBanner.exampleLabel`)} hint={t(`${K}.pageStateBanner.exampleHint`)}>
           <PageStateBannerDemo />
