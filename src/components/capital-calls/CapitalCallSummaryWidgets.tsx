@@ -22,7 +22,7 @@ export const CALL_STATE_VARIANT: Record<CallState, StatusVariant> = {
 };
 
 /** Filtre appliqué à l'onglet ouvert par un compteur. */
-export type LinesPreset = { filter: 'noticeState' | 'notification' | 'settlement'; values: string[] };
+export type LinesPreset = { filter: 'noticeState' | 'notification' | 'settlement' | 'share'; values: string[] };
 
 interface CapitalCallSummaryWidgetsProps {
   summary: CallSummary;

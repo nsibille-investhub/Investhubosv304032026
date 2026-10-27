@@ -1,7 +1,9 @@
 import { useState } from 'react';
-import { AlertTriangle, CheckCircle2, Eye, FileText, Users, UserX } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Download, Eye, FileText, Users, UserX } from 'lucide-react';
 
 import { useTranslation } from '../../../utils/languageContext';
+import type { CapitalCallAttachment, CapitalCallDiffusion } from '../../../utils/capitalCallGenerator';
+import { downloadCsv } from '../../../utils/capitalCallRecipients';
 import {
   FundCallSettings,
   ShareSimulation,
@@ -18,6 +20,8 @@ import { BIG_MODAL_COMPACT, BigModal, BigModalBody, BigModalContent, BigModalPan
 import { TableRowActions } from '../../ui/row-actions';
 import { SectionCard } from '../../ui/section-card';
 import { WidgetCard, WidgetMetric } from '../../ui/widget-card';
+import { Button } from '../../ui/button';
+import { CapitalCallNotificationPanel } from '../CapitalCallNotificationPanel';
 
 const K = 'funds.capitalCalls.wizard.control';
 
@@ -28,9 +32,26 @@ interface WizardControlStepProps {
   callName: string;
   fundName: string;
   dueDate: Date;
+  shares: string[];
+  restrictedTo: number | null;
+  diffusion: CapitalCallDiffusion;
+  message: string;
+  attachments: CapitalCallAttachment[];
 }
 
-export function WizardControlStep({ simulation, settings, currency, callName, fundName, dueDate }: WizardControlStepProps) {
+export function WizardControlStep({
+  simulation,
+  settings,
+  currency,
+  callName,
+  fundName,
+  dueDate,
+  shares,
+  restrictedTo,
+  diffusion,
+  message,
+  attachments,
+}: WizardControlStepProps) {
   const { t, lang } = useTranslation();
   const [preview, setPreview] = useState<SimulatedLine | null>(null);
   const money = (value: number) =>
@@ -38,6 +59,26 @@ export function WizardControlStep({ simulation, settings, currency, callName, fu
       value,
     );
   const dateFormat = new Intl.DateTimeFormat(lang, { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const integer = new Intl.NumberFormat(lang);
+  const dash = <span className="text-muted-foreground">-</span>;
+  const amountOrDash = (value: number) => (value > 0 ? <span className="text-sm">{money(value)}</span> : dash);
+  const L = 'funds.capitalCalls.detail.lines.columns';
+
+  const exportLines = () =>
+    downloadCsv(
+      [t(`${L}.investor`), t(`${L}.subscription`), t(`${L}.share`), t(`${L}.units`), t(`${L}.calledAmount`), t(`${L}.fees`), t(`${L}.premium`), t(`${L}.total`)],
+      simulation.lines.map(line => [
+        line.subscription.investor,
+        line.subscription.id,
+        line.subscription.share,
+        line.subscription.units,
+        line.amount.toFixed(2),
+        line.fees.toFixed(2),
+        line.premium.toFixed(2),
+        line.total.toFixed(2),
+      ]),
+      t(`${K}.lines.fileName`, { name: callName || fundName }),
+    );
 
   const shareColumns: ColumnConfig<ShareSimulation & { id: number }>[] = [
     {
@@ -63,7 +104,11 @@ export function WizardControlStep({ simulation, settings, currency, callName, fu
       label: t(`${K}.lines.share`),
       render: row => <span className="whitespace-nowrap text-sm">{t('funds.detail.sharePrefix', { name: row.subscription.share })}</span>,
     },
-    { key: 'amount', label: t(`${K}.lines.amount`), align: 'right', render: row => <span className="text-sm">{money(row.amount)}</span> },
+    { key: 'units', label: t(`${L}.units`), align: 'right', render: row => <span className="text-sm">{integer.format(row.subscription.units)}</span> },
+    { key: 'amount', label: t(`${L}.calledAmount`), align: 'right', render: row => <span className="text-sm">{money(row.amount)}</span> },
+    { key: 'fees', label: t(`${L}.fees`), align: 'right', render: row => amountOrDash(row.fees) },
+    { key: 'premium', label: t(`${L}.premium`), align: 'right', render: row => amountOrDash(row.premium) },
+    { key: 'total', label: t(`${L}.total`), align: 'right', render: row => <span className="text-sm font-semibold">{money(row.total)}</span> },
     {
       key: 'remaining',
       label: t(`${K}.lines.remaining`),
@@ -168,6 +213,12 @@ export function WizardControlStep({ simulation, settings, currency, callName, fu
         icon={Users}
         title={t(`${K}.lines.title`)}
         summary={t(`${K}.lines.summary`, { count: simulation.lines.length })}
+        badges={
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={exportLines} disabled={simulation.lines.length === 0}>
+            <Download className="h-4 w-4" />
+            {t(`${K}.lines.export`)}
+          </Button>
+        }
       >
         {simulation.lines.length === 0 ? (
           <EmptyState icon={Users} title={t(`${K}.lines.empty`)} />
@@ -177,6 +228,19 @@ export function WizardControlStep({ simulation, settings, currency, callName, fu
           </div>
         )}
       </SectionCard>
+
+      <CapitalCallNotificationPanel
+        fundName={fundName}
+        shares={shares.filter(share => simulation.shares.some(item => item.share === share))}
+        restrictedTo={restrictedTo}
+        lines={simulation.lines.map(line => ({ investor: line.subscription.investor, subscription: line.subscription.id }))}
+        diffusion={diffusion}
+        combinedNotices={settings.combinedNotices}
+        dueDate={dueDate}
+        message={message}
+        attachments={attachments}
+        callName={callName}
+      />
 
       <SectionCard
         mode="read"

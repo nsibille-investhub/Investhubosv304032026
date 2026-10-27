@@ -340,6 +340,9 @@ export function CapitalCallWizard({
     }, CREATION_DELAY);
   };
 
+  const restrictedCount = shares.some(share => inputs[share]?.restriction)
+    ? shares.reduce((sum, share) => sum + (inputs[share]?.restriction?.length ?? 0), 0)
+    : null;
   const createDisabledReason = simulation?.blockers.length ? t(`${K}.createBlocked`) : null;
   const stepLabel = (index: number) => t(`${K}.steps.${STEPS[index]}`);
 
@@ -437,6 +440,11 @@ export function CapitalCallWizard({
                 callName={info.name}
                 fundName={fund.name}
                 dueDate={info.dueDate}
+                shares={shares}
+                restrictedTo={restrictedCount}
+                diffusion={info.diffusion}
+                message={info.message}
+                attachments={info.attachments.filter((file): file is CapitalCallAttachment => Boolean(file))}
               />
             </div>
           )}

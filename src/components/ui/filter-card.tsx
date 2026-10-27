@@ -13,6 +13,8 @@ interface FilterCardProps {
   metricLabel: string;
   metricValue: string;
   averageValue: string;
+  /** Libellé de la dernière ligne ; « Moy » par défaut. */
+  averageLabel?: string;
   iconActiveClassName?: string;
 }
 
@@ -26,6 +28,7 @@ export function FilterCard({
   metricLabel,
   metricValue,
   averageValue,
+  averageLabel,
   iconActiveClassName = 'text-primary',
 }: FilterCardProps) {
   const { t } = useTranslation();
@@ -140,7 +143,7 @@ export function FilterCard({
           <span className={`text-[13px] font-bold ${isActive ? 'text-primary' : 'text-foreground'}`}>{metricValue}</span>
         </div>
         <div className="flex items-baseline justify-between pt-1 border-t border-gray-200">
-          <span className="text-[9px] text-gray-400">{t('common.average')}</span>
+          <span className="text-[9px] text-gray-400">{averageLabel ?? t('common.average')}</span>
           <span className="text-[10px] text-gray-500 font-medium">{averageValue}</span>
         </div>
       </div>

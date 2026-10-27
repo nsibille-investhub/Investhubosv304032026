@@ -6539,7 +6539,6 @@
         "tabs": {
           "lines": "Investor lines",
           "emails": "Emails",
-          "breakdown": "Breakdown by share",
           "message": "Message and attachments",
           "journal": "Journal"
         },
@@ -6563,7 +6562,22 @@
           "notCalled": "Not called",
           "noRestriction": "None",
           "restrictedOne": "{{count}} subscription",
-          "restrictedMany": "{{count}} subscriptions"
+          "restrictedMany": "{{count}} subscriptions",
+          "title": "Breakdown by share",
+          "hint": "Click a share to filter the lines",
+          "allShares": "All shares",
+          "calledTotal": "Amount called",
+          "sharesLabel": "Shares",
+          "optionsLabel": "Options",
+          "entryFeesShort": "Fees",
+          "premiumShort": "Premium",
+          "releasedShort": "Released {{amount}}",
+          "noOption": "No option",
+          "modesShort": {
+            "percent": "Percentage",
+            "totalAmount": "Total amount",
+            "perUnit": "Per unit held"
+          }
         },
         "message": {
           "title": "Accompanying message",
@@ -6595,7 +6609,7 @@
             "investor": "Investor",
             "subscription": "Subscription",
             "share": "Share",
-            "units": "Units",
+            "units": "Number of units",
             "amountPerUnit": "Amount per unit",
             "calledAmount": "Called amount",
             "fees": "Fees",
@@ -7023,7 +7037,9 @@
             "remaining": "Remaining to call",
             "overRemaining": "Exceeds: {{amount}} left",
             "preview": "Notice preview",
-            "empty": "No line produced"
+            "empty": "No line produced",
+            "export": "Export (CSV)",
+            "fileName": "lines-{{name}}.csv"
           },
           "exclusions": {
             "title": "Excluded subscriptions",
@@ -7074,6 +7090,39 @@
         "noFund": "Fund not chosen",
         "resume": "Resume",
         "discard": "Abandon"
+      },
+      "notificationPanel": {
+        "title": "Recipients and notification",
+        "target": "Target:",
+        "restricted": "{{count}} subscriptions selected",
+        "principal": "Subscription address",
+        "copy": "Structure copy",
+        "export": "Export recipients (CSV)",
+        "noEmail": "Notification disabled: no email is sent.",
+        "noTemplate": "No capital call notification template",
+        "templateLine": "Notification template · {{slug}}",
+        "preview": "Preview",
+        "previewTitle": "Preview: {{name}}",
+        "previewDescription": "Example for a sample investor. Nothing is sent.",
+        "subject": "Subject:",
+        "frameLabel": "Email preview",
+        "attachments": "Attachments:",
+        "noticeFile": "Capital call notice (PDF)",
+        "message": "Accompanying message:",
+        "noMessage": "No message",
+        "channels": {
+          "portal": "Investor portal",
+          "email": "Email",
+          "documents": "Document space",
+          "none": "No distribution"
+        },
+        "csv": {
+          "investor": "Investor",
+          "subscriptions": "Subscriptions",
+          "contact": "Recipient",
+          "role": "Role",
+          "fileName": "recipients-{{name}}.csv"
+        }
       }
     }
   },

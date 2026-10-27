@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, ArrowLeftRight, CheckCircle2, EyeOff, Layers, Loader2, Repeat, RotateCw, Users } from 'lucide-react';
 
+import { CapitalCallNotificationPanel } from './CapitalCallNotificationPanel';
 import { useTranslation } from '../../utils/languageContext';
 import type { CapitalCall } from '../../utils/capitalCallGenerator';
 import {
@@ -321,6 +322,19 @@ export function CapitalCallLinesTab({
   const hasFiltering = Object.keys(activeFilters).length > 0 || search.trim().length > 0;
 
   return (
+    <div className="space-y-4">
+    <CapitalCallNotificationPanel
+      fundName={call.fundName}
+      shares={call.shares.map(item => item.share)}
+      restrictedTo={call.shares.some(item => item.restrictedTo !== null) ? call.shares.reduce((sum, item) => sum + (item.restrictedTo ?? 0), 0) : null}
+      lines={lines}
+      diffusion={call.diffusion}
+      combinedNotices={lines.some(line => line.combinedNotice)}
+      dueDate={call.dueDate}
+      message={call.message}
+      attachments={call.attachments}
+      callName={call.name}
+    />
     <ListingCard
       toolbar={
         <div className="flex items-start justify-between gap-3">
@@ -407,5 +421,6 @@ export function CapitalCallLinesTab({
         </>
       )}
     </ListingCard>
+    </div>
   );
 }

@@ -12,8 +12,7 @@ import { DisabledReason } from '../../ui/disabled-reason';
 import { FormSubsection } from '../../ui/form-section';
 import { MailPreviewDialog } from '../../ui/mail-preview-dialog';
 import { ModernMultiSelect } from '../../ui/modern-multiselect';
-import { MAIL_TEMPLATES, PREVIEW_VALUES } from '../../../utils/mailTemplatesMockData';
-import { buildPreviewDocument } from '../../settings/MailTemplateDetailPage';
+import { callMailPreview, callTemplate } from '../../../utils/capitalCallRecipients';
 import { Checkbox } from '../../ui/checkbox';
 import { DatePicker } from '../../ui/date-picker';
 import { DetailLink } from '../../ui/detail-summary';
@@ -50,9 +49,6 @@ export type InfoErrors = Partial<Record<'fundId' | 'shares' | 'name' | 'dueDate'
 export const NO_FORECAST = 'none';
 
 const DIFFUSION_CHANNELS = ['portal', 'notify', 'documents'] as const;
-
-/** Gabarit de notification d'un appel (Starter Pack, section 6). */
-const CALL_TEMPLATE_SLUG = 'new_call';
 
 interface WizardInfoStepProps {
   funds: Fund[];
@@ -92,21 +88,17 @@ export function WizardInfoStep({
   const fundShares = funds.find(fund => fund.id === values.fundId)?.shareClasses.map(item => item.name) ?? [];
 
   const [previewOpen, setPreviewOpen] = useState(false);
-  const template = MAIL_TEMPLATES.find(item => item.slug === CALL_TEMPLATE_SLUG);
+  const template = callTemplate(settings?.combinedNotices ?? false);
   const previewDisabledReason = !notify ? t(`${K}.communication.previewNoEmail`) : !template ? t(`${K}.communication.previewNoTemplate`) : null;
   const fundName = funds.find(fund => fund.id === values.fundId)?.name;
-  const preview = (() => {
-    if (!template || !previewOpen) return null;
-    const content = template[lang === 'en' ? 'en' : 'fr'];
-    const previewValues: Record<string, string> = {
-      ...PREVIEW_VALUES,
-      $campaign: fundName ?? PREVIEW_VALUES.$campaign,
-      $date: values.dueDate ? new Intl.DateTimeFormat(lang).format(values.dueDate) : PREVIEW_VALUES.$date,
-      $pitch: values.message,
-    };
-    const subject = content.subject.replace(/\$[a-zA-Z_][\w]*(?:\.[a-zA-Z_][\w]*)*/g, token => previewValues[token] ?? token);
-    return { subject, html: buildPreviewDocument(content.html, previewValues) };
-  })();
+  const preview =
+    template && previewOpen
+      ? callMailPreview(template, lang, {
+          fund: fundName,
+          dueDate: values.dueDate ? new Intl.DateTimeFormat(lang).format(values.dueDate) : undefined,
+          message: values.message,
+        })
+      : null;
   const attachedFiles = [t(`${K}.communication.noticeFile`), ...values.attachments.filter(Boolean).map(file => file!.name)];
 
   return (

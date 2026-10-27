@@ -6539,7 +6539,6 @@
         "tabs": {
           "lines": "Lignes investisseurs",
           "emails": "Envois",
-          "breakdown": "Ventilation par part",
           "message": "Message et pièces jointes",
           "journal": "Journal"
         },
@@ -6556,14 +6555,29 @@
           "modes": {
             "percent": "Pourcentage du montant souscrit",
             "totalAmount": "Montant total de la part",
-            "perUnit": "Montant par titre"
+            "perUnit": "Montant par part"
           },
-          "perUnitValue": "{{amount}} par titre",
+          "perUnitValue": "{{amount}} par part",
           "called": "Appelés",
           "notCalled": "Non appelés",
           "noRestriction": "Aucune",
           "restrictedOne": "{{count}} souscription",
-          "restrictedMany": "{{count}} souscriptions"
+          "restrictedMany": "{{count}} souscriptions",
+          "title": "Ventilation par part",
+          "hint": "Cliquez sur une part pour filtrer les lignes",
+          "allShares": "Toutes les parts",
+          "calledTotal": "Montant appelé",
+          "sharesLabel": "Parts",
+          "optionsLabel": "Options",
+          "entryFeesShort": "Frais",
+          "premiumShort": "Prime",
+          "releasedShort": "Débloqué {{amount}}",
+          "noOption": "Aucune option",
+          "modesShort": {
+            "percent": "Pourcentage",
+            "totalAmount": "Montant total",
+            "perUnit": "Par part détenue"
+          }
         },
         "message": {
           "title": "Message d'accompagnement",
@@ -6595,8 +6609,8 @@
             "investor": "Investisseur",
             "subscription": "Souscription",
             "share": "Part",
-            "units": "Nombre de titres",
-            "amountPerUnit": "Montant par titre",
+            "units": "Nombre de parts",
+            "amountPerUnit": "Montant par part",
             "calledAmount": "Montant appelé",
             "fees": "Frais",
             "premium": "Prime",
@@ -6913,51 +6927,51 @@
             "perShare": "Par part",
             "toRaise": "Montant à lever"
           },
-          "toRaiseUnavailable": "Indisponible : l'appel est généré par titre.",
+          "toRaiseUnavailable": "Indisponible : l'appel est généré par part.",
           "settings": {
             "label": "Paramètres du fonds :",
             "none": "aucun paramètre particulier",
-            "perUnit": "Générer l'appel par titre",
+            "perUnit": "Générer l'appel par part",
             "netFlow": "Flux net",
             "capAt100": "Limiter les appels à 100 %",
             "combinedNotices": "Avis combinés"
           },
           "allocation": {
-            "perUnit": "Répartition par titre",
-            "units": "Répartition au prorata du nombre de titres",
+            "perUnit": "Répartition par part détenue",
+            "units": "Répartition au prorata du nombre de parts",
             "subscribedAmount": "Répartition au prorata du montant souscrit"
           },
           "shareSummary": "Engagement {{committed}} · {{count}} souscriptions",
           "kinds": {
             "percent": "Pourcentage",
             "amount": "Montant",
-            "perUnit": "Par titre",
+            "perUnit": "Par part détenue",
             "label": "Mode de saisie",
             "percentRestricted": "Pourcentage indisponible sur une part restreinte.",
             "hints": {
               "percent": "Pourcentage de l'engagement de chaque souscription.",
               "amount": "Montant total de la part, réparti entre les souscriptions.",
-              "perUnit": "Montant fixe par titre, multiplié par le nombre de titres détenus par chaque souscription."
+              "perUnit": "Montant fixe par part, multiplié par le nombre de parts détenues par chaque souscription."
             }
           },
           "fields": {
             "value": "Montant appelé",
-            "perUnit": "Montant par titre",
+            "perUnit": "Montant par part",
             "recall": "Rappel de distributions provisoires",
-            "recallPerUnit": "Rappel par titre",
+            "recallPerUnit": "Rappel par part",
             "netFlow": "Flux net",
-            "netFlowPerUnit": "Flux net par titre",
+            "netFlowPerUnit": "Flux net par part",
             "entryFees": "Appeler les frais d'entrée",
             "premium": "Appeler la prime"
           },
-          "perUnitSuffix": "{{currency}}/titre",
+          "perUnitSuffix": "{{currency}}/part",
           "notCalledPlaceholder": "Vide : part non appelée",
           "shareAmount": "Montant de la part :",
           "restriction": {
             "toggle": "Restreindre à certaines souscriptions",
             "selected": "{{count}} sur {{total}} retenues",
             "hint": "Seules les souscriptions choisies sont appelées sur cette part. Aucune sélection : toutes les souscriptions de la part sont appelées.",
-            "details": "{{id}} · Engagement {{committed}} · {{units}} titres · Validée le {{validatedAt}}",
+            "details": "{{id}} · Engagement {{committed}} · {{units}} parts · Validée le {{validatedAt}}",
             "placeholder": "Choisir les souscriptions",
             "search": "Rechercher un investisseur ou une souscription",
             "empty": "Aucune souscription",
@@ -7023,7 +7037,9 @@
             "remaining": "Reste à appeler",
             "overRemaining": "Dépasse : reste {{amount}}",
             "preview": "Aperçu de l'avis",
-            "empty": "Aucune ligne produite"
+            "empty": "Aucune ligne produite",
+            "export": "Exporter (CSV)",
+            "fileName": "lignes-{{name}}.csv"
           },
           "exclusions": {
             "title": "Souscriptions exclues",
@@ -7074,6 +7090,39 @@
         "noFund": "Fonds non choisi",
         "resume": "Reprendre",
         "discard": "Abandonner"
+      },
+      "notificationPanel": {
+        "title": "Destinataires et notification",
+        "target": "Cible :",
+        "restricted": "{{count}} souscriptions retenues",
+        "principal": "Adresse de la souscription",
+        "copy": "Copie structure",
+        "export": "Exporter les destinataires (CSV)",
+        "noEmail": "Notification désactivée : aucun email n'est envoyé.",
+        "noTemplate": "Aucun gabarit de notification d'appel",
+        "templateLine": "Gabarit de notification · {{slug}}",
+        "preview": "Aperçu",
+        "previewTitle": "Aperçu : {{name}}",
+        "previewDescription": "Exemple pour un investisseur fictif. Rien n'est envoyé.",
+        "subject": "Objet :",
+        "frameLabel": "Aperçu du mail",
+        "attachments": "Pièces jointes :",
+        "noticeFile": "Avis d'appel (PDF)",
+        "message": "Message d'accompagnement :",
+        "noMessage": "Aucun message",
+        "channels": {
+          "portal": "Portail investisseur",
+          "email": "Email",
+          "documents": "Espace documentaire",
+          "none": "Aucune diffusion"
+        },
+        "csv": {
+          "investor": "Investisseur",
+          "subscriptions": "Souscriptions",
+          "contact": "Destinataire",
+          "role": "Rôle",
+          "fileName": "destinataires-{{name}}.csv"
+        }
       }
     }
   },

@@ -193,6 +193,17 @@ export type ExclusionReason = 'availableAfterDueDate' | 'outsideRestriction' | '
 export interface SimulatedLine {
   subscription: WizardSubscription;
   amount: number;
+  /** Frais d'entrée et prime repris de la souscription, si la part les appelle. */
+  fees: number;
+  premium: number;
+  total: number;
+}
+
+/** Mêmes taux que les lignes de la maquette : 2 % de frais d'entrée, 1 % de prime. */
+export function lineCharges(amount: number, input: Pick<ShareInput, 'callEntryFees' | 'callPremium'>) {
+  const fees = input.callEntryFees ? Math.round(amount * 2) / 100 : 0;
+  const premium = input.callPremium ? Math.round(amount) / 100 : 0;
+  return { fees, premium, total: toCents(amount + fees + premium) };
 }
 
 export interface SimulatedExclusion {
@@ -267,7 +278,7 @@ export function simulateCall(
         return;
       }
       linesTotal = toCents(linesTotal + amount);
-      lines.push({ subscription, amount });
+      lines.push({ subscription, amount, ...lineCharges(amount, input) });
     });
     shares.push({ share, entered, linesTotal, roundingGap: toCents(entered - linesTotal) });
   });
