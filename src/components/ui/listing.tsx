@@ -6,6 +6,7 @@ import { useTranslation } from '../../utils/languageContext';
 import { copyToClipboard } from '../../utils/clipboard';
 import { ClickableText } from '../ClickableText';
 import { HighlightText } from '../HighlightText';
+import { Tag } from '../Tag';
 import { Button } from './button';
 import {
   DropdownMenu,
@@ -160,13 +161,15 @@ interface ListingStackCellProps {
   children: ReactNode;
   /** Largeur de la carte, en classe Tailwind. */
   cardClassName?: string;
+  /** `text` : libellé gris avec icône (défaut). `tag` : premier élément en Tag, « +n » accolé (catégories, listes). */
+  variant?: 'text' | 'tag';
 }
 
 /**
  * Cellule « un élément + n autres » d'un listing (structures, accès, rôles...).
  * Au clic, une carte présente le détail complet. Référence : colonne Structure du listing investisseurs.
  */
-export function ListingStackCell({ icon: Icon, items, title, subtitle, children, cardClassName }: ListingStackCellProps) {
+export function ListingStackCell({ icon: Icon, items, title, subtitle, children, cardClassName, variant = 'text' }: ListingStackCellProps) {
   const { t } = useTranslation();
   if (items.length === 0) return <span className="text-gray-400 text-sm">—</span>;
   const remaining = items.length - 1;
@@ -174,6 +177,23 @@ export function ListingStackCell({ icon: Icon, items, title, subtitle, children,
   return (
     <Popover>
       <PopoverTrigger asChild>
+        {variant === 'tag' ? (
+          <motion.button
+            type="button"
+            whileHover={{ x: 2 }}
+            whileTap={{ scale: 0.98 }}
+            className="inline-flex items-center gap-1.5 text-xs group min-w-0"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <Tag label={items[0]} />
+            {remaining > 0 && (
+              <span className="shrink-0 font-medium text-primary group-hover:underline">
+                {t('common.listing.more', { count: remaining })}
+              </span>
+            )}
+            <ChevronRight className="w-3 h-3 shrink-0 text-muted-foreground opacity-50 group-hover:opacity-100 group-hover:text-blue-700 transition-all" />
+          </motion.button>
+        ) : (
         <motion.button
           type="button"
           whileHover={{ x: 2 }}
@@ -195,6 +215,7 @@ export function ListingStackCell({ icon: Icon, items, title, subtitle, children,
             </span>
           )}
         </motion.button>
+        )}
       </PopoverTrigger>
       <PopoverContent
         className={cn('w-96 p-0', cardClassName)}

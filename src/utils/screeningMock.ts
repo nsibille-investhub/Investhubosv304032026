@@ -175,6 +175,7 @@ export interface EntityCounters {
 export interface EntityRow extends ScreeningEntity {
   status: EntityStatus;
   matchTypes: AlertListCategory[];
+  hitsByMatchType: Partial<Record<AlertListCategory, number>>;
   hits: number;
   decisions: number;
   pendingMatches: number;
@@ -1176,7 +1177,11 @@ function toLegacyAuditEvent(event: EntityAuditEvent): LegacyAuditEvent {
 export function buildEntityRow(entity: ScreeningEntity, entityMatches: ScreeningMatch[]): EntityRow {
   const counters = computeCounters(entityMatches);
   const status = deriveEntityStatus(entity, entityMatches);
-  const matchTypes = Array.from(new Set(entityMatches.flatMap((mt) => mt.categories)));
+  const hitsByMatchType: Partial<Record<AlertListCategory, number>> = {};
+  entityMatches.forEach((mt) => mt.categories.forEach((c) => (hitsByMatchType[c] = (hitsByMatchType[c] ?? 0) + 1)));
+  const matchTypes = (Object.keys(hitsByMatchType) as AlertListCategory[]).sort(
+    (a, b) => (hitsByMatchType[b] ?? 0) - (hitsByMatchType[a] ?? 0),
+  );
   const decisions = entityMatches.filter((mt) => mt.currentDecision !== null).length;
   const timestamps = [
     ...entityMatches.map((mt) => new Date(mt.lastUpdate).getTime()),
@@ -1190,6 +1195,7 @@ export function buildEntityRow(entity: ScreeningEntity, entityMatches: Screening
     ...entity,
     status,
     matchTypes,
+    hitsByMatchType,
     hits: entityMatches.length,
     decisions,
     pendingMatches: counters.pending,
