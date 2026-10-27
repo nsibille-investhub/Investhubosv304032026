@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Calculator, FileText, Send, Wallet } from 'lucide-react';
 
 import { useTranslation } from '../../utils/languageContext';
+import type { CapitalCallDiffusion } from '../../utils/capitalCallGenerator';
 import type { CallState, CallSummary } from '../../utils/capitalCallSummary';
 import type { StatusVariant } from '../StatusBadge';
 import { WidgetCard, WidgetMetric } from '../ui/widget-card';
@@ -16,6 +17,7 @@ export const CALL_STATE_VARIANT: Record<CallState, StatusVariant> = {
   notified: 'info',
   partiallyNotified: 'neutral',
   publishedWithoutSending: 'outline',
+  notDistributed: 'outline',
   readyToNotify: 'neutral',
 };
 
@@ -25,7 +27,7 @@ export type LinesPreset = { filter: 'noticeState' | 'notification' | 'settlement
 interface CapitalCallSummaryWidgetsProps {
   summary: CallSummary;
   currency: string;
-  publication: 'onNotification' | 'immediate';
+  diffusion: CapitalCallDiffusion;
   onOpenLines: (preset: LinesPreset | null) => void;
   onOpenFailedEmails: () => void;
 }
@@ -61,11 +63,18 @@ function Grid({ children }: { children: ReactNode }) {
 export function CapitalCallSummaryWidgets({
   summary,
   currency,
-  publication,
+  diffusion,
   onOpenLines,
   onOpenFailedEmails,
 }: CapitalCallSummaryWidgetsProps) {
   const { t, lang } = useTranslation();
+  const channels = [
+    diffusion.portal &&
+      t(diffusion.notify ? `${K}.notification.diffusion.portal.${diffusion.portalTiming}` : `${K}.notification.diffusion.portal.alone`),
+    diffusion.notify && t(`${K}.notification.diffusion.email`),
+    diffusion.documents && t(`${K}.notification.diffusion.documents`),
+  ].filter(Boolean);
+  const diffusionSummary = channels.length > 0 ? channels.join(' · ') : t(`${K}.notification.diffusion.none`);
   const money = (value: number) =>
     new Intl.NumberFormat(lang, { style: 'currency', currency, minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
   const open = (filter: LinesPreset['filter'], value: string) => () => onOpenLines({ filter, values: [value] });
@@ -95,7 +104,7 @@ export function CapitalCallSummaryWidgets({
       <WidgetCard
         icon={Send}
         title={t(`${K}.notification.title`)}
-        subtitle={t(`${K}.notification.publication.${publication}`)}
+        subtitle={diffusionSummary}
       >
         <Grid>
           <Counter label={t(`${K}.notification.notified`)} value={summary.notified} tone="info" onClick={open('notification', 'notified')} />

@@ -457,7 +457,7 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
       lines: draft.lines,
       notifiedLines: 0,
       linesToRelaunch: 0,
-      publication: draft.publication,
+      diffusion: draft.diffusion,
       justCreated: true,
     };
     setAllCalls(prev => [call, ...prev]);
@@ -562,11 +562,20 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
         return (
           <span className="flex flex-col whitespace-nowrap text-sm tabular-nums">
             <span>
-              {call.publication === 'immediate' && summary.notified === 0
-                ? t(`${K}.progress.immediate`)
-                : t(`${K}.progress.notified`, { done: summary.notified, total: summary.lines })}
+              {call.diffusion.notify
+                ? t(`${K}.progress.notified`, { done: summary.notified, total: summary.lines })
+                : t(`${K}.progress.withoutNotification`)}
             </span>
-            {call.sending && <span className="text-xs text-muted-foreground">{t(`${K}.progress.sending`)}</span>}
+            {call.sending ? (
+              <span className="text-xs text-muted-foreground">{t(`${K}.progress.sending`)}</span>
+            ) : (
+              call.diffusion.notify &&
+              call.diffusion.portal &&
+              call.diffusion.portalTiming === 'immediate' &&
+              summary.notified < summary.lines && (
+                <span className="text-xs text-muted-foreground">{t(`${K}.progress.prePublished`)}</span>
+              )
+            )}
           </span>
         );
       },

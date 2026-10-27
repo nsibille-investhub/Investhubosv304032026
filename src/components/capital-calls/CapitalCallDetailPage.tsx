@@ -288,7 +288,7 @@ export function CapitalCallDetailPage({ call, initialLines, onLinesChange, right
         <CapitalCallSummaryWidgets
           summary={summary}
           currency={call.currency}
-          publication={call.publication}
+          diffusion={call.diffusion}
           onOpenLines={openLines}
           onOpenFailedEmails={() => {
             setEmailsPreset({ values: ['failed', 'spam', 'notFound'], nonce: Date.now() });

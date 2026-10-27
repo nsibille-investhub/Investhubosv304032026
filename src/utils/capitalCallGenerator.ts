@@ -29,6 +29,25 @@ export interface CapitalCallAttachment {
   sizeKb: number;
 }
 
+/** Diffusion d'un appel, choisie à la création : trois canaux indépendants. */
+export interface CapitalCallDiffusion {
+  /** Visible sur le portail investisseur, sur la souscription. */
+  portal: boolean;
+  /** Notification de l'avis par email. */
+  notify: boolean;
+  /** Dépôt de l'avis dans l'espace documentaire de l'investisseur. */
+  documents: boolean;
+  /** Visible et notifié : pré-publication immédiate sur le portail, ou publication à l'envoi de la notification. */
+  portalTiming: 'immediate' | 'onNotification';
+}
+
+export const DEFAULT_DIFFUSION: CapitalCallDiffusion = {
+  portal: true,
+  notify: true,
+  documents: true,
+  portalTiming: 'onNotification',
+};
+
 export interface CapitalCall {
   id: number;
   fundId: number;
@@ -54,8 +73,7 @@ export interface CapitalCall {
   notifiedLines: number;
   /** Lignes notifiées ni payées ni compensées : celles qu'une relance cible. */
   linesToRelaunch: number;
-  /** Publication sur le portail : à la notification, ou immédiate sans email. */
-  publication: 'onNotification' | 'immediate';
+  diffusion: CapitalCallDiffusion;
   /** Appel créé dans la session : lignes à notifier, avis demandés à la création. */
   justCreated?: boolean;
 }
@@ -96,6 +114,13 @@ function seeded(seed: number) {
 }
 
 const DAY = 24 * 60 * 60 * 1000;
+
+/** Quelques appels non notifiés sont diffusés sans email, d'autres pré-publiés sur le portail. */
+function demoDiffusion(draw: number): CapitalCallDiffusion {
+  if (draw < 0.1) return { ...DEFAULT_DIFFUSION, notify: false };
+  if (draw < 0.2) return { ...DEFAULT_DIFFUSION, portalTiming: 'immediate' };
+  return DEFAULT_DIFFUSION;
+}
 
 export function generateCapitalCalls(funds: Fund[], today = new Date()): CapitalCall[] {
   const calls: CapitalCall[] = [];
@@ -175,7 +200,7 @@ export function generateCapitalCalls(funds: Fund[], today = new Date()): Capital
         lines,
         notifiedLines,
         linesToRelaunch,
-        publication: notifiedLines === 0 && random() < 0.15 ? 'immediate' : 'onNotification',
+        diffusion: demoDiffusion(notifiedLines === 0 ? random() : 1),
       });
     }
   });

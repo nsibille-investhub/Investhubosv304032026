@@ -9,6 +9,7 @@ export type CallState =
   | 'notified'
   | 'partiallyNotified'
   | 'publishedWithoutSending'
+  | 'notDistributed'
   | 'readyToNotify';
 
 /**
@@ -22,6 +23,7 @@ export const CALL_STATES: CallState[] = [
   'notified',
   'partiallyNotified',
   'publishedWithoutSending',
+  'notDistributed',
   'readyToNotify',
 ];
 
@@ -88,7 +90,9 @@ export function summarizeCall(call: CapitalCall, lines: CapitalCallLine[], email
   else if (settled > 0) state = 'partiallySettled';
   else if (lines.length > 0 && notified === lines.length) state = 'notified';
   else if (notified > 0) state = 'partiallyNotified';
-  else if (call.publication === 'immediate') state = 'publishedWithoutSending';
+  else if (!call.diffusion.notify) {
+    state = call.diffusion.portal || call.diffusion.documents ? 'publishedWithoutSending' : 'notDistributed';
+  }
 
   return {
     lines: lines.length,
@@ -100,7 +104,7 @@ export function summarizeCall(call: CapitalCall, lines: CapitalCallLine[], email
     noticesFailed,
     noticesReplaced: count(line => line.noticeState === 'replaced'),
     notified,
-    toNotify: count(line => line.notifiedAt === null),
+    toNotify: call.diffusion.notify ? count(line => line.notifiedAt === null) : 0,
     reminded: count(line => line.lastReminderAt !== null),
     emailsFailed: emails.filter(email => ['failed', 'spam', 'notFound'].includes(email.state)).length,
     paid: count(line => settlementOf(line) === 'paid'),

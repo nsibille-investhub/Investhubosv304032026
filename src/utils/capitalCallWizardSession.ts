@@ -1,3 +1,4 @@
+import type { CapitalCallDiffusion } from './capitalCallGenerator';
 import type { ShareInput } from './capitalCallWizard';
 
 /**
@@ -11,7 +12,7 @@ export interface CapitalCallWizardSession {
   name: string;
   dueDate: string | null;
   noticeDate: string | null;
-  publication: 'onNotification' | 'immediate';
+  diffusion: CapitalCallDiffusion;
   message: string;
   attachments: [{ name: string; sizeKb: number } | null, { name: string; sizeKb: number } | null];
   forecastId: number | null;

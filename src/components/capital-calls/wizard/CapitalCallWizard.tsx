@@ -3,7 +3,13 @@ import { ArrowLeft, ArrowRight, Check, Clock, Loader2, RefreshCw, X } from 'luci
 
 import { useTranslation } from '../../../utils/languageContext';
 import type { Fund } from '../../../utils/fundGenerator';
-import type { CapitalCallAttachment, CapitalCallShare, LinkedDistribution } from '../../../utils/capitalCallGenerator';
+import {
+  CapitalCallAttachment,
+  CapitalCallDiffusion,
+  CapitalCallShare,
+  DEFAULT_DIFFUSION,
+  LinkedDistribution,
+} from '../../../utils/capitalCallGenerator';
 import { CapitalCallWizardSession, sessionDate } from '../../../utils/capitalCallWizardSession';
 import {
   ShareInput,
@@ -47,7 +53,7 @@ export interface CapitalCallDraft {
   shares: CapitalCallShare[];
   calledAmount: number;
   lines: number;
-  publication: 'onNotification' | 'immediate';
+  diffusion: CapitalCallDiffusion;
 }
 
 interface CapitalCallWizardProps {
@@ -71,7 +77,7 @@ const infoFromSession = (session: CapitalCallWizardSession, funds: Fund[]): Info
     name: session.name,
     dueDate: sessionDate(session.dueDate),
     noticeDate: sessionDate(session.noticeDate),
-    publication: session.publication,
+    diffusion: session.diffusion ?? DEFAULT_DIFFUSION,
     message: session.message,
     attachments: session.attachments,
     forecastId: inScope ? session.forecastId : null,
@@ -84,7 +90,7 @@ const emptyInfo = (): InfoValues => ({
   name: '',
   dueDate: undefined,
   noticeDate: undefined,
-  publication: 'onNotification',
+  diffusion: DEFAULT_DIFFUSION,
   message: '',
   attachments: [null, null],
   forecastId: null,
@@ -257,7 +263,7 @@ export function CapitalCallWizard({
       shares: calledShares,
       calledAmount,
       lines,
-      publication: info.publication,
+      diffusion: info.diffusion,
     };
   };
 
@@ -274,7 +280,7 @@ export function CapitalCallWizard({
       name: info.name,
       dueDate: info.dueDate?.toISOString() ?? null,
       noticeDate: info.noticeDate?.toISOString() ?? null,
-      publication: info.publication,
+      diffusion: info.diffusion,
       message: info.message,
       attachments: info.attachments,
       forecastId: info.forecastId,

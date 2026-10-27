@@ -3,6 +3,7 @@ import { AlertTriangle } from 'lucide-react';
 
 import { useTranslation } from '../../../utils/languageContext';
 import type { Fund } from '../../../utils/fundGenerator';
+import type { CapitalCallDiffusion } from '../../../utils/capitalCallGenerator';
 import type { FundCallSettings, FundDistribution, PendingForecast } from '../../../utils/capitalCallWizard';
 import { Alert, AlertDescription, AlertTitle } from '../../ui/alert';
 import { Checkbox } from '../../ui/checkbox';
@@ -11,20 +12,18 @@ import { DetailLink } from '../../ui/detail-summary';
 import { Input } from '../../ui/input';
 import { FormField } from '../../ui/form-field';
 import { SegmentedControl } from '../../ui/segmented-control';
-import { SidePanelFileDrop } from '../../ui/side-panel';
+import { SidePanelCard, SidePanelFileDrop, SidePanelSwitchRow } from '../../ui/side-panel';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { Textarea } from '../../ui/textarea';
 
 const K = 'funds.capitalCalls.wizard.info';
-
-export type Publication = 'onNotification' | 'immediate';
 
 export interface InfoValues {
   fundId: number | null;
   name: string;
   dueDate: Date | undefined;
   noticeDate: Date | undefined;
-  publication: Publication;
+  diffusion: CapitalCallDiffusion;
   message: string;
   attachments: [AttachmentValue | null, AttachmentValue | null];
   forecastId: number | null;
@@ -39,6 +38,8 @@ export interface AttachmentValue {
 export type InfoErrors = Partial<Record<'fundId' | 'name' | 'dueDate', string>>;
 
 export const NO_FORECAST = 'none';
+
+const DIFFUSION_CHANNELS = ['portal', 'notify', 'documents'] as const;
 
 interface WizardInfoStepProps {
   funds: Fund[];
@@ -64,6 +65,10 @@ export function WizardInfoStep({
   const { t, lang } = useTranslation();
   const money = (value: number) =>
     new Intl.NumberFormat(lang, { style: 'currency', currency, maximumFractionDigits: 0 }).format(value);
+
+  const setDiffusion = (patch: Partial<CapitalCallDiffusion>) => onChange({ diffusion: { ...values.diffusion, ...patch } });
+  const { portal, notify, documents } = values.diffusion;
+  const diffusionHint = !portal && !notify && !documents ? t(`${K}.diffusion.noneHint`) : undefined;
 
   const setAttachment = (index: 0 | 1, file: AttachmentValue | null) => {
     const next: [AttachmentValue | null, AttachmentValue | null] = [...values.attachments];
@@ -114,7 +119,7 @@ export function WizardInfoStep({
         />
       </FormField>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <FormField id="call-due" label={t(`${K}.dueDate`)} required error={errors.dueDate}>
           <div id="call-due" aria-invalid={Boolean(errors.dueDate)}>
             <DatePicker
@@ -135,18 +140,37 @@ export function WizardInfoStep({
             />
           </div>
         </FormField>
-        <FormField id="call-publication" label={t(`${K}.publication`)}>
-          <SegmentedControl<Publication>
-            options={[
-              { value: 'onNotification', label: t(`${K}.publicationOptions.onNotification`) },
-              { value: 'immediate', label: t(`${K}.publicationOptions.immediate`) },
-            ]}
-            value={values.publication}
-            onValueChange={publication => onChange({ publication })}
-            size="sm"
-          />
-        </FormField>
       </div>
+
+      <FormField id="call-diffusion" label={t(`${K}.diffusion.label`)} hint={diffusionHint}>
+        <SidePanelCard className="divide-y divide-border p-0 md:p-0">
+          {DIFFUSION_CHANNELS.map(channel => (
+            <div key={channel} className="px-4 py-3">
+              <SidePanelSwitchRow
+                id={`call-diffusion-${channel}`}
+                label={t(`${K}.diffusion.${channel}.label`)}
+                description={t(`${K}.diffusion.${channel}.description`)}
+                checked={values.diffusion[channel]}
+                onCheckedChange={checked => setDiffusion({ [channel]: checked })}
+              />
+              {channel === 'notify' && values.diffusion.portal && values.diffusion.notify && (
+                <div className="mt-3 space-y-1.5">
+                  <p className="text-sm font-medium">{t(`${K}.diffusion.timing.label`)}</p>
+                  <SegmentedControl<CapitalCallDiffusion['portalTiming']>
+                    options={[
+                      { value: 'onNotification', label: t(`${K}.diffusion.timing.onNotification`) },
+                      { value: 'immediate', label: t(`${K}.diffusion.timing.immediate`) },
+                    ]}
+                    value={values.diffusion.portalTiming}
+                    onValueChange={portalTiming => setDiffusion({ portalTiming })}
+                    size="sm"
+                  />
+                </div>
+              )}
+            </div>
+          ))}
+        </SidePanelCard>
+      </FormField>
 
       <FormField id="call-message" label={t(`${K}.message`)}>
         <Textarea

@@ -6519,7 +6519,8 @@
         "sending": "Sending in progress",
         "alreadyNotified": "Call already notified",
         "nothingToRelaunch": "No line to remind",
-        "missingRight": "Missing right, please contact your internal administrator"
+        "missingRight": "Missing right, please contact your internal administrator",
+        "notificationDisabled": "Notification disabled on this call"
       },
       "deleteDialog": {
         "title": "Delete {{name}}?",
@@ -6761,14 +6762,20 @@
           },
           "notification": {
             "title": "Notification",
-            "publication": {
-              "onNotification": "Published on notification",
-              "immediate": "Immediate publication, no email"
-            },
             "notified": "Notified",
             "toNotify": "To notify",
             "reminded": "Reminded",
-            "emailsFailed": "Failed emails"
+            "emailsFailed": "Failed emails",
+            "diffusion": {
+              "portal": {
+                "onNotification": "Portal at notification",
+                "immediate": "Portal pre-published",
+                "alone": "Portal"
+              },
+              "email": "Email",
+              "documents": "Document space",
+              "none": "No distribution"
+            }
           },
           "settlement": {
             "title": "Settlement",
@@ -6829,11 +6836,6 @@
           "noticeDate": "Notice date",
           "noticeDateHint": "Optional. Printed on the notice if it differs from the due date.",
           "datePlaceholder": "Pick a date",
-          "publication": "Portal publication",
-          "publicationOptions": {
-            "onNotification": "On notification",
-            "immediate": "Immediate, no email"
-          },
           "message": "Accompanying message",
           "messagePlaceholder": "Text sent with the notice",
           "attachment": "Attachment {{index}}",
@@ -6858,6 +6860,27 @@
             "hintDesc": "PDF, Word or image",
             "ready": "File ready to attach",
             "preview": "Preview"
+          },
+          "diffusion": {
+            "label": "Notice distribution",
+            "noneHint": "No channel selected: the call will be tracked in the back office without being distributed to investors.",
+            "portal": {
+              "label": "Visible on the investor portal",
+              "description": "The call and its notice appear on the investor's subscription."
+            },
+            "notify": {
+              "label": "Notify by email",
+              "description": "The investor receives the notice by email when the notification is sent."
+            },
+            "documents": {
+              "label": "File in the document space",
+              "description": "The notice is filed in the investor's documents, at notification or at creation if the call is not notified."
+            },
+            "timing": {
+              "label": "Publication on the portal",
+              "onNotification": "When the notification is sent",
+              "immediate": "Immediate pre-publication"
+            }
           }
         },
         "amounts": {
@@ -6989,10 +7012,11 @@
         "notices": "{{done}} / {{total}} available",
         "noticesFailed": "{{count}} failed",
         "notified": "{{done}} / {{total}} notified",
-        "immediate": "Immediate publication",
         "settled": "{{done}} / {{total}} settled",
         "remainingDue": "{{amount}} still due",
-        "sending": "Sending"
+        "sending": "Sending",
+        "withoutNotification": "No notification",
+        "prePublished": "Pre-published on the portal"
       },
       "callStates": {
         "noticesGenerating": "Notices generating",
@@ -7001,7 +7025,8 @@
         "notified": "Notified",
         "partiallyNotified": "Partially notified",
         "publishedWithoutSending": "Published without email",
-        "readyToNotify": "Ready to notify"
+        "readyToNotify": "Ready to notify",
+        "notDistributed": "Not distributed"
       },
       "pendingWizard": {
         "title": "You have a call in preparation: {{name}}",
