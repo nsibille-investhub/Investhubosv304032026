@@ -367,7 +367,8 @@
       "updatedAt": "Dernière MAJ",
       "documents": "Dossier",
       "entryFeesComposite": "Frais d'entrée",
-      "lastReopenedAt": "Dernière réouverture"
+      "lastReopenedAt": "Dernière réouverture",
+      "lastInvestorChangeAt": "Dernière modification investisseur"
     },
     "page": {
       "searchPlaceholder": "Rechercher une souscription...",

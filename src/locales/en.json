@@ -367,7 +367,8 @@
       "updatedAt": "Last update",
       "documents": "Documents",
       "entryFeesComposite": "Entry fees",
-      "lastReopenedAt": "Last reopened"
+      "lastReopenedAt": "Last reopened",
+      "lastInvestorChangeAt": "Last investor change"
     },
     "page": {
       "searchPlaceholder": "Search a subscription...",
