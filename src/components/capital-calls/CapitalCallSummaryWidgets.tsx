@@ -12,7 +12,6 @@ const K = 'funds.capitalCalls.detail.summary';
 export const CALL_STATE_VARIANT: Record<CallState, StatusVariant> = {
   sending: 'info',
   noticesGenerating: 'info',
-  noticesFailed: 'danger',
   settled: 'success',
   partiallySettled: 'warning',
   notified: 'info',
@@ -89,7 +88,7 @@ export function CapitalCallSummaryWidgets({
         <Grid>
           <Counter label={t(`${K}.notices.available`)} value={summary.noticesAvailable} tone="success" onClick={open('noticeState', 'available')} />
           <Counter label={t(`${K}.notices.generating`)} value={summary.noticesGenerating} tone="info" onClick={open('noticeState', 'generating')} />
-          <Counter label={t(`${K}.notices.failed`)} value={summary.noticesFailed} tone="danger" onClick={open('noticeState', 'failed')} />
+          <Counter label={t(`${K}.notices.failed`)} value={summary.noticesFailed} onClick={open('noticeState', 'failed')} />
           <Counter label={t(`${K}.notices.replaced`)} value={summary.noticesReplaced} onClick={open('noticeState', 'replaced')} />
         </Grid>
       </WidgetCard>

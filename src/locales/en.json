@@ -6444,7 +6444,6 @@
       "queues": {
         "label": "Work queues",
         "all": "All calls",
-        "noticesFailed": "Notices failed",
         "toNotify": "To notify",
         "sending": "Sending",
         "overdue": "Overdue, not settled",
@@ -6998,7 +6997,6 @@
       "callStates": {
         "sending": "Sending",
         "noticesGenerating": "Notices generating",
-        "noticesFailed": "Notices failed",
         "settled": "Settled",
         "partiallySettled": "Partially settled",
         "notified": "Notified",

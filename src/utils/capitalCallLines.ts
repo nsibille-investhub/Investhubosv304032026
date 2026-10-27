@@ -93,6 +93,8 @@ export function generateCapitalCallLines(call: CapitalCall): CapitalCallLine[] {
   const pastDue = call.dueDate.getTime() < now;
   // La plupart des appels échus sont soldés ; les autres gardent quelques lignes non réglées.
   const fullySettled = pastDue && call.linesToRelaunch === 0 && random() < 0.8;
+  // Incident de production rare : seuls quelques appels ont des avis en génération prolongée ou en échec.
+  const noticeIncidents = call.id % 9 === 0;
 
   return weights.map((weight, index) => {
     const share = call.shares[index % call.shares.length];
@@ -117,7 +119,7 @@ export function generateCapitalCallLines(call: CapitalCall): CapitalCallLine[] {
     const noticeEvents: NoticeEvent[] = [{ at: requestedAt, kind: 'requested' }];
     const failedAt = new Date(requestedAt.getTime() + 2 * MINUTE);
     if (!notified) {
-      const draw = random();
+      const draw = noticeIncidents ? random() : 0.36 + random() * 0.64;
       if (draw < 0.08) {
         // Demande restée sans réponse : passe en échec au contrôle du délai maximal.
         noticeState = 'generating';

@@ -6444,7 +6444,6 @@
       "queues": {
         "label": "Files de travail",
         "all": "Tous les appels",
-        "noticesFailed": "Avis en échec",
         "toNotify": "À notifier",
         "sending": "Envoi en cours",
         "overdue": "Échus non soldés",
@@ -6998,7 +6997,6 @@
       "callStates": {
         "sending": "Envoi en cours",
         "noticesGenerating": "Avis en génération",
-        "noticesFailed": "Avis en échec",
         "settled": "Soldé",
         "partiallySettled": "Partiellement réglé",
         "notified": "Notifié",

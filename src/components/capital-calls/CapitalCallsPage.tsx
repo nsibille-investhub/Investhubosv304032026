@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner@2.0.3';
 import {
-  AlertTriangle,
   BellRing,
   CalendarX,
   FileArchive,
@@ -107,7 +106,7 @@ const DEFAULT_COLUMNS: ColumnKey[] = [
 ];
 const COLUMNS_STORAGE_KEY = 'investhub-columns-capital-calls-v3';
 
-type Queue = 'all' | 'noticesFailed' | 'toNotify' | 'sending' | 'overdue';
+type Queue = 'all' | 'toNotify' | 'sending' | 'overdue';
 
 /** Identifiant d'URL de l'assistant de création. */
 const NEW_CALL_ID = 'new';
@@ -264,7 +263,6 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
   const today = new Date();
   const inQueue = (call: CapitalCall, id: Queue) => {
     const summary = summaryOf(call);
-    if (id === 'noticesFailed') return summary.noticesFailed > 0;
     if (id === 'toNotify') return summary.toNotify > 0;
     if (id === 'sending') return call.sending;
     if (id === 'overdue') return call.dueDate < today && summary.settled < summary.lines;
@@ -546,14 +544,12 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
       render: call => {
         const summary = summaryOf(call);
         return (
-          <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-sm tabular-nums">
-            {t(`${K}.progress.notices`, { done: summary.noticesAvailable + summary.noticesReplaced, total: summary.lines })}
+          <span className="flex flex-col whitespace-nowrap text-sm tabular-nums">
+            <span>{t(`${K}.progress.notices`, { done: summary.noticesAvailable + summary.noticesReplaced, total: summary.lines })}</span>
             {summary.noticesFailed > 0 && (
-              <StatusBadge
-                label={t(`${K}.progress.noticesFailed`, { count: summary.noticesFailed })}
-                variant="danger"
-                icon={AlertTriangle}
-              />
+              <span className="text-xs text-muted-foreground">
+                {t(`${K}.progress.noticesFailed`, { count: summary.noticesFailed })}
+              </span>
             )}
           </span>
         );
@@ -604,7 +600,7 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
           <StatusBadge
             label={t(`${K}.callStates.${state}`)}
             variant={CALL_STATE_VARIANT[state]}
-            icon={state === 'sending' || state === 'noticesGenerating' ? Loader2 : state === 'noticesFailed' ? AlertTriangle : undefined}
+            icon={state === 'sending' || state === 'noticesGenerating' ? Loader2 : undefined}
           />
         );
       },
@@ -831,9 +827,8 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
             onDiscard={() => setConfirmDiscard(true)}
           />
         )}
-        <FilterCardGroup title={t(`${K}.queues.label`)} hint={t(`${K}.queues.clickToFilter`)} columns={5}>
+        <FilterCardGroup title={t(`${K}.queues.label`)} hint={t(`${K}.queues.clickToFilter`)} columns={4}>
             {queueCard('all', List, scopedCalls)}
-            {queueCard('noticesFailed', AlertTriangle, scopedCalls.filter(call => inQueue(call, 'noticesFailed')))}
             {queueCard('toNotify', Send, scopedCalls.filter(call => inQueue(call, 'toNotify')))}
             {queueCard('sending', Loader2, scopedCalls.filter(call => inQueue(call, 'sending')))}
             {queueCard('overdue', CalendarX, scopedCalls.filter(call => inQueue(call, 'overdue')))}

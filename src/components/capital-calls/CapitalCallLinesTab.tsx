@@ -337,17 +337,19 @@ export function CapitalCallLinesTab({
             onFilterChange={handleFilterChange}
             onClearAll={resetFilters}
           />
-          <DisabledReason reason={relaunchDisabledReason} className="shrink-0">
-            <Button
-              variant="outline"
-              className="gap-1.5"
-              onClick={onRelaunchFailed}
-              disabled={Boolean(relaunchDisabledReason)}
-            >
-              <RotateCw className="h-4 w-4" />
-              {t(`${K}.relaunch.label`, { count: failedCount })}
-            </Button>
-          </DisabledReason>
+          {failedCount > 0 && (
+            <DisabledReason reason={relaunchDisabledReason} className="shrink-0">
+              <Button
+                variant="ghost"
+                className="gap-1.5"
+                onClick={onRelaunchFailed}
+                disabled={Boolean(relaunchDisabledReason)}
+              >
+                <RotateCw className="h-4 w-4" />
+                {t(`${K}.relaunch.label`, { count: failedCount })}
+              </Button>
+            </DisabledReason>
+          )}
         </div>
       }
       footer={
