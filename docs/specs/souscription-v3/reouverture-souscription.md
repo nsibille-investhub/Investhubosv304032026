@@ -1,6 +1,7 @@
 # Souscription v3 : Rouvrir une souscription pour correction
 
-**Type** : Epic + 7 stories · **Programme** : Souscription V3 (IC-4938) · **Liens** : IC-5261 (contrôle du dossier), IC-5241 (communications), IC-5248 (réouverture et reprise en main), IC-5210 (statuts)
+**Type** : Epic IC-5655 + 21 stories · **Programme** : Souscription V3 (IC-4938) · **Liens** : IC-5261 (contrôle du dossier), IC-5241 (communications), IC-5248 (réouverture et reprise en main), IC-5210 (statuts)
+**PRD** : Confluence, PRD - Réouverture d'une souscription pour correction (page 1090715649)
 **Module** : Investhub Onboarding · **Composant** : Souscriptions
 
 > En tant qu'opérateur back-office, je veux renvoyer une souscription à l'investisseur avec la liste précise des réponses et des pièces à corriger, afin d'obtenir un dossier complet sans échanges hors plateforme.
@@ -47,7 +48,35 @@ La maquette V3 sait invalider une réponse ou une pièce, mais rien ne renvoie l
 
 ## 4. Stories
 
-### Story 1 : Rouvrir une souscription depuis l'étape Onboarding
+Découpage Jira, une story par comportement. Les blocs détaillés qui suivent regroupent les stories par thème et rappellent les clés couvertes. Les critères d'acceptance à jour sont dans Jira.
+
+| Clé | Story | Thème |
+| --- | --- | --- |
+| IC-5656 | Rouvrir une souscription depuis l'étape Onboarding | 1 |
+| IC-5657 | Passer à la validation sans condition depuis l'étape Onboarding | 1 |
+| IC-5658 | Sélectionner les éléments à corriger à la réouverture | 2 |
+| IC-5659 | Commenter chaque élément à corriger à la réouverture | 2 |
+| IC-5660 | Saisir un message général à la réouverture | 2 |
+| IC-5661 | Remettre le dossier en onboarding à la réouverture | 3 |
+| IC-5662 | Retirer les pièces pointées à la réouverture | 3 |
+| IC-5663 | Purger la qualification du dossier à la réouverture | 3 |
+| IC-5664 | Tracer la réouverture dans la piste d'audit | 3 |
+| IC-5665 | Notifier le distributeur par webhook à la réouverture | 3 |
+| IC-5666 | Envoyer l'email de réouverture | 4 |
+| IC-5667 | Déterminer le destinataire de l'email de réouverture | 4 |
+| IC-5668 | Afficher le destinataire et le gabarit avant la réouverture | 4 |
+| IC-5669 | Renvoyer au partenaire un dossier qu'il a déjà validé | 5 |
+| IC-5670 | Afficher le statut Rouvert d'une souscription | 6 |
+| IC-5671 | Filtrer le listing des souscriptions sur le statut Rouvert | 6 |
+| IC-5672 | Afficher le nombre et la date des réouvertures dans l'en-tête | 6 |
+| IC-5673 | Signaler une souscription rouverte par un bandeau d'état | 6 |
+| IC-5674 | Exposer l'état de réouverture dans l'API des souscriptions | 6 |
+| IC-5675 | Reprendre le parcours sur les éléments à corriger | 7 |
+| IC-5676 | Resoumettre un dossier rouvert | 7 |
+
+Hors epic, liée : IC-5683 Afficher la date de dernière réouverture dans le listing des souscriptions (epic IC-4859).
+
+### Thème 1 : Rouvrir une souscription depuis l'étape Onboarding (IC-5656, IC-5657)
 
 **En tant qu'** opérateur back-office
 **Je veux** rouvrir une souscription en bas de l'étape Onboarding, à côté du passage à la validation
@@ -85,7 +114,7 @@ When il arrive en bas de l'étape Onboarding
 Then "Rouvrir pour correction" est grisé avec le motif de droit manquant
 ```
 
-### Story 2 : Sélectionner et commenter les éléments à corriger
+### Thème 2 : Sélectionner et commenter les éléments à corriger (IC-5658, IC-5659, IC-5660)
 
 **En tant qu'** opérateur back-office
 **Je veux** choisir les réponses et les pièces à corriger et expliquer chaque correction
@@ -111,7 +140,7 @@ When l'opérateur veut confirmer
 Then le bouton est grisé avec le motif "Sélectionnez au moins un élément ou saisissez un message"
 ```
 
-### Story 3 : Appliquer les effets de la réouverture sur le dossier
+### Thème 3 : Appliquer les effets de la réouverture sur le dossier (IC-5661 à IC-5665)
 
 **En tant qu'** opérateur back-office
 **Je veux** que la réouverture remette le dossier en onboarding de façon tracée
@@ -141,7 +170,7 @@ When une pièce pointée est rouverte
 Then la pièce est retirée du dossier et repasse à fournir
 ```
 
-### Story 4 : Envoyer l'email de réouverture au bon destinataire
+### Thème 4 : Envoyer l'email de réouverture au bon destinataire (IC-5666, IC-5667, IC-5668)
 
 **En tant qu'** opérateur back-office
 **Je veux** voir avant l'envoi qui reçoit l'email de réouverture et avec quel gabarit
@@ -174,7 +203,7 @@ When la réouverture est confirmée
 Then l'email part avec ce gabarit
 ```
 
-### Story 5 : Renvoyer au partenaire un dossier qu'il a déjà validé
+### Thème 5 : Renvoyer au partenaire un dossier qu'il a déjà validé (IC-5669)
 
 **En tant qu'** opérateur back-office
 **Je veux** que la réouverture d'un dossier déjà validé par le partenaire délégué lui revienne
@@ -198,7 +227,7 @@ And le statut de la souscription ne change pas
 And l'email "partner-reopen" part au validateur partenaire
 ```
 
-### Story 6 : Rendre visible l'état Rouvert
+### Thème 6 : Rendre visible l'état Rouvert (IC-5670 à IC-5674)
 
 **En tant qu'** opérateur back-office
 **Je veux** repérer en un coup d'œil une souscription rouverte et son historique de réouvertures
@@ -225,7 +254,7 @@ Then le bandeau n'est plus affiché
 And l'en-tête indique "Rouvert 1 fois" avec la date
 ```
 
-### Story 7 : Reprendre le parcours et soumettre à nouveau côté investisseur
+### Thème 7 : Reprendre le parcours et soumettre à nouveau côté investisseur (IC-5675, IC-5676)
 
 **En tant qu'** investisseur
 **Je veux** retrouver dans mon parcours les éléments à corriger avec le commentaire du gestionnaire
@@ -258,4 +287,5 @@ And les éléments corrigés repassent à contrôler côté back-office
 1. **Libellé.** "Rouvrir le KYC" désigne aujourd'hui, dans l'étape Conformité, la réouverture des décisions de conformité. L'atelier Souscription v3 appelle "réouverture KYC" la réouverture de la souscription. Proposition : "Rouvrir pour correction" pour la souscription, "Rouvrir les décisions" pour la conformité.
 2. **Validation pendant la réouverture.** La V1 laisse valider un dossier rouvert non resoumis (règle 4.5). On garde, ou on bloque avec un motif tant que l'investisseur n'a pas resoumis ?
 3. **Suppression des pièces.** Le comportement par défaut de la V1 supprime les pièces pointées. Pour la piste d'audit, faut-il plutôt les archiver ?
-4. **Réouverture par le partenaire depuis son portail.** Hors de cette epic (portail distributeur). En V1 elle remet la validation partenaire à 0 et n'écrit qu'au distributeur.
+4. **Périmètre des stories côté investisseur.** IC-5675 et IC-5676 portent le Périmètre N/A dans Jira : Portail V1 ou Portail V2 ?
+5. **Réouverture par le partenaire depuis son portail.** Hors de cette epic (portail distributeur). En V1 elle remet la validation partenaire à 0 et n'écrit qu'au distributeur.
