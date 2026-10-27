@@ -503,6 +503,13 @@ function PageStateBannerDemo() {
         onResume={() => undefined}
         onDiscard={() => undefined}
       />
+      <PageStateBanner
+        variant="reopened"
+        author="Jean Dupont"
+        date="26/10/2026 09:12"
+        itemCount={2}
+        recipient="investisseur@example.com"
+      />
     </div>
   );
 }
@@ -1110,7 +1117,8 @@ export function FundDetailComponentsSection() {
 <PageStateBanner variant="mirror" masterName={name} onOpenMaster={open} />
 <PageStateBanner variant="sendingNotices" blockedActions={[...]} />
 <PageStateBanner variant="readOnly" />
-<PageStateBanner variant="delegatedReview" partner={name} validatedBy={author} date={date} />`}
+<PageStateBanner variant="delegatedReview" partner={name} validatedBy={author} date={date} />
+<PageStateBanner variant="reopened" author={author} date={date} itemCount={2} recipient={email} />`}
       >
         <Example label={t(`${K}.pageStateBanner.exampleLabel`)} hint={t(`${K}.pageStateBanner.exampleHint`)}>
           <PageStateBannerDemo />

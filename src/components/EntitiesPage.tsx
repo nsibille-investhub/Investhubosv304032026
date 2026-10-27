@@ -8,6 +8,7 @@ import {
   Copy,
   Download,
   List,
+  ShieldAlert,
   User,
 } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
@@ -42,6 +43,7 @@ import { Badge } from './ui/badge';
 import { Card, CardContent } from './ui/card';
 import { DataPagination } from './ui/data-pagination';
 import { FilterCard } from './ui/filter-card';
+import { ListingStackCell, ListingStackRow } from './ui/listing';
 import { PageHeader } from './ui/page-header';
 import { Switch } from './ui/switch';
 import { FilterBar, type FilterConfig } from './FilterBar';
@@ -56,7 +58,6 @@ const STATUS_GROUPS: Record<StatusType, EntityStatus[]> = {
 
 const STATUS_FILTER_VALUES: EntityStatus[] = ['Pending', 'New Hit', 'True Hit', 'Clear', 'Validated', 'Closed'];
 const RISK_FILTER_VALUES = ['Low', 'Medium', 'High', 'Pending'] as const;
-const MAX_VISIBLE_TAGS = 3;
 
 export function EntitiesPage() {
   const { isModuleActive } = useAppStore();
@@ -336,15 +337,29 @@ export function EntitiesPage() {
         if (entity.matchTypes.length === 0) {
           return <span className="text-xs text-muted-foreground italic">{t('complianceEntities.list.noMatches')}</span>;
         }
-        const visible = entity.matchTypes.slice(0, MAX_VISIBLE_TAGS);
-        const remaining = entity.matchTypes.length - visible.length;
+        const hitsLabel = (count: number) =>
+          t(count === 1 ? 'complianceEntities.list.matchesCard.hitsOne' : 'complianceEntities.list.matchesCard.hitsMany', { count });
         return (
-          <div className="flex flex-wrap gap-1">
-            {visible.map((m) => (
-              <Tag key={m} label={t(CATEGORY_KEY[m])} />
-            ))}
-            {remaining > 0 && <span className="text-xs text-muted-foreground self-center">+{remaining}</span>}
-          </div>
+          <ListingStackCell
+            variant="tag"
+            icon={ShieldAlert}
+            items={entity.matchTypes.map((m) => t(CATEGORY_KEY[m]))}
+            title={t('complianceEntities.list.matchesCard.title', { name: entity.name })}
+            subtitle={t(
+              entity.matchTypes.length === 1
+                ? 'complianceEntities.list.matchesCard.subtitleOne'
+                : 'complianceEntities.list.matchesCard.subtitleMany',
+              { count: entity.matchTypes.length, hits: entity.hits },
+            )}
+          >
+            <div className="space-y-2">
+              {entity.matchTypes.map((m) => (
+                <ListingStackRow key={m} icon={ShieldAlert} label={t(CATEGORY_KEY[m])}>
+                  <Tag label={hitsLabel(entity.hitsByMatchType[m] ?? 0)} />
+                </ListingStackRow>
+              ))}
+            </div>
+          </ListingStackCell>
         );
       },
     },

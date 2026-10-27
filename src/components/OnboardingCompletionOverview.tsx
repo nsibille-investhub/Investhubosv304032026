@@ -41,6 +41,8 @@ export interface OnboardingNavSection {
   stats: OnboardingBucketStats;
   /** Clé du libellé de groupe (préonboarding, dossier). */
   groupKey?: string;
+  /** Section non posée à l'investisseur : ni position ni compteur. */
+  notAsked?: boolean;
 }
 
 const STATE_ORDER: OnboardingItemState[] = [
@@ -300,8 +302,20 @@ export function OnboardingSectionNav({
 }: OnboardingSectionNavProps) {
   const { t } = useTranslation();
 
+  const askedTotal = sections.filter(section => !section.notAsked).length;
   const items: SectionNavItem[] = sections.map(section => {
     const state = getSectionState(section.stats);
+    if (section.notAsked) {
+      return {
+        id: section.id,
+        title: t(section.titleKey),
+        subtitle: t('subscriptions.detail.onboarding.notAsked.sectionTag'),
+        icon: section.icon,
+        iconTone: 'neutral',
+        group: section.groupKey ? t(section.groupKey) : undefined,
+        indicator: { kind: 'none' },
+      };
+    }
     return {
       id: section.id,
       title: t(section.titleKey),
@@ -315,7 +329,7 @@ export function OnboardingSectionNav({
             )
           : t('subscriptions.detail.onboarding.completion.sectionPosition', {
               position: section.position,
-              total: sections.length,
+              total: askedTotal,
             }),
       icon: section.icon,
       iconTone: state === 'validated' ? 'success' : 'neutral',

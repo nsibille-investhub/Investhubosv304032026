@@ -35,7 +35,20 @@ export interface MockQuestion {
   createsMandate?: boolean;
 }
 
-export type MockLinkedObject = 'subscription' | 'investor' | 'partner' | 'participation';
+export type MockLinkedObject =
+  | 'subscription'
+  | 'investor'
+  | 'partner'
+  | 'participation'
+  | 'flaminem'
+  | 'salesforce'
+  | 'dynamo'
+  | 'crm';
+
+/** Destinations hors InvestHub : outil KYC, CRM, logiciel de tenue de registre. */
+export const EXTERNAL_LINKED_OBJECTS: MockLinkedObject[] = ['flaminem', 'salesforce', 'dynamo', 'crm'];
+
+export const isExternalLinkedObject = (object: MockLinkedObject) => EXTERNAL_LINKED_OBJECTS.includes(object);
 
 export interface MockLinkedTarget {
   object: MockLinkedObject;
@@ -45,6 +58,8 @@ export interface MockLinkedTarget {
   previousValue?: string;
   /** Sens de la synchronisation, par défaut la réponse alimente la donnée. */
   direction?: MockSyncDirection;
+  /** Destination externe : le dernier envoi a échoué. */
+  syncFailed?: boolean;
 }
 
 /** toTarget : réponse → donnée, fromTarget : donnée → réponse, both : dans les deux sens. */
@@ -210,10 +225,10 @@ export const mockSections: MockSection[] = [
       { question: "Pays de naissance*", response: "France", verified: true, type: 'country', constraints: { required: true } },
       { question: "Code postal de naissance*", response: "75008", verified: true },
       { question: "Commune de naissance*", response: "Paris", verified: true },
-      { question: "Nationalité*", response: "France", verified: true, hasAlert: true, type: 'country', constraints: { required: true }, targets: [{ object: 'investor', field: 'nationality', direction: 'both' }] },
-      { question: "E-mail*", response: "iwadouachi+testPM@eurazeo.com", verified: true, targets: [{ object: 'investor', field: 'email', direction: 'both' }, { object: 'partner', field: 'investorEmail', direction: 'fromTarget' }] },
-      { question: "Numéro de téléphone mobile*", response: "+33622653352", verified: true, targets: [{ object: 'investor', field: 'phone', direction: 'both' }] },
-      { question: "Numéro et nom de rue*", response: "66 Rue Pierre Charron", verified: true, targets: [{ object: 'subscription', field: 'address' }, { object: 'investor', field: 'address', direction: 'both' }] },
+      { question: "Nationalité*", response: "France", verified: true, hasAlert: true, type: 'country', constraints: { required: true }, targets: [{ object: 'investor', field: 'nationality', direction: 'both' }, { object: 'flaminem', field: 'nationality' }] },
+      { question: "E-mail*", response: "iwadouachi+testPM@eurazeo.com", verified: true, targets: [{ object: 'investor', field: 'email', direction: 'both' }, { object: 'partner', field: 'investorEmail', direction: 'fromTarget' }, { object: 'salesforce', field: 'email', direction: 'both' }] },
+      { question: "Numéro de téléphone mobile*", response: "+33622653352", verified: true, targets: [{ object: 'investor', field: 'phone', direction: 'both' }, { object: 'salesforce', field: 'phone', direction: 'both' }] },
+      { question: "Numéro et nom de rue*", response: "66 Rue Pierre Charron", verified: true, targets: [{ object: 'subscription', field: 'address' }, { object: 'investor', field: 'address', direction: 'both' }, { object: 'dynamo', field: 'address' }] },
       { question: "Ville*", response: "Paris", verified: true, targets: [{ object: 'subscription', field: 'city' }, { object: 'investor', field: 'city', direction: 'both' }] },
       { question: "Code postal*", response: "75008", verified: true, targets: [{ object: 'subscription', field: 'postalCode' }, { object: 'investor', field: 'postalCode', direction: 'both' }] },
       { question: "Pays*", response: "France", verified: true, type: 'country', constraints: { required: true }, targets: [{ object: 'subscription', field: 'country' }, { object: 'investor', field: 'country', direction: 'both' }] },
@@ -230,7 +245,7 @@ export const mockSections: MockSection[] = [
     icon: Shield,
     questions: [
       { question: "Pays de résidence fiscale*", response: "France", verified: true, type: 'country', constraints: { required: true },
-        targets: [{ object: 'investor', field: 'taxResidence', direction: 'both' }, { object: 'participation', field: 'taxResidence' }],
+        targets: [{ object: 'investor', field: 'taxResidence', direction: 'both' }, { object: 'participation', field: 'taxResidence' }, { object: 'flaminem', field: 'taxResidence' }, { object: 'crm', field: 'taxResidence' }],
         triggers: [{ question: "Citoyen(ne) et/ou résident fiscal(e) des États-Unis d'Amérique*", values: { 'États-Unis': 'Oui' }, otherwise: 'Non' }] },
       { question: "Pays de votre seconde résidence fiscale", response: "", verified: true, type: 'country', notAsked: true },
       { question: "Mon adresse de résidence est différente de mon adresse fiscale*", response: "Non", verified: true },
@@ -253,7 +268,7 @@ export const mockSections: MockSection[] = [
       { question: "Nom de votre établissement bancaire", response: "BNP Paribas", verified: true },
       { question: "Adresse de la banque", response: "16 Boulevard des Italiens, 75009 Paris", verified: true },
       { question: "IBAN*", response: "FR76 4061 8803 1200 0407 6100 201", verified: true, constraints: { required: true, maxLength: 34 },
-        targets: [{ object: 'subscription', field: 'iban' }, { object: 'investor', field: 'iban', direction: 'both', previousValue: 'FR76 3000 4000 0312 3456 7890 143' }] },
+        targets: [{ object: 'subscription', field: 'iban' }, { object: 'investor', field: 'iban', direction: 'both', previousValue: 'FR76 3000 4000 0312 3456 7890 143' }, { object: 'dynamo', field: 'iban', syncFailed: true }] },
       { question: "BIC*", response: "BNPAFRPPXXX", verified: true, targets: [{ object: 'subscription', field: 'bic' }] },
       { question: "Numéro de compte", response: "00407610020", verified: true }
     ]
@@ -271,7 +286,7 @@ export const mockSections: MockSection[] = [
       { question: "Avez vous des liens avec des société cotées ? *", response: "Oui", verified: true },
       { question: "Pouvez-vous préciser ? *", response: "Actionnaire minoritaire", verified: true },
       { question: "Détenez-vous des parts ou actions dans des sociétés (< de 25 %) ? *", response: "Non", verified: true },
-      { question: "Exercez-vous ou avez-vous exercé une fonction politiquement exposée ?*", response: "Non", verified: true, type: 'list', options: ['Oui', 'Non'], constraints: { required: true }, targets: [{ object: 'investor', field: 'pep', direction: 'both' }] },
+      { question: "Exercez-vous ou avez-vous exercé une fonction politiquement exposée ?*", response: "Non", verified: true, type: 'list', options: ['Oui', 'Non'], constraints: { required: true }, targets: [{ object: 'investor', field: 'pep', direction: 'both' }, { object: 'flaminem', field: 'pep' }] },
       { question: "Une personne de votre entourage exerce-t-elle ou a-t-elle exercé depuis moins d'un an une fonction politiquement exposée ?*", response: "Non", verified: true }
     ]
   },
@@ -286,7 +301,7 @@ export const mockSections: MockSection[] = [
         triggers: [{ question: "Montant*", values: { Non: '' } }, { question: "Fréquence*", values: { Non: '' } }] },
       { question: "Montant*", response: "1 000,00 EUR", verified: true, type: 'amount', constraints: { required: true, min: 0 } },
       { question: "Fréquence*", response: "Mensuel", verified: true, type: 'list', options: ['Mensuel', 'Trimestriel', 'Annuel'], constraints: { required: true } },
-      { question: "Quel est le montant estimé de votre patrimoine financier ?*", response: "1 999 999,00 EUR", verified: true, type: 'amount', constraints: { required: true, min: 0 }, targets: [{ object: 'investor', field: 'financialAssets', direction: 'both', previousValue: '1 500 000,00 EUR' }] },
+      { question: "Quel est le montant estimé de votre patrimoine financier ?*", response: "1 999 999,00 EUR", verified: true, type: 'amount', constraints: { required: true, min: 0 }, targets: [{ object: 'investor', field: 'financialAssets', direction: 'both', previousValue: '1 500 000,00 EUR' }, { object: 'salesforce', field: 'financialAssets' }] },
       { question: "Part de votre patrimoine financier investie dans ce fonds (%)*", response: "12 %", verified: true, type: 'percentage', constraints: { required: true, min: 0, max: 100 } },
       { question: "Nombre de personnes à charge", response: "2", verified: true, type: 'number', constraints: { min: 0, max: 20, integer: true } },
       { question: "Objectifs de votre investissement*", response: "Diversification, Transmission", verified: true, type: 'multiChoice', options: ['Diversification', 'Transmission', 'Revenus complémentaires', 'Optimisation fiscale', 'Valorisation du capital'], constraints: { required: true } },

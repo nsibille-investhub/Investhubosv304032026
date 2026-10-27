@@ -273,7 +273,7 @@ export function WizardInfoStep({
         }
       >
         <FormField id="call-diffusion" label={t(`${K}.diffusion.label`)} hint={diffusionHint}>
-          <SidePanelCard className="divide-y divide-border p-0 md:p-0">
+          <SidePanelCard flush className="divide-y divide-border">
             {DIFFUSION_CHANNELS.map(channel => (
               <div key={channel} className="px-4 py-3">
                 <SidePanelSwitchRow

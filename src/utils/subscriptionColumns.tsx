@@ -38,6 +38,8 @@ const ONBOARDING_COLUMNS: SubscriptionColumnDef[] = [
   COL('onboardingStatus', 'subscriptions.columns.onboardingStatus', { width: '180px', sortable: true }),
   COL('blockageReason', 'subscriptions.columns.blockageReason', { width: '200px', sortable: false }),
   COL('completionRate', 'subscriptions.columns.completionRate', { width: '130px', sortable: true, align: 'center' }),
+  COL('lastReopenedAt', 'subscriptions.columns.lastReopenedAt', { width: '170px', sortable: true }),
+  COL('lastInvestorChangeAt', 'subscriptions.columns.lastInvestorChangeAt', { width: '190px', sortable: true }),
   COL('lastAction', 'subscriptions.columns.lastAction', { width: '140px', sortable: true }),
   COL('analyst', 'subscriptions.columns.analyst', { width: '140px', sortable: true }),
 ];
@@ -126,6 +128,8 @@ const ALL_COLUMNS: SubscriptionColumnDef[] = [
   COL('blockageReason', 'subscriptions.columns.blockageReason', { width: '200px', sortable: false }),
   COL('completionRate', 'subscriptions.columns.completionRate', { width: '130px', sortable: true, align: 'center' }),
   COL('onboardingReopened', 'subscriptions.columns.onboardingReopened', { width: '140px', sortable: true, align: 'center' }),
+  COL('lastReopenedAt', 'subscriptions.columns.lastReopenedAt', { width: '170px', sortable: true }),
+  COL('lastInvestorChangeAt', 'subscriptions.columns.lastInvestorChangeAt', { width: '190px', sortable: true }),
   COL('notes', 'subscriptions.columns.notes', { width: '200px', sortable: false }),
 
   // Signatures

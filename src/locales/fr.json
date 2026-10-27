@@ -279,7 +279,8 @@
       "rejected": "Rejetée",
       "cancelled": "Annulée",
       "expired": "Expirée",
-      "archived": "Archivée"
+      "archived": "Archivée",
+      "reopened": "Rouvert"
     },
     "workflowTabs": {
       "title": "Workflow de Souscription",
@@ -365,7 +366,9 @@
       "notes": "Notes",
       "updatedAt": "Dernière MAJ",
       "documents": "Dossier",
-      "entryFeesComposite": "Frais d'entrée"
+      "entryFeesComposite": "Frais d'entrée",
+      "lastReopenedAt": "Dernière réouverture",
+      "lastInvestorChangeAt": "Dernière modification investisseur"
     },
     "page": {
       "searchPlaceholder": "Rechercher une souscription...",
@@ -414,7 +417,9 @@
         "riskNotValidated": "Non validé",
         "validatedByLabel": "Par {{name}}",
         "copyId": "Cliquer pour copier l'ID",
-        "openInNewTab": "Ouvrir dans un nouvel onglet"
+        "openInNewTab": "Ouvrir dans un nouvel onglet",
+        "reopenedOne": "Rouvert {{count}} fois, dernière le {{date}}",
+        "reopenedMany": "Rouvert {{count}} fois, dernière le {{date}}"
       },
       "tabs": {
         "onboarding": "Onboarding",
@@ -651,9 +656,13 @@
           "beneficialOwner": "Bénéficiaire effectif {{n}}"
         },
         "notAsked": {
-          "tag": "Non posée",
-          "show": "Afficher les questions non posées ({{count}})",
-          "hide": "Masquer les questions non posées"
+          "tag": "Non demandée",
+          "toggle": "Afficher les éléments non demandés ({{count}})",
+          "sectionTag": "Section non demandée",
+          "sectionReason": {
+            "corporateOnly": "Condition d'affichage non remplie : section réservée aux personnes morales"
+          },
+          "navGroup": "Non demandées"
         },
         "modified": {
           "byOperator": "Modifiée par un opérateur",
@@ -1447,7 +1456,8 @@
           "newValue": "Nouvelle valeur",
           "reason": "Motif",
           "author": "Auteur",
-          "origin": "Origine"
+          "origin": "Origine",
+          "domain": "Domaine"
         },
         "types": {
           "invitationSent": "Invitation envoyée",
@@ -1472,7 +1482,19 @@
           "dossierReopened": "Dossier rouvert",
           "partnerValidated": "Dossier validé par le partenaire",
           "reviewHandedOff": "Dossier transmis à l'analyste suivant",
-          "finalValidation": "Validation finale"
+          "finalValidation": "Validation finale",
+          "subscriptionCreated": "Souscription créée",
+          "subscriptionEdited": "Souscription modifiée",
+          "emailSent": "Email envoyé",
+          "screeningLaunched": "Screening lancé",
+          "scoreValidated": "Score de risque validé",
+          "scoreInvalidated": "Validation du score retirée",
+          "complianceValidated": "Conformité validée",
+          "signaturePackSent": "Pack envoyé en signature",
+          "signatureCompleted": "Signature complète",
+          "paymentConfirmed": "Paiement confirmé",
+          "noteAdded": "Note ajoutée",
+          "dossierExported": "Données exportées"
         },
         "origin": {
           "investor": "Investisseur",
@@ -1485,12 +1507,30 @@
         "causedBy": "Suite à la modification de : {{label}}",
         "pendingModificationsOne": "1 modification depuis la dernière validation",
         "pendingModificationsMany": "{{count}} modifications depuis la dernière validation",
-        "recipients": "Destinataires : {{recipients}}"
+        "recipients": "Destinataires : {{recipients}}",
+        "domains": {
+          "subscription": "Souscription",
+          "onboarding": "Onboarding",
+          "compliance": "Conformité",
+          "signature": "Signatures",
+          "payment": "Paiement",
+          "communication": "Communications",
+          "notes": "Notes et commentaires"
+        },
+        "activity": {
+          "title": "Piste d'audit de la souscription",
+          "description": "{{count}} actions, de la création de la souscription à aujourd'hui.",
+          "domainFilter": "Filtrer par domaine",
+          "allDomains": "Tous les domaines",
+          "exportAll": "Exporter la piste complète",
+          "exportedToast": "Piste d'audit exportée",
+          "exportedToastDesc": "{{count}} actions exportées, tous domaines confondus.",
+          "open": "Piste d'audit"
+        }
       },
       "documentControl": {
         "rejectedToast": "Document refusé",
         "rejectedToastDesc": "{{name}} : le motif est visible de l'investisseur",
-        "validationBlocked": "Validation impossible : {{count}} pièce(s) bloquante(s), voir la liste en tête du dossier",
         "blockersTitleOne": "1 pièce bloque la validation du dossier",
         "blockersTitleMany": "{{count}} pièces bloquent la validation du dossier",
         "blockersDescription": "Renseignez les informations manquantes pour pouvoir valider le dossier.",
@@ -1602,7 +1642,11 @@
           "subscription": "Souscription",
           "investor": "Fiche investisseur",
           "partner": "Partenaire",
-          "participation": "Participation"
+          "participation": "Participation",
+          "flaminem": "Flaminem",
+          "salesforce": "Salesforce",
+          "dynamo": "Dynamo",
+          "crm": "CRM"
         },
         "fields": {
           "nationality": "Nationalité",
@@ -1679,16 +1723,80 @@
         "synced": "Synchronisé",
         "notSynced": "Non synchronisé",
         "sectionTitle": "Objets mis à jour",
-        "sectionDescription": "{{count}} données copiées depuis les réponses vers la souscription et la fiche investisseur."
+        "sectionDescription": "{{count}} données copiées depuis les réponses vers les objets InvestHub (souscription, fiche investisseur, partenaire, participation).",
+        "failed": "Échec de l'envoi",
+        "retry": "Relancer l'envoi",
+        "retriedToast": "Envoi relancé",
+        "externalTitle": "Partenaires externes",
+        "externalDescription": "{{count}} données envoyées aux outils connectés (KYC, CRM, registre).",
+        "externalDescriptionFailed": "{{count}} données envoyées aux outils connectés (KYC, CRM, registre), dont {{failed}} en échec.",
+        "filters": {
+          "title": "Filtrer",
+          "source": "Source",
+          "destination": "Destination",
+          "allSources": "Toutes les sections",
+          "allDestinations": "Toutes les destinations",
+          "emptyTitle": "Aucune donnée",
+          "emptyDescription": "Aucune donnée synchronisée ne correspond à ces filtres."
+        }
       },
       "partnerReview": {
-        "awaitingPartner": "En attente de la validation de {{partner}}",
         "simulate": "Simuler le contrôle du partenaire",
         "mockRejectReason": "Numéro injoignable, merci de le vérifier avec l'investisseur",
         "mockReminder": "Relance pour le numéro de téléphone",
         "transmitted": "Transmis à l'analyste 1",
         "validatedToast": "Dossier validé par {{partner}}",
         "validatedToastDesc": "Le dossier est transmis à l'analyste 1."
+      },
+      "reopen": {
+        "action": "Rouvrir pour correction",
+        "documentsSection": "Pièces justificatives",
+        "disabled": {
+          "noRight": "Vous n'avez pas le droit de gérer cette souscription.",
+          "packSent": "Le pack de signature est envoyé : la souscription ne peut plus être rouverte."
+        },
+        "auditSummary": "{{count}} élément(s) à corriger, email envoyé à {{recipient}}",
+        "emailType": "Réouverture de la souscription",
+        "emailTypePartner": "Réouverture partenaire",
+        "emailSubject": "Votre dossier de souscription {{fund}} est à compléter",
+        "toast": "Souscription rouverte",
+        "toastPartner": "Dossier renvoyé au partenaire",
+        "toastDesc": "{{count}} élément(s) à corriger, email envoyé à {{recipient}}.",
+        "simulateResubmission": "Simuler la nouvelle soumission",
+        "resubmittedToast": "Dossier soumis à nouveau",
+        "resubmittedToastDesc": "{{count}} élément(s) corrigé(s), à contrôler.",
+        "templates": {
+          "default": "Réouverture de la souscription (gabarit de la part, à défaut gabarit par défaut)",
+          "partner": "Réouverture partenaire"
+        },
+        "dialog": {
+          "title": "Rouvrir la souscription pour correction",
+          "subtitle": "L'investisseur reprend son parcours pour corriger les éléments sélectionnés.",
+          "titlePartner": "Renvoyer le dossier au partenaire",
+          "subtitlePartner": "Le partenaire a déjà validé ce dossier : il lui revient pour un nouveau contrôle.",
+          "itemsTitle": "Éléments à corriger",
+          "itemsSelected": "{{count}} sur {{total}} sélectionné(s)",
+          "noItemsTitle": "Aucun élément invalidé",
+          "noItemsDescription": "Invalidez une réponse ou une pièce pour la pointer, ou expliquez la correction attendue dans le message.",
+          "kind": {
+            "question": "Réponse",
+            "document": "Pièce"
+          },
+          "commentLabel": "Commentaire pour {{item}}",
+          "commentPlaceholder": "Précisez la correction attendue (repris dans l'email)",
+          "messageLabel": "Message à l'investisseur",
+          "messagePlaceholder": "Message général repris en tête de l'email",
+          "emailTitle": "Email de réouverture",
+          "copy": "{{email}} (en copie)",
+          "intermediatedHint": "Dossier intermédié : l'email part au distributeur. L'investisseur le reçoit aussi si le distributeur est en mode sans onboarding, si sa case Réouverture investisseur est cochée ou si le réglage Envoyer l'email de réouverture à l'investisseur est actif.",
+          "template": "Gabarit : {{template}}",
+          "documentsDeleted": "{{count}} pièce(s) pointée(s) sera(ont) retirée(s) du dossier : l'investisseur devra la(les) déposer à nouveau.",
+          "documentsKept": "{{count}} pièce(s) pointée(s) reste(nt) dans le dossier jusqu'à leur remplacement.",
+          "effects": "La souscription repasse au statut Rouvert et revient à l'étape Onboarding. Une validation de conformité déjà donnée est retirée. Le profil de risque et les réponses déjà contrôlées sont conservés.",
+          "effectsPartner": "La validation du partenaire est retirée. Le statut de la souscription ne change pas et l'investisseur n'est pas recontacté.",
+          "emptyReason": "Sélectionnez au moins un élément ou saisissez un message.",
+          "confirm": "Rouvrir et envoyer l'email"
+        }
       }
     },
     "table": {
@@ -2053,6 +2161,11 @@
         "pendingDescription": "Le partenaire contrôle le dossier sur son portail. Le dossier vous sera transmis après sa validation.",
         "validatedTitle": "Dossier validé par {{author}} ({{partner}}) le {{date}}",
         "validatedDescription": "Transmis à l'analyste 1. Les actions du partenaire figurent dans la piste d'audit."
+      },
+      "reopened": {
+        "title": "Dossier rouvert pour correction par {{author}}, le {{date}}",
+        "descriptionOne": "{{count}} élément à corriger a été envoyé à {{recipient}}. Le dossier reste à l'étape Onboarding jusqu'à sa nouvelle soumission.",
+        "descriptionMany": "{{count}} éléments à corriger ont été envoyés à {{recipient}}. Le dossier reste à l'étape Onboarding jusqu'à sa nouvelle soumission."
       }
     }
   },
@@ -4973,6 +5086,13 @@
       "searchPlaceholder": "Rechercher une entité...",
       "empty": "Aucune entité ne correspond aux filtres actuels.",
       "noMatches": "Aucun match",
+      "matchesCard": {
+        "title": "Listes de {{name}}",
+        "subtitleOne": "{{count}} liste · {{hits}} hits au total",
+        "subtitleMany": "{{count}} listes · {{hits}} hits au total",
+        "hitsOne": "{{count}} hit",
+        "hitsMany": "{{count}} hits"
+      },
       "idLabel": "ID",
       "copyId": "Copier l'identifiant",
       "columns": {
