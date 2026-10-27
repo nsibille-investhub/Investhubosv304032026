@@ -23,7 +23,19 @@ export type SubscriptionAuditEventType =
   | 'reviewHandedOff'
   | 'finalValidation'
   | 'commentAdded'
-  | 'dossierSubmitted';
+  | 'dossierSubmitted'
+  | 'subscriptionCreated'
+  | 'subscriptionEdited'
+  | 'emailSent'
+  | 'screeningLaunched'
+  | 'scoreValidated'
+  | 'scoreInvalidated'
+  | 'complianceValidated'
+  | 'signaturePackSent'
+  | 'signatureCompleted'
+  | 'paymentConfirmed'
+  | 'noteAdded'
+  | 'dossierExported';
 
 export const SUBSCRIPTION_AUDIT_EVENT_TYPES: SubscriptionAuditEventType[] = [
   'invitationSent',
@@ -49,7 +61,65 @@ export const SUBSCRIPTION_AUDIT_EVENT_TYPES: SubscriptionAuditEventType[] = [
   'finalValidation',
   'commentAdded',
   'dossierSubmitted',
+  'subscriptionCreated',
+  'subscriptionEdited',
+  'emailSent',
+  'screeningLaunched',
+  'scoreValidated',
+  'scoreInvalidated',
+  'complianceValidated',
+  'signaturePackSent',
+  'signatureCompleted',
+  'paymentConfirmed',
+  'noteAdded',
+  'dossierExported',
 ];
+
+/** Domaine d'une action, pour filtrer la piste d'audit de toute la souscription. */
+export type SubscriptionAuditDomain =
+  | 'subscription'
+  | 'onboarding'
+  | 'compliance'
+  | 'signature'
+  | 'payment'
+  | 'communication'
+  | 'notes';
+
+export const SUBSCRIPTION_AUDIT_DOMAINS: SubscriptionAuditDomain[] = [
+  'subscription',
+  'onboarding',
+  'compliance',
+  'signature',
+  'payment',
+  'communication',
+  'notes',
+];
+
+const DOMAIN_BY_TYPE: Partial<Record<SubscriptionAuditEventType, SubscriptionAuditDomain>> = {
+  subscriptionCreated: 'subscription',
+  subscriptionEdited: 'subscription',
+  dossierExported: 'subscription',
+  invitationSent: 'communication',
+  notificationSent: 'communication',
+  investorReminded: 'communication',
+  emailSent: 'communication',
+  screeningLaunched: 'compliance',
+  scoreValidated: 'compliance',
+  scoreInvalidated: 'compliance',
+  complianceValidated: 'compliance',
+  reviewHandedOff: 'compliance',
+  finalValidation: 'compliance',
+  signaturePackSent: 'signature',
+  signatureCompleted: 'signature',
+  mandateCreated: 'payment',
+  paymentConfirmed: 'payment',
+  noteAdded: 'notes',
+  commentAdded: 'notes',
+};
+
+/** Les actions sur les réponses, les pièces et le dossier relèvent de l'onboarding. */
+export const auditDomainOf = (type: SubscriptionAuditEventType): SubscriptionAuditDomain =>
+  DOMAIN_BY_TYPE[type] ?? 'onboarding';
 
 /** Origine d'un changement, reprise de IC-5264. */
 export type SubscriptionAuditOrigin = 'investor' | 'operator' | 'partner' | 'automatic' | 'api';
@@ -172,6 +242,22 @@ export function buildInitialSubscriptionAudit({
     entries.push({ id: `audit-${seq}`, ...entry });
   };
 
+  push({
+    type: 'subscriptionCreated',
+    timestamp: at('2026-05-12T08:40', 0),
+    origin: 'operator',
+    actorName: CONTROLLER,
+    newValue: '1 000 000,00 EUR',
+  });
+  push({
+    type: 'subscriptionEdited',
+    timestamp: at('2026-05-12T08:52', 0),
+    origin: 'operator',
+    actorName: CONTROLLER,
+    previousValue: '1 000 000,00 EUR',
+    newValue: '500 000,00 EUR',
+    reason: 'Montant revu à la demande du distributeur',
+  });
   push({ type: 'invitationSent', timestamp: at('2026-05-12T09:00', 0), origin: 'automatic' });
 
   const questionSections = sections.filter(s => s.id !== AUDIT_DOCUMENTS_SECTION);
@@ -321,6 +407,22 @@ export function buildInitialSubscriptionAudit({
       sectionId: AUDIT_DOCUMENTS_SECTION,
       reason: status === 'rejected' ? 'Document illisible, merci de transmettre une copie complète' : undefined,
     });
+  });
+
+  push({ type: 'screeningLaunched', timestamp: at('2026-05-19T16:11', 0), origin: 'automatic', newValue: 'Aucune correspondance' });
+  push({
+    type: 'emailSent',
+    timestamp: at('2026-05-19T16:12', 0),
+    origin: 'automatic',
+    reason: 'Onboarding à valider',
+    newValue: 'Équipe de gestion',
+  });
+  push({
+    type: 'noteAdded',
+    timestamp: at('2026-05-21T11:05', 0),
+    origin: 'operator',
+    actorName: CONTROLLER,
+    newValue: 'Relancer la pièce fiscale avant le closing',
   });
 
   return entries;

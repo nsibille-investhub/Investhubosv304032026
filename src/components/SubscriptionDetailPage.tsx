@@ -55,6 +55,7 @@ import {
   ArrowLeft,
   Link2,
   PencilLine,
+  RotateCcw,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Badge } from './ui/badge';
@@ -82,7 +83,7 @@ import { PartyTypeBadge } from './ui/party-type-badge';
 import { QuestionActions, QuestionStatus } from './QuestionActions';
 import { QuestionCommentThread } from './QuestionCommentThread';
 import { IntegrationsTab } from './IntegrationsTab';
-import { SectionCard } from './ui/section-card';
+import { SectionCard, SectionFieldRow } from './ui/section-card';
 import { DetailTabsList } from './ui/detail-tabs';
 import {
   Tabs,
@@ -104,8 +105,10 @@ import {
   mockCapitalCalls,
   mockInitEmails,
   MOCK_SUBMISSION_REPORT,
+  type MockEmail,
   type MockLinkedTarget,
   type MockRequiredDocument,
+  isExternalLinkedObject,
 } from '../utils/subscriptionDetailMockData';
 import {
   AUDIT_DOCUMENTS_SECTION,
@@ -118,7 +121,7 @@ import {
   type SubscriptionAuditOrigin,
   type SubscriptionAuditEntry,
 } from '../utils/subscriptionAuditMock';
-import { SubscriptionAuditPanel, SubscriptionAuditTab } from './SubscriptionAuditTrail';
+import { SubscriptionActivitySheet, SubscriptionAuditPanel, SubscriptionAuditTab } from './SubscriptionAuditTrail';
 import { Tag as NeutralTag } from './Tag';
 import { EmptyState } from './EmptyState';
 import { RowActionButton } from './ui/row-actions';
@@ -160,6 +163,7 @@ import { NotesTab } from './investor-detail/NotesTab';
 import { SubscriptionDocumentsTab, getSubscriptionDocumentsCount } from './SubscriptionDocumentsTab';
 import { SubscriptionCapitalCallsTab } from './SubscriptionCapitalCallsTab';
 import { createNote } from './investor-detail/NoteEditSheet';
+import { SubscriptionReopenDialog, type ReopenItem, type ReopenSubmission } from './SubscriptionReopenDialog';
 import type { Note } from '../utils/investorGenerator';
 
 const SUBSCRIPTION_STEPS = [
@@ -216,6 +220,18 @@ const MODIFIED_BY_KEY: Record<SubscriptionAuditOrigin, string> = {
 
 const DIRECT_PARTNER_NAMES = ['Souscription Directe', 'Direct Subscription'];
 
+// Réglages V1 de la réouverture, à leur valeur par défaut : pièces pointées supprimées,
+// email réservé au distributeur sur un dossier intermédié.
+const KEEP_DOCS_AT_REOPEN = false;
+const SEND_REOPEN_MAIL_TO_INVESTOR = false;
+
+interface ReopenRecord {
+  by: string;
+  at: string;
+  itemIds: string[];
+  recipient: string;
+}
+
 export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack }: SubscriptionDetailPageProps) {
   const { t, lang } = useTranslation();
 
@@ -226,6 +242,11 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   const isCorporateInvestor = subscription.contrepartie?.type === 'corporate';
   const onboardingSections = useMemo(
     () => mockSections.filter(section => !section.corporateOnly || isCorporateInvestor),
+    [isCorporateInvestor],
+  );
+  // Sections dont la condition d'affichage n'est pas remplie pour cet investisseur.
+  const notAskedSections = useMemo(
+    () => mockSections.filter(section => section.corporateOnly && !isCorporateInvestor),
     [isCorporateInvestor],
   );
 
@@ -321,12 +342,20 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   const afterSignature = editScenario === 'signedNoRight' || editScenario === 'signedWithRight';
   const canModifyAnswers = canManage && (!afterSignature || editScenario === 'signedWithRight');
   const [answerEdit, setAnswerEdit] = useState<{ sectionId: string; idx: number } | null>(null);
-  const [notAskedVisible, setNotAskedVisible] = useState<string[]>([]);
+  // Un seul interrupteur pour tout l'onboarding : questions et sections non posées.
+  const [showNotAsked, setShowNotAsked] = useState(false);
   const [modifiedOnly, setModifiedOnly] = useState(false);
   const [reviewCircuit, setReviewCircuit] = useState<ReviewCircuit>('standard');
   const { push: pushNotification } = useNotifications();
   const [distributorPreview, setDistributorPreview] = useState<AnswersModifiedNotification | null>(null);
   const [partnerValidation, setPartnerValidation] = useState<{ by: string; at: string } | null>(null);
+  const [reopenOpen, setReopenOpen] = useState(false);
+  const [reopenCount, setReopenCount] = useState(0);
+  // Réouverture en attente de la nouvelle soumission de l'investisseur (statut "Rouvert").
+  const [pendingReopen, setPendingReopen] = useState<ReopenRecord | null>(null);
+  const [lastReopenAt, setLastReopenAt] = useState<string | null>(null);
+  const [liveEmails, setLiveEmails] = useState<MockEmail[]>([]);
+  const emails = [...liveEmails, ...mockEmails];
 
   // Lien d'une notification : onglet Onboarding filtré sur les réponses modifiées.
   const openModifiedAnswersAt = (subscriptionProp as { openModifiedAnswersAt?: number }).openModifiedAnswersAt;
@@ -362,6 +391,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
     return map;
   }, []);
   const [auditElement, setAuditElement] = useState<{ elementId: string; sectionId: string } | null>(null);
+  const [activityOpen, setActivityOpen] = useState(false);
   const logAudit = (...entries: Parameters<typeof createLiveAuditEntry>[0][]) =>
     setAuditEntries(prev => [...prev, ...entries.map(createLiveAuditEntry)]);
   const sectionOf = (elementId: string) => elementId.slice(0, elementId.lastIndexOf('-'));
@@ -372,6 +402,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   const [riskValidatedBy, setRiskValidatedBy] = useState<string | null>(null);
 
   const handleInvalidateRisk = () => {
+    logAudit({ type: 'scoreInvalidated' });
     setRiskValidated(false);
     setRiskValidationDate(null);
     setRiskValidatedBy(null);
@@ -379,6 +410,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   };
 
   const handleValidateRisk = () => {
+    logAudit({ type: 'scoreValidated' });
     setRiskValidated(true);
     const now = new Date();
     setRiskValidationDate(now.toLocaleDateString('fr-FR') + ' à ' + now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }));
@@ -588,12 +620,19 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   };
 
   const [reportOpen, setReportOpen] = useState(false);
+  // Démonstration : envois externes relancés avec succès depuis le panneau de synchronisation.
+  const [retriedSyncs, setRetriedSyncs] = useState<string[]>([]);
+  const handleRetrySync = (questionId: string, target: MockLinkedTarget) => {
+    setRetriedSyncs(prev => [...prev, linkedKey(questionId, target.object, target.field)]);
+    toast.success(t('subscriptions.detail.report.retriedToast'), { description: targetLabelOf(target) });
+  };
   const submissionReportRows: SubmissionReportRow[] = [
     ...onboardingSections.flatMap(section =>
       section.questions.flatMap((question, idx) =>
         (question.targets ?? []).map((target): SubmissionReportRow => {
           const questionId = `${section.id}-${idx}`;
           const value = linkedValueOf(questionId, question, target);
+          const failed = target.syncFailed && !retriedSyncs.includes(linkedKey(questionId, target.object, target.field));
           return {
             key: `${questionId}-${target.object}-${target.field}`,
             icon: Link2,
@@ -601,9 +640,14 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
             value,
             origin: question.question.replace(/\s*\*\s*$/, ''),
             originSection: t(section.titleKey),
-            state: value !== responseOf(section.id, idx, question) ? 'gap' : 'inSync',
+            sourceKey: section.id,
+            destinationKey: target.object,
+            external: isExternalLinkedObject(target.object),
+            direction: target.direction ?? 'toTarget',
+            state: failed ? 'failed' : value !== responseOf(section.id, idx, question) ? 'gap' : 'inSync',
             previousValue: target.previousValue,
             onPropagate: canManage ? () => handlePropagateReported(section.id, idx, target) : undefined,
+            onRetry: canManage && failed ? () => handleRetrySync(questionId, target) : undefined,
           };
         }),
       ),
@@ -619,6 +663,8 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                 value: MOCK_SUBMISSION_REPORT.mandateReference,
                 origin: t('subscriptions.detail.report.mandateOrigin'),
                 originSection: t(section.titleKey),
+                sourceKey: section.id,
+                destinationKey: 'subscription',
                 state: 'created',
               },
             ]
@@ -631,10 +677,12 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
       label: targetLabelOf({ object: 'investor', field: doc.field }),
       value: t(doc.nameKey),
       origin: t('subscriptions.detail.sections.documents'),
+      sourceKey: 'documents',
+      destinationKey: 'investor',
       state: 'copied',
     })),
   ];
-  const submissionReportSynced = submissionReportRows.every(row => row.state !== 'gap');
+  const submissionReportSynced = submissionReportRows.every(row => row.state !== 'gap' && row.state !== 'failed');
 
   const questionLabelOf = (questionId: string) => {
     const sectionId = sectionOf(questionId);
@@ -883,6 +931,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   const modifiedTotal = onboardingSections.reduce((sum, sec) => sum + modifiedCountOf(sec.id), 0);
 
   const handleExportDossier = () => {
+    logAudit({ type: 'dossierExported' });
     const csvField = (v: string) => (/[";\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
     const header = ['section', 'question', 'answer', 'control', 'indicator'].map(col =>
       t(`subscriptions.detail.dossierExport.columns.${col}`),
@@ -920,13 +969,6 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
     .map((doc, idx) => ({ doc, idx }))
     .filter(({ doc }) => isMissingIssueDate(doc));
   const delegatedPartnerName = subscription.partenaire?.name ?? t('subscriptions.detail.answerAlerts.partnerFallback');
-  const awaitingPartner = reviewCircuit === 'partnerPrevalidation' && !partnerValidation;
-  const validationBlockedReason =
-    documentBlockers.length > 0
-      ? t('subscriptions.detail.documentControl.validationBlocked', { count: documentBlockers.length })
-      : awaitingPartner
-        ? t('subscriptions.detail.partnerReview.awaitingPartner', { partner: delegatedPartnerName })
-        : undefined;
 
   const onboardingNavSections: OnboardingNavSection[] = onboardingSections.map((section, idx) => ({
     id: section.id,
@@ -939,6 +981,30 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
       ? 'subscriptions.detail.onboarding.preonboarding.group'
       : 'subscriptions.detail.onboarding.preonboarding.dossierGroup',
   }));
+
+  const notAskedTotal =
+    onboardingSections.reduce((acc, section) => acc + section.questions.filter(q => q.notAsked).length, 0) +
+    notAskedSections.length;
+  const displayedSections =
+    showNotAsked && !modifiedOnly
+      ? mockSections.filter(section => onboardingSections.includes(section) || notAskedSections.includes(section))
+      : onboardingSections;
+  const navSections: OnboardingNavSection[] =
+    showNotAsked && !modifiedOnly
+      ? [
+          ...onboardingNavSections,
+          ...notAskedSections.map((section, idx) => ({
+            id: section.id,
+            titleKey: section.titleKey,
+            icon: section.icon,
+            position: onboardingNavSections.length + idx + 1,
+            kind: 'questions' as const,
+            stats: emptyBucketStats(),
+            groupKey: 'subscriptions.detail.onboarding.notAsked.navGroup',
+            notAsked: true,
+          })),
+        ]
+      : onboardingNavSections;
 
   const handleSelectOnboardingSection = (sectionId: string) => {
     setActiveOnboardingSection(sectionId);
@@ -1137,8 +1203,150 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
     const now = new Date();
     const stamp = `${now.toLocaleDateString('fr-FR')} ${now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;
     setResentEmails(prev => ({ ...prev, [id]: stamp }));
+    logAudit({ type: 'emailSent', reason: t(templateKey), newValue: recipient });
     toast.success(t('subscriptions.detail.initStep.toast.emailResent', { template: t(templateKey) }), {
       description: t('subscriptions.detail.initStep.toast.emailResentDesc', { recipient }),
+    });
+  };
+
+  // Réouverture pour correction (iso V1, page WIH "Ré-ouverture d'une souscription").
+  const reopenBackToPartner = reviewCircuit === 'partnerPrevalidation' && Boolean(partnerValidation);
+  const reopenRecipient = reopenBackToPartner
+    ? {
+        audienceKey: 'subscriptions.detail.initStep.audiences.partner',
+        email: toEmail(PARTNER_REVIEWER, partnerDomain || 'example.com'),
+        copies: [],
+      }
+    : isIntermediated && networkCopy.email
+      ? {
+          audienceKey: networkCopy.labelKey,
+          email: networkCopy.email,
+          copies: SEND_REOPEN_MAIL_TO_INVESTOR
+            ? [{ audienceKey: 'subscriptions.detail.initStep.audiences.investor', email: investorEmail }]
+            : [],
+          hintKey: 'subscriptions.detail.reopen.dialog.intermediatedHint',
+        }
+      : { audienceKey: 'subscriptions.detail.initStep.audiences.investor', email: investorEmail, copies: [] };
+
+  const reopenItems: ReopenItem[] = [
+    ...onboardingSections.flatMap(section =>
+      section.id === 'documents'
+        ? []
+        : section.questions.flatMap((question, idx) =>
+            questionStatuses[`${section.id}-${idx}`] === 'rejected'
+              ? [{
+                  id: `${section.id}-${idx}`,
+                  kind: 'question' as const,
+                  sectionLabel: t(section.titleKey),
+                  label: question.question.replace(/\s*\*\s*$/, ''),
+                }]
+              : [],
+          ),
+    ),
+    ...requiredDocuments.flatMap((doc, idx) =>
+      documentStatuses[`document-${idx}`] === 'rejected'
+        ? [{
+            id: `document-${idx}`,
+            kind: 'document' as const,
+            sectionLabel: t('subscriptions.detail.reopen.documentsSection'),
+            label: docLabel(doc),
+            defaultComment: doc.rejectionReason,
+          }]
+        : [],
+    ),
+  ];
+
+  const reopenDisabledReason = !canManage
+    ? t('subscriptions.detail.reopen.disabled.noRight')
+    : afterSignature
+      ? t('subscriptions.detail.reopen.disabled.packSent')
+      : undefined;
+
+  const nowStamp = () => {
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  };
+
+  const handleConfirmReopen = ({ itemIds, comments, message }: ReopenSubmission) => {
+    const at = nowStamp();
+    const recipient = reopenRecipient.email;
+    const items = reopenItems.filter(item => itemIds.includes(item.id));
+
+    if (!KEEP_DOCS_AT_REOPEN) {
+      items
+        .filter(item => item.kind === 'document')
+        .forEach(item => updateDocument(Number(item.id.slice('document-'.length)), { hasFile: false, issueDate: '' }));
+    }
+
+    if (reopenBackToPartner) {
+      // Le partenaire a déjà validé : le dossier lui revient, l'investisseur n'est pas recontacté.
+      setPartnerValidation(null);
+    } else {
+      setReopenCount(prev => prev + 1);
+      setLastReopenAt(at);
+      setPendingReopen({ by: CURRENT_OPERATOR, at, itemIds, recipient });
+      setComplianceStatus({ status: 'awaitingValidation', by: null, at: null });
+    }
+
+    logAudit({
+      type: 'dossierReopened',
+      reason: message || undefined,
+      newValue: [
+        t('subscriptions.detail.reopen.auditSummary', { count: items.length, recipient }),
+        ...items.map(item =>
+          comments[item.id] ? `${item.label} : ${comments[item.id]}` : item.label,
+        ),
+      ].join(' · '),
+    });
+    setLiveEmails(prev => [
+      {
+        id: Date.now(),
+        date: at,
+        type: t(reopenBackToPartner ? 'subscriptions.detail.reopen.emailTypePartner' : 'subscriptions.detail.reopen.emailType'),
+        recipients: [recipient, ...reopenRecipient.copies.map(copy => copy.email)].join(', '),
+        cc: '',
+        subject: t('subscriptions.detail.reopen.emailSubject', { fund: subscription.fund.name }),
+        receivedAt: at,
+        openedAt: '',
+        clickedAt: '',
+      },
+      ...prev,
+    ]);
+    setReopenOpen(false);
+    setActiveTab('onboarding');
+    setCurrentStep(1);
+    toast.success(t(reopenBackToPartner ? 'subscriptions.detail.reopen.toastPartner' : 'subscriptions.detail.reopen.toast'), {
+      description: t('subscriptions.detail.reopen.toastDesc', { count: items.length, recipient }),
+    });
+  };
+
+  // Démonstration : l'investisseur reprend son parcours, corrige les éléments pointés et resoumet.
+  const handleSimulateResubmission = () => {
+    if (!pendingReopen) return;
+    const questionIds = pendingReopen.itemIds.filter(id => !id.startsWith('document-'));
+    const documentIds = pendingReopen.itemIds.filter(id => id.startsWith('document-'));
+    setQuestionStatuses(prev => {
+      const next = { ...prev };
+      questionIds.forEach(id => delete next[id]);
+      return next;
+    });
+    setDocumentStatuses(prev => {
+      const next = { ...prev };
+      documentIds.forEach(id => delete next[id]);
+      return next;
+    });
+    documentIds.forEach(id =>
+      updateDocument(Number(id.slice('document-'.length)), { hasFile: true, rejectionReason: undefined }),
+    );
+    const investorEntry = {
+      origin: 'investor' as const,
+      actorName: subscription.contrepartie?.investor || subscription.contrepartie?.name || '',
+    };
+    logAudit({ ...investorEntry, type: 'dossierSubmitted' as const });
+    setPendingReopen(null);
+    toast.success(t('subscriptions.detail.reopen.resubmittedToast'), {
+      description: t('subscriptions.detail.reopen.resubmittedToastDesc', { count: pendingReopen.itemIds.length }),
     });
   };
 
@@ -1562,6 +1770,11 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
             <Button variant="outline" size="sm" className="bg-card" onClick={handleSimulateInvestorChange}>
               {t('subscriptions.detail.answerAlerts.simulate')}
             </Button>
+            {pendingReopen && (
+              <Button variant="outline" size="sm" className="bg-card" onClick={handleSimulateResubmission}>
+                {t('subscriptions.detail.reopen.simulateResubmission')}
+              </Button>
+            )}
           </>
         }
       />
@@ -1569,7 +1782,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
         title={
           <span className="inline-flex items-center gap-3">
             {subscription.name}
-            <SubscriptionStatusBadge status={subscription.status} />
+            <SubscriptionStatusBadge status={pendingReopen ? 'Rouvert' : subscription.status} />
           </span>
         }
         subtitle={
@@ -1615,6 +1828,18 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
               </>
             )}
 
+            {reopenCount > 0 && lastReopenAt && (
+              <>
+                <PageHeaderSubtitleSeparator />
+                <PageHeaderSubtitleItem icon={RotateCcw}>
+                  {t(reopenCount === 1 ? 'subscriptions.detail.header.reopenedOne' : 'subscriptions.detail.header.reopenedMany', {
+                    count: reopenCount,
+                    date: lastReopenAt,
+                  })}
+                </PageHeaderSubtitleItem>
+              </>
+            )}
+
             <PageHeaderSubtitleSeparator />
 
             <DetailLink href={fundUrl} icon={Landmark} title={openInNewTab} className="text-sm">
@@ -1631,6 +1856,11 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
           icon: <Download className="w-4 h-4" />,
           onClick: handleExportDossier,
         }}
+        secondaryAction={{
+          label: t('subscriptions.detail.audit.activity.open'),
+          icon: <History className="w-4 h-4" />,
+          onClick: () => setActivityOpen(true),
+        }}
       />
 
 
@@ -1640,7 +1870,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
           <DetailTabsList
             items={[
               { value: 'onboarding', icon: ClipboardList, labelKey: 'subscriptions.detail.tabs.onboarding', badge: `${Math.round(subscription.completionOnboarding)}%` },
-              { value: 'emails', icon: Mail, labelKey: 'subscriptions.detail.tabs.emails', badge: String(mockEmails.length) },
+              { value: 'emails', icon: Mail, labelKey: 'subscriptions.detail.tabs.emails', badge: String(emails.length) },
               { value: 'capital-calls', icon: DollarSign, labelKey: 'subscriptions.detail.tabs.capitalCalls', badge: String(mockCapitalCalls.length) },
               { value: 'documents', icon: FolderOpen, labelKey: 'subscriptions.detail.tabs.documents', badge: String(getSubscriptionDocumentsCount(subscription)) },
               { value: 'integrations', icon: Database, labelKey: 'subscriptions.detail.tabs.integrations', badge: '5' },
@@ -1878,6 +2108,15 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                   {currentStep === 1 && (
                     // Onboarding en cours — KPI de completion, navigation par section, sections
                     <div className="space-y-6">
+                      {pendingReopen && (
+                        <PageStateBanner
+                          variant="reopened"
+                          author={pendingReopen.by}
+                          date={pendingReopen.at}
+                          itemCount={pendingReopen.itemIds.length}
+                          recipient={pendingReopen.recipient}
+                        />
+                      )}
                       {reviewCircuit === 'partnerPrevalidation' && (
                         <PageStateBanner
                           variant="delegatedReview"
@@ -1920,7 +2159,19 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                         }
                       />
 
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex flex-wrap items-center justify-end gap-x-6 gap-y-2">
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            id="show-not-asked"
+                            checked={showNotAsked}
+                            onCheckedChange={setShowNotAsked}
+                            disabled={notAskedTotal === 0 || modifiedOnly}
+                          />
+                          <Label htmlFor="show-not-asked" className="text-sm">
+                            {t('subscriptions.detail.onboarding.notAsked.toggle', { count: notAskedTotal })}
+                          </Label>
+                        </div>
+                        <div className="flex items-center gap-2">
                         <Switch
                           id="modified-only"
                           checked={modifiedOnly}
@@ -1930,6 +2181,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                         <Label htmlFor="modified-only" className="text-sm">
                           {t('subscriptions.detail.onboarding.modified.filter', { count: modifiedTotal })}
                         </Label>
+                        </div>
                       </div>
 
                       <div
@@ -1937,7 +2189,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                         style={{ gridTemplateColumns: 'minmax(0, 300px) minmax(0, 1fr)' }}
                       >
                           <OnboardingSectionNav
-                            sections={onboardingNavSections}
+                            sections={navSections}
                             activeSectionId={activeOnboardingSection}
                             onSelect={handleSelectOnboardingSection}
                           />
@@ -1946,10 +2198,50 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                             onOpenChange={setReportOpen}
                             submittedAt={MOCK_SUBMISSION_REPORT.submittedAt}
                             rows={submissionReportRows}
+                            sources={onboardingSections.map(section => ({ value: section.id, label: t(section.titleKey) }))}
                           />
 
                           <div className="space-y-4">
-              {onboardingSections.map((section) => {
+              {displayedSections.map((section) => {
+                if (!onboardingSections.includes(section)) {
+                  return (
+                    <div
+                      key={section.id}
+                      ref={el => {
+                        onboardingSectionRefs.current[section.id] = el;
+                      }}
+                      style={{ scrollMarginTop: '1rem' }}
+                    >
+                      <SectionCard
+                        mode="validation"
+                        icon={section.icon}
+                        title={t(section.titleKey)}
+                        iconTone="neutral"
+                        active={activeOnboardingSection === section.id}
+                        open={openSections.includes(section.id)}
+                        onOpenChange={() => {
+                          toggleSection(section.id);
+                          setActiveOnboardingSection(section.id);
+                        }}
+                        summary={t('subscriptions.detail.onboarding.notAsked.sectionReason.corporateOnly')}
+                        badges={<NeutralTag label={t('subscriptions.detail.onboarding.notAsked.sectionTag')} />}
+                      >
+                        <div className="divide-y divide-border">
+                          {Array.from(
+                            new Set<string>(section.questions.filter(q => !q.info).map(q => q.question.replace(/\s*\*\s*$/, ''))),
+                          ).map(label => (
+                            <SectionFieldRow
+                              key={label}
+                              mode="read"
+                              label={label}
+                              value={<NeutralTag label={t('subscriptions.detail.onboarding.notAsked.tag')} />}
+                            />
+                          ))}
+                        </div>
+                      </SectionCard>
+                    </div>
+                  );
+                }
                 if (modifiedOnly && modifiedCountOf(section.id) === 0) return null;
                 const Icon = section.icon;
                 const isOpen = modifiedOnly || openSections.includes(section.id);
@@ -2243,7 +2535,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
 
                                   const modifiedOrigin = modifiedOriginOf(questionId);
                                   if (modifiedOnly && !modifiedOrigin) return null;
-                                  if (item.notAsked && !notAskedVisible.includes(section.id) && !modifiedOrigin) return null;
+                                  if (item.notAsked && !showNotAsked && !modifiedOrigin) return null;
 
                                   if (item.info) return null;
                                   const comments = questionComments[questionId] || [];
@@ -2339,28 +2631,6 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                   );
                                 })}
                               </div>
-                              {section.questions.some(q => q.notAsked) && (
-                                <div className="px-4 py-3 border-t border-border">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-xs"
-                                    onClick={() =>
-                                      setNotAskedVisible(prev =>
-                                        prev.includes(section.id)
-                                          ? prev.filter(id => id !== section.id)
-                                          : [...prev, section.id],
-                                      )
-                                    }
-                                  >
-                                    {notAskedVisible.includes(section.id)
-                                      ? t('subscriptions.detail.onboarding.notAsked.hide')
-                                      : t('subscriptions.detail.onboarding.notAsked.show', {
-                                          count: section.questions.filter(q => q.notAsked).length,
-                                        })}
-                                  </Button>
-                                </div>
-                              )}
                             </div>
                           )}
                   </SectionCard>
@@ -2371,12 +2641,23 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
 
                             {/* Action — passer à l'étape suivante */}
 
-                            <div className="flex justify-end pt-4">
-                              <DisabledReason reason={validationBlockedReason}>
+                            <div className="flex justify-end gap-2 pt-4">
+                              {reopenItems.length > 0 && (
+                                <DisabledReason reason={reopenDisabledReason}>
+                                  <Button
+                                    variant="outline"
+                                    className="gap-2"
+                                    disabled={Boolean(reopenDisabledReason)}
+                                    onClick={() => setReopenOpen(true)}
+                                  >
+                                    <RotateCcw className="w-4 h-4" />
+                                    {t('subscriptions.detail.reopen.action')}
+                                  </Button>
+                                </DisabledReason>
+                              )}
                               <Button
                                 style={{ background: PRIMARY_BUTTON_GRADIENT }}
                                 className="gap-2 text-white hover:opacity-90"
-                                disabled={Boolean(validationBlockedReason)}
                                 onClick={() => {
                                   setCurrentStep(2);
                                   toast.success(t('subscriptions.detail.onboarding.submittedForValidation'));
@@ -2385,7 +2666,6 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                 <ChevronRight className="w-4 h-4" />
                                 {t('subscriptions.detail.onboarding.proceedToValidation')}
                               </Button>
-                              </DisabledReason>
                             </div>
                           </div>
                         </div>
@@ -2416,7 +2696,12 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                       onInvalidateScore={handleInvalidateRisk}
                       initialStatus={complianceStatus}
                       screeningSeed={String(subscription.id ?? subscription.contrepartie?.name ?? 'subscription')}
-                      onStatusChange={setComplianceStatus}
+                      onStatusChange={next => {
+                        if (next.status === 'validated' && complianceStatus.status !== 'validated') {
+                          logAudit({ type: 'complianceValidated' });
+                        }
+                        setComplianceStatus(next);
+                      }}
                       onSubscriptionValidated={() => setCurrentStep(3)}
                     />
                   )}
@@ -2428,6 +2713,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                       compliance={complianceStatus}
                       onOpenCompliance={() => setCurrentStep(2)}
                       onProceedToPayment={() => {
+                        logAudit({ type: 'signatureCompleted', origin: 'automatic', actorName: undefined });
                         setCurrentStep(4);
                         toast.success(t('subscriptions.detail.signatureStep.toast.toPayment'));
                       }}
@@ -2505,7 +2791,10 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                             <Button 
                               className="hover:opacity-90"
                               style={{ background: PRIMARY_BUTTON_GRADIENT }}
-                              onClick={() => toast.success(t('subscriptions.detail.paymentStep.paymentConfirmed'))}
+                              onClick={() => {
+                                logAudit({ type: 'paymentConfirmed' });
+                                toast.success(t('subscriptions.detail.paymentStep.paymentConfirmed'));
+                              }}
                             >
                               <CheckCircle2 className="w-4 h-4 mr-2" />
                               {t('subscriptions.detail.paymentStep.confirmPayment')}
@@ -2553,7 +2842,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                       </tr>
                     </thead>
                     <tbody className="bg-card divide-y divide-border/50">
-                      {mockEmails.map((email) => (
+                      {emails.map((email) => (
                         <tr key={email.id} className="hover:bg-muted transition-colors">
                           <td className="px-4 py-3 text-sm text-muted-foreground">
                             {email.date}
@@ -2619,7 +2908,10 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
 
           <TabsContent value="notes" className="mt-0">
             <div className="px-8 py-6">
-              <NotesTab notes={initialNotes} scope="subscription" onCountChange={setNotesCount} />
+              <NotesTab notes={initialNotes} scope="subscription" onCountChange={count => {
+                if (count > notesCount) logAudit({ type: 'noteAdded' });
+                setNotesCount(count);
+              }} />
             </div>
           </TabsContent>
         </Tabs>
@@ -2724,8 +3016,32 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
         onClose={() => setAuditElement(null)}
         onShowAll={() => {
           setAuditElement(null);
-          setActiveTab('audit');
+          setActivityOpen(true);
         }}
+      />
+
+      <SubscriptionActivitySheet
+        open={activityOpen}
+        onOpenChange={setActivityOpen}
+        entries={auditEntries}
+        sections={onboardingSections}
+        documents={requiredDocuments}
+        subscriptionName={String(subscription.id)}
+      />
+
+      <SubscriptionReopenDialog
+        open={reopenOpen}
+        onOpenChange={setReopenOpen}
+        items={reopenItems}
+        recipient={reopenRecipient}
+        templateLabel={t(
+          reopenBackToPartner
+            ? 'subscriptions.detail.reopen.templates.partner'
+            : 'subscriptions.detail.reopen.templates.default',
+        )}
+        keepDocuments={KEEP_DOCS_AT_REOPEN}
+        backToPartner={reopenBackToPartner}
+        onConfirm={handleConfirmReopen}
       />
 
       <NewSubscriptionDialog
@@ -2733,7 +3049,10 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
         mode="edit"
         subscription={subscription}
         onClose={() => setIsEditDialogOpen(false)}
-        onSubscriptionUpdated={updated => setEditedSubscription(updated)}
+        onSubscriptionUpdated={updated => {
+          logAudit({ type: 'subscriptionEdited' });
+          setEditedSubscription(updated);
+        }}
       />
     </div>
   );

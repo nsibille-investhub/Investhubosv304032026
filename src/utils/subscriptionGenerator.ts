@@ -306,6 +306,8 @@ export interface Subscription {
   sepaEnabled?: boolean; // Prélèvement SEPA activé
   pendingCalls?: number; // Nombre d'appels de fonds en attente de versement
   onboardingReopened?: number; // Nombre de réouvertures de l'onboarding
+  lastReopenedAt?: Date | null; // Date de la dernière réouverture
+  lastInvestorChangeAt?: Date | null; // Dernière modification faite par l'investisseur
   advisor?: string; // Nom du conseiller partenaire
   documents?: {
     total: number;
@@ -664,6 +666,8 @@ export function generateSubscriptions(count: number): Subscription[] {
     
     // Nombre de réouvertures de l'onboarding (0-3)
     const onboardingReopened = Math.random() > 0.8 ? randomNumber(1, 3) : 0;
+    const lastReopenedAt = onboardingReopened > 0 ? randomDate(20) : null;
+    const lastInvestorChangeAt = Math.random() > 0.3 ? randomDate(30) : null;
 
     // Documents du dossier
     const docTotal = randomNumber(4, 12);
@@ -793,6 +797,8 @@ export function generateSubscriptions(count: number): Subscription[] {
       sepaEnabled,
       pendingCalls,
       onboardingReopened,
+      lastReopenedAt,
+      lastInvestorChangeAt,
       advisor,
       documents: {
         total: docTotal,
