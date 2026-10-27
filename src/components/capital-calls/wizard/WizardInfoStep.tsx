@@ -4,7 +4,7 @@ import { AlertTriangle, ArrowLeftRight, Eye, Landmark, Megaphone } from 'lucide-
 
 import { useTranslation } from '../../../utils/languageContext';
 import type { Fund } from '../../../utils/fundGenerator';
-import type { CapitalCallDiffusion } from '../../../utils/capitalCallGenerator';
+import { CapitalCallDiffusion, fundDocumentFolders } from '../../../utils/capitalCallGenerator';
 import type { FundCallSettings, FundDistribution, PendingForecast } from '../../../utils/capitalCallWizard';
 import { Alert, AlertDescription, AlertTitle } from '../../ui/alert';
 import { Button } from '../../ui/button';
@@ -44,7 +44,7 @@ export interface AttachmentValue {
   sizeKb: number;
 }
 
-export type InfoErrors = Partial<Record<'fundId' | 'shares' | 'name' | 'dueDate', string>>;
+export type InfoErrors = Partial<Record<'fundId' | 'shares' | 'name' | 'dueDate' | 'documentFolder', string>>;
 
 export const NO_FORECAST = 'none';
 
@@ -113,6 +113,7 @@ export function WizardInfoStep({
                 onChange({
                   fundId: Number(value),
                   shares: fund?.shareClasses.map(item => item.name) ?? [],
+                  diffusion: { ...values.diffusion, documentFolder: null },
                   forecastId: null,
                   distributionIds: [],
                 });
@@ -282,6 +283,33 @@ export function WizardInfoStep({
                   checked={values.diffusion[channel]}
                   onCheckedChange={checked => setDiffusion({ [channel]: checked })}
                 />
+                {channel === 'documents' && values.diffusion.documents && (
+                  <FormField
+                    id="call-document-folder"
+                    label={t(`${K}.diffusion.folder.label`)}
+                    required
+                    error={errors.documentFolder}
+                    hint={fundName ? t(`${K}.diffusion.folder.hint`) : t(`${K}.chooseFundFirst`)}
+                    className="mt-3"
+                  >
+                    <Select
+                      value={values.diffusion.documentFolder ?? ''}
+                      onValueChange={documentFolder => setDiffusion({ documentFolder })}
+                      disabled={!fundName}
+                    >
+                      <SelectTrigger id="call-document-folder" aria-invalid={Boolean(errors.documentFolder)} className="w-full">
+                        <SelectValue placeholder={t(`${K}.diffusion.folder.placeholder`)} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(fundName ? fundDocumentFolders(fundName) : []).map(folder => (
+                          <SelectItem key={folder} value={folder}>
+                            {folder}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormField>
+                )}
                 {channel === 'notify' && values.diffusion.portal && values.diffusion.notify && (
                   <div className="mt-3 space-y-1.5">
                     <p className="text-sm font-medium">{t(`${K}.diffusion.timing.label`)}</p>

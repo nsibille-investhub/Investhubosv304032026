@@ -6853,7 +6853,8 @@
           "invalidNumber": "Saisissez un nombre positif.",
           "over100": "Pourcentage refusé : le paramètre \"Limiter les appels à 100 %\" est actif.",
           "noShare": "Saisissez un montant sur au moins une part.",
-          "shares": "Choisissez au moins une part."
+          "shares": "Choisissez au moins une part.",
+          "documentFolder": "Choisissez le dossier cible du dépôt."
         },
         "suspended": {
           "title": "Création suspendue",
@@ -6923,6 +6924,11 @@
               "label": "Publication sur le portail",
               "onNotification": "À l'envoi de la notification",
               "immediate": "Pré-publication immédiate"
+            },
+            "folder": {
+              "label": "Dossier cible",
+              "placeholder": "Choisir un dossier",
+              "hint": "Dossiers éligibles selon les règles de l'espace documentaire et le fonds."
             }
           },
           "shares": "Parts appelées",
@@ -7142,7 +7148,8 @@
           "portal": "Portail investisseur",
           "email": "Email",
           "documents": "Espace documentaire",
-          "none": "Aucune diffusion"
+          "none": "Aucune diffusion",
+          "documentsIn": "Espace documentaire : {{folder}}"
         },
         "csv": {
           "investor": "Investisseur",

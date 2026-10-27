@@ -57,7 +57,8 @@ export function CapitalCallNotificationPanel({
   const channels = [
     diffusion.portal && t(`${K}.channels.portal`),
     diffusion.notify && t(`${K}.channels.email`),
-    diffusion.documents && t(`${K}.channels.documents`),
+    diffusion.documents &&
+      (diffusion.documentFolder ? t(`${K}.channels.documentsIn`, { folder: diffusion.documentFolder }) : t(`${K}.channels.documents`)),
   ].filter(Boolean);
 
   const exportRecipients = () =>

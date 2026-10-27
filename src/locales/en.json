@@ -6853,7 +6853,8 @@
           "invalidNumber": "Enter a positive number.",
           "over100": "Percentage refused: \"Limit calls to 100%\" is active.",
           "noShare": "Enter an amount on at least one share.",
-          "shares": "Choose at least one share."
+          "shares": "Choose at least one share.",
+          "documentFolder": "Choose the target folder for filing."
         },
         "suspended": {
           "title": "Creation suspended",
@@ -6923,6 +6924,11 @@
               "label": "Publication on the portal",
               "onNotification": "When the notification is sent",
               "immediate": "Immediate pre-publication"
+            },
+            "folder": {
+              "label": "Target folder",
+              "placeholder": "Choose a folder",
+              "hint": "Eligible folders according to the document space rules and the fund."
             }
           },
           "shares": "Shares called",
@@ -7142,7 +7148,8 @@
           "portal": "Investor portal",
           "email": "Email",
           "documents": "Document space",
-          "none": "No distribution"
+          "none": "No distribution",
+          "documentsIn": "Document space: {{folder}}"
         },
         "csv": {
           "investor": "Investor",

@@ -191,6 +191,7 @@ export function CapitalCallWizard({
     else if (info.shares.length === 0) errors.shares = t(`${K}.errors.shares`);
     if (!info.name.trim()) errors.name = t(`${K}.errors.name`);
     if (!info.dueDate) errors.dueDate = t(`${K}.errors.dueDate`);
+    if (info.diffusion.documents && !info.diffusion.documentFolder) errors.documentFolder = t(`${K}.errors.documentFolder`);
     setInfoErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -372,6 +373,7 @@ export function CapitalCallWizard({
                 setInfoErrors(prev => {
                   const nextErrors = { ...prev };
                   Object.keys(patch).forEach(key => delete nextErrors[key as keyof InfoErrors]);
+                  if (patch.diffusion) delete nextErrors.documentFolder;
                   return nextErrors;
                 });
               }}

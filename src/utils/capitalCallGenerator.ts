@@ -39,6 +39,8 @@ export interface CapitalCallDiffusion {
   documents: boolean;
   /** Visible et notifié : pré-publication immédiate sur le portail, ou publication à l'envoi de la notification. */
   portalTiming: 'immediate' | 'onNotification';
+  /** Dossier de dépôt dans l'espace documentaire, obligatoire quand le dépôt est actif. */
+  documentFolder?: string | null;
 }
 
 export const DEFAULT_DIFFUSION: CapitalCallDiffusion = {
@@ -46,7 +48,13 @@ export const DEFAULT_DIFFUSION: CapitalCallDiffusion = {
   notify: true,
   documents: true,
   portalTiming: 'onNotification',
+  documentFolder: null,
 };
+
+/** Dossiers de l'espace documentaire éligibles au dépôt des avis d'un fonds (jeu de démonstration). */
+export function fundDocumentFolders(fundName: string): string[] {
+  return [`${fundName} / Appels de fonds`, `${fundName} / Avis aux investisseurs`, `${fundName} / Correspondance`];
+}
 
 export interface CapitalCall {
   id: number;
@@ -116,10 +124,11 @@ function seeded(seed: number) {
 const DAY = 24 * 60 * 60 * 1000;
 
 /** Quelques appels non notifiés sont diffusés sans email, d'autres pré-publiés sur le portail. */
-function demoDiffusion(draw: number): CapitalCallDiffusion {
-  if (draw < 0.1) return { ...DEFAULT_DIFFUSION, notify: false };
-  if (draw < 0.2) return { ...DEFAULT_DIFFUSION, portalTiming: 'immediate' };
-  return DEFAULT_DIFFUSION;
+function demoDiffusion(draw: number, fundName: string): CapitalCallDiffusion {
+  const base = { ...DEFAULT_DIFFUSION, documentFolder: fundDocumentFolders(fundName)[0] };
+  if (draw < 0.1) return { ...base, notify: false };
+  if (draw < 0.2) return { ...base, portalTiming: 'immediate' };
+  return base;
 }
 
 export function generateCapitalCalls(funds: Fund[], today = new Date()): CapitalCall[] {
@@ -200,7 +209,7 @@ export function generateCapitalCalls(funds: Fund[], today = new Date()): Capital
         lines,
         notifiedLines,
         linesToRelaunch,
-        diffusion: demoDiffusion(notifiedLines === 0 ? random() : 1),
+        diffusion: demoDiffusion(notifiedLines === 0 ? random() : 1, fund.name),
       });
     }
   });
