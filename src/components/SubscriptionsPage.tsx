@@ -216,6 +216,10 @@ export function SubscriptionsPage({ data, isLoading, allData, setAllData, onSubs
         aValue = (a[sortConfig.key as 'createdAt' | 'updatedAt'] as Date).getTime();
         bValue = (b[sortConfig.key as 'createdAt' | 'updatedAt'] as Date).getTime();
       }
+      if (sortConfig.key === 'lastReopenedAt') {
+        aValue = a.lastReopenedAt?.getTime() ?? 0;
+        bValue = b.lastReopenedAt?.getTime() ?? 0;
+      }
       
       // Gestion spéciale pour les montants
       if (sortConfig.key === 'amount') {

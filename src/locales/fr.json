@@ -366,7 +366,8 @@
       "notes": "Notes",
       "updatedAt": "Dernière MAJ",
       "documents": "Dossier",
-      "entryFeesComposite": "Frais d'entrée"
+      "entryFeesComposite": "Frais d'entrée",
+      "lastReopenedAt": "Dernière réouverture"
     },
     "page": {
       "searchPlaceholder": "Rechercher une souscription...",
@@ -1454,7 +1455,8 @@
           "newValue": "Nouvelle valeur",
           "reason": "Motif",
           "author": "Auteur",
-          "origin": "Origine"
+          "origin": "Origine",
+          "domain": "Domaine"
         },
         "types": {
           "invitationSent": "Invitation envoyée",
@@ -1479,7 +1481,19 @@
           "dossierReopened": "Dossier rouvert",
           "partnerValidated": "Dossier validé par le partenaire",
           "reviewHandedOff": "Dossier transmis à l'analyste suivant",
-          "finalValidation": "Validation finale"
+          "finalValidation": "Validation finale",
+          "subscriptionCreated": "Souscription créée",
+          "subscriptionEdited": "Souscription modifiée",
+          "emailSent": "Email envoyé",
+          "screeningLaunched": "Screening lancé",
+          "scoreValidated": "Score de risque validé",
+          "scoreInvalidated": "Validation du score retirée",
+          "complianceValidated": "Conformité validée",
+          "signaturePackSent": "Pack envoyé en signature",
+          "signatureCompleted": "Signature complète",
+          "paymentConfirmed": "Paiement confirmé",
+          "noteAdded": "Note ajoutée",
+          "dossierExported": "Données exportées"
         },
         "origin": {
           "investor": "Investisseur",
@@ -1492,7 +1506,26 @@
         "causedBy": "Suite à la modification de : {{label}}",
         "pendingModificationsOne": "1 modification depuis la dernière validation",
         "pendingModificationsMany": "{{count}} modifications depuis la dernière validation",
-        "recipients": "Destinataires : {{recipients}}"
+        "recipients": "Destinataires : {{recipients}}",
+        "domains": {
+          "subscription": "Souscription",
+          "onboarding": "Onboarding",
+          "compliance": "Conformité",
+          "signature": "Signatures",
+          "payment": "Paiement",
+          "communication": "Communications",
+          "notes": "Notes et commentaires"
+        },
+        "activity": {
+          "title": "Piste d'audit de la souscription",
+          "description": "{{count}} actions, de la création de la souscription à aujourd'hui.",
+          "domainFilter": "Filtrer par domaine",
+          "allDomains": "Tous les domaines",
+          "exportAll": "Exporter la piste complète",
+          "exportedToast": "Piste d'audit exportée",
+          "exportedToastDesc": "{{count}} actions exportées, tous domaines confondus.",
+          "open": "Piste d'audit"
+        }
       },
       "documentControl": {
         "rejectedToast": "Document refusé",

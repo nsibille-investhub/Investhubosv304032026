@@ -1,7 +1,17 @@
 import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import {
+  BadgeCheck,
   BellRing,
   CalendarCheck,
+  Download,
+  FileDown,
+  FileSignature,
+  FolderPlus,
+  Radar,
+  ScanSearch,
+  StickyNote,
+  Wallet,
   Forward,
   ShieldCheck,
   Handshake,
@@ -35,7 +45,9 @@ import type { MockRequiredDocument, MockSection } from '../utils/subscriptionDet
 import {
   AUDIT_DOCUMENTS_SECTION,
   AUDIT_DOSSIER_SCOPE,
+  SUBSCRIPTION_AUDIT_DOMAINS,
   SUBSCRIPTION_AUDIT_EVENT_TYPES,
+  auditDomainOf,
   countPendingModifications,
   type SubscriptionAuditEntry,
   type SubscriptionAuditEventType,
@@ -65,6 +77,18 @@ const AUDIT_ICONS: Record<SubscriptionAuditEventType, typeof History> = {
   finalValidation: ShieldCheck,
   commentAdded: MessageSquare,
   dossierSubmitted: Send,
+  subscriptionCreated: FolderPlus,
+  subscriptionEdited: PencilLine,
+  emailSent: Mail,
+  screeningLaunched: ScanSearch,
+  scoreValidated: BadgeCheck,
+  scoreInvalidated: Radar,
+  complianceValidated: ShieldCheck,
+  signaturePackSent: Send,
+  signatureCompleted: FileSignature,
+  paymentConfirmed: Wallet,
+  noteAdded: StickyNote,
+  dossierExported: FileDown,
 };
 
 const T = 'subscriptions.detail.audit';
@@ -135,7 +159,7 @@ function AuditTimeline({
           meta: { entry },
           description: (
             <div className="space-y-0.5">
-              {showElement && (
+              {showElement && (entry.elementId || auditDomainOf(entry.type) === 'onboarding') && (
                 <div>
                   <span className="font-medium text-foreground">{elementLabel(entry)}</span>
                   {entry.elementId && <span> · {sectionLabel(entry.sectionId)}</span>}
@@ -147,7 +171,7 @@ function AuditTimeline({
                   <span> → </span>
                   <span className="text-foreground">{entry.newValue || t(`${T}.empty`)}</span>
                 </div>
-              ) : entry.type === 'notificationSent' ? (
+              ) : entry.type === 'notificationSent' || entry.type === 'emailSent' ? (
                 <>
                   <div className="text-foreground">{entry.reason}</div>
                   <div>{t(`${T}.recipients`, { recipients: entry.newValue ?? '' })}</div>
@@ -170,7 +194,7 @@ function AuditTimeline({
                   })}
                 </div>
               )}
-              {entry.reason && entry.type !== 'notificationSent' && (
+              {entry.reason && entry.type !== 'notificationSent' && entry.type !== 'emailSent' && (
                 <div>{t(`${T}.reason`, { reason: entry.reason })}</div>
               )}
               {entry.viaSection && <div>{t(`${T}.viaSection`)}</div>}
@@ -330,6 +354,119 @@ export function SubscriptionAuditPanel({
           </Button>
           <Button variant="outline" onClick={onClose}>
             {t(`${T}.close`)}
+          </Button>
+        </SidePanelFooter>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+const csvField = (value: string) => (/[;"\n\r]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value);
+
+interface SubscriptionActivitySheetProps extends AuditSource {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  subscriptionName: string;
+}
+
+/** Panneau latéral : piste d'audit de toutes les actions de la souscription, avec export complet. */
+export function SubscriptionActivitySheet({
+  open,
+  onOpenChange,
+  entries,
+  sections,
+  documents,
+  subscriptionName,
+}: SubscriptionActivitySheetProps) {
+  const { t, lang } = useTranslation();
+  const [domain, setDomain] = useState<string>('all');
+  const { sectionLabel, elementLabel } = useAuditLabels({ sections, documents });
+
+  const sorted = useMemo(
+    () => [...entries].sort((a, b) => b.timestamp.localeCompare(a.timestamp)),
+    [entries],
+  );
+  const scoped = useMemo(
+    () => (domain === 'all' ? sorted : sorted.filter(entry => auditDomainOf(entry.type) === domain)),
+    [sorted, domain],
+  );
+
+  // Toute la piste, quels que soient les filtres affichés.
+  const handleExportAll = () => {
+    const locale = lang === 'en' ? 'en-US' : 'fr-FR';
+    const header = [
+      'date', 'time', 'domain', 'event', 'section', 'element', 'previousValue', 'newValue', 'reason', 'author', 'origin',
+    ].map(column => t(`${T}.columns.${column}`));
+    const rows = [...entries]
+      .sort((a, b) => a.timestamp.localeCompare(b.timestamp))
+      .map(entry => {
+        const date = new Date(entry.timestamp);
+        const origin = t(`${T}.origin.${entry.origin}`);
+        return [
+          date.toLocaleDateString(locale),
+          date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }),
+          t(`${T}.domains.${auditDomainOf(entry.type)}`),
+          t(`${T}.types.${entry.type}`),
+          sectionLabel(entry.sectionId),
+          elementLabel(entry),
+          entry.previousValue ?? '',
+          entry.newValue ?? '',
+          entry.reason ?? '',
+          entry.actorName ?? origin,
+          origin,
+        ];
+      });
+    const csv = '\ufeff' + [header, ...rows].map(row => row.map(csvField).join(';')).join('\r\n');
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `piste_audit_${subscriptionName}.csv`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast.success(t(`${T}.activity.exportedToast`), {
+      description: t(`${T}.activity.exportedToastDesc`, { count: entries.length }),
+    });
+  };
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" style={SIDE_PANEL_WIDE_STYLE} className="h-full p-0 gap-0">
+        <SidePanelHeader
+          title={t(`${T}.activity.title`)}
+          description={t(`${T}.activity.description`, { count: entries.length })}
+        >
+          <div className="mt-3">
+            <Select value={domain} onValueChange={setDomain}>
+              <SelectTrigger className="h-11" aria-label={t(`${T}.activity.domainFilter`)}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t(`${T}.activity.allDomains`)}</SelectItem>
+                {SUBSCRIPTION_AUDIT_DOMAINS.map(value => (
+                  <SelectItem key={value} value={value}>
+                    {t(`${T}.domains.${value}`)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </SidePanelHeader>
+        <div className="flex-1 overflow-y-auto px-6 py-2">
+          <AuditTimeline
+            entries={scoped}
+            sections={sections}
+            documents={documents}
+            exportFileName={`audit_${subscriptionName}`}
+            showElement
+          />
+        </div>
+        <SidePanelFooter className="justify-between">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            {t(`${T}.close`)}
+          </Button>
+          <Button variant="primary" onClick={handleExportAll} className="gap-2">
+            <Download className="w-4 h-4" />
+            {t(`${T}.activity.exportAll`)}
           </Button>
         </SidePanelFooter>
       </SheetContent>

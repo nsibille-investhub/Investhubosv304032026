@@ -121,7 +121,7 @@ import {
   type SubscriptionAuditOrigin,
   type SubscriptionAuditEntry,
 } from '../utils/subscriptionAuditMock';
-import { SubscriptionAuditPanel, SubscriptionAuditTab } from './SubscriptionAuditTrail';
+import { SubscriptionActivitySheet, SubscriptionAuditPanel, SubscriptionAuditTab } from './SubscriptionAuditTrail';
 import { Tag as NeutralTag } from './Tag';
 import { EmptyState } from './EmptyState';
 import { RowActionButton } from './ui/row-actions';
@@ -391,6 +391,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
     return map;
   }, []);
   const [auditElement, setAuditElement] = useState<{ elementId: string; sectionId: string } | null>(null);
+  const [activityOpen, setActivityOpen] = useState(false);
   const logAudit = (...entries: Parameters<typeof createLiveAuditEntry>[0][]) =>
     setAuditEntries(prev => [...prev, ...entries.map(createLiveAuditEntry)]);
   const sectionOf = (elementId: string) => elementId.slice(0, elementId.lastIndexOf('-'));
@@ -401,6 +402,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   const [riskValidatedBy, setRiskValidatedBy] = useState<string | null>(null);
 
   const handleInvalidateRisk = () => {
+    logAudit({ type: 'scoreInvalidated' });
     setRiskValidated(false);
     setRiskValidationDate(null);
     setRiskValidatedBy(null);
@@ -408,6 +410,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   };
 
   const handleValidateRisk = () => {
+    logAudit({ type: 'scoreValidated' });
     setRiskValidated(true);
     const now = new Date();
     setRiskValidationDate(now.toLocaleDateString('fr-FR') + ' à ' + now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }));
@@ -928,6 +931,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   const modifiedTotal = onboardingSections.reduce((sum, sec) => sum + modifiedCountOf(sec.id), 0);
 
   const handleExportDossier = () => {
+    logAudit({ type: 'dossierExported' });
     const csvField = (v: string) => (/[";\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
     const header = ['section', 'question', 'answer', 'control', 'indicator'].map(col =>
       t(`subscriptions.detail.dossierExport.columns.${col}`),
@@ -1199,6 +1203,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
     const now = new Date();
     const stamp = `${now.toLocaleDateString('fr-FR')} ${now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;
     setResentEmails(prev => ({ ...prev, [id]: stamp }));
+    logAudit({ type: 'emailSent', reason: t(templateKey), newValue: recipient });
     toast.success(t('subscriptions.detail.initStep.toast.emailResent', { template: t(templateKey) }), {
       description: t('subscriptions.detail.initStep.toast.emailResentDesc', { recipient }),
     });
@@ -1851,6 +1856,11 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
           icon: <Download className="w-4 h-4" />,
           onClick: handleExportDossier,
         }}
+        secondaryAction={{
+          label: t('subscriptions.detail.audit.activity.open'),
+          icon: <History className="w-4 h-4" />,
+          onClick: () => setActivityOpen(true),
+        }}
       />
 
 
@@ -2218,7 +2228,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                       >
                         <div className="divide-y divide-border">
                           {Array.from(
-                            new Set(section.questions.filter(q => !q.info).map(q => q.question.replace(/\s*\*\s*$/, ''))),
+                            new Set<string>(section.questions.filter(q => !q.info).map(q => q.question.replace(/\s*\*\s*$/, ''))),
                           ).map(label => (
                             <SectionFieldRow
                               key={label}
@@ -2686,7 +2696,12 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                       onInvalidateScore={handleInvalidateRisk}
                       initialStatus={complianceStatus}
                       screeningSeed={String(subscription.id ?? subscription.contrepartie?.name ?? 'subscription')}
-                      onStatusChange={setComplianceStatus}
+                      onStatusChange={next => {
+                        if (next.status === 'validated' && complianceStatus.status !== 'validated') {
+                          logAudit({ type: 'complianceValidated' });
+                        }
+                        setComplianceStatus(next);
+                      }}
                       onSubscriptionValidated={() => setCurrentStep(3)}
                     />
                   )}
@@ -2698,6 +2713,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                       compliance={complianceStatus}
                       onOpenCompliance={() => setCurrentStep(2)}
                       onProceedToPayment={() => {
+                        logAudit({ type: 'signatureCompleted', origin: 'automatic', actorName: undefined });
                         setCurrentStep(4);
                         toast.success(t('subscriptions.detail.signatureStep.toast.toPayment'));
                       }}
@@ -2775,7 +2791,10 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                             <Button 
                               className="hover:opacity-90"
                               style={{ background: PRIMARY_BUTTON_GRADIENT }}
-                              onClick={() => toast.success(t('subscriptions.detail.paymentStep.paymentConfirmed'))}
+                              onClick={() => {
+                                logAudit({ type: 'paymentConfirmed' });
+                                toast.success(t('subscriptions.detail.paymentStep.paymentConfirmed'));
+                              }}
                             >
                               <CheckCircle2 className="w-4 h-4 mr-2" />
                               {t('subscriptions.detail.paymentStep.confirmPayment')}
@@ -2889,7 +2908,10 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
 
           <TabsContent value="notes" className="mt-0">
             <div className="px-8 py-6">
-              <NotesTab notes={initialNotes} scope="subscription" onCountChange={setNotesCount} />
+              <NotesTab notes={initialNotes} scope="subscription" onCountChange={count => {
+                if (count > notesCount) logAudit({ type: 'noteAdded' });
+                setNotesCount(count);
+              }} />
             </div>
           </TabsContent>
         </Tabs>
@@ -2994,8 +3016,17 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
         onClose={() => setAuditElement(null)}
         onShowAll={() => {
           setAuditElement(null);
-          setActiveTab('audit');
+          setActivityOpen(true);
         }}
+      />
+
+      <SubscriptionActivitySheet
+        open={activityOpen}
+        onOpenChange={setActivityOpen}
+        entries={auditEntries}
+        sections={onboardingSections}
+        documents={requiredDocuments}
+        subscriptionName={String(subscription.id)}
       />
 
       <SubscriptionReopenDialog
@@ -3018,7 +3049,10 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
         mode="edit"
         subscription={subscription}
         onClose={() => setIsEditDialogOpen(false)}
-        onSubscriptionUpdated={updated => setEditedSubscription(updated)}
+        onSubscriptionUpdated={updated => {
+          logAudit({ type: 'subscriptionEdited' });
+          setEditedSubscription(updated);
+        }}
       />
     </div>
   );

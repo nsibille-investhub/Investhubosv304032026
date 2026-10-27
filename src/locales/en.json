@@ -366,7 +366,8 @@
       "notes": "Notes",
       "updatedAt": "Last update",
       "documents": "Documents",
-      "entryFeesComposite": "Entry fees"
+      "entryFeesComposite": "Entry fees",
+      "lastReopenedAt": "Last reopened"
     },
     "page": {
       "searchPlaceholder": "Search a subscription...",
@@ -1454,7 +1455,8 @@
           "newValue": "New value",
           "reason": "Reason",
           "author": "Author",
-          "origin": "Origin"
+          "origin": "Origin",
+          "domain": "Area"
         },
         "types": {
           "invitationSent": "Invitation sent",
@@ -1479,7 +1481,19 @@
           "dossierReopened": "File reopened",
           "partnerValidated": "File validated by the partner",
           "reviewHandedOff": "File handed over to the next analyst",
-          "finalValidation": "Final validation"
+          "finalValidation": "Final validation",
+          "subscriptionCreated": "Subscription created",
+          "subscriptionEdited": "Subscription edited",
+          "emailSent": "Email sent",
+          "screeningLaunched": "Screening launched",
+          "scoreValidated": "Risk score validated",
+          "scoreInvalidated": "Score validation withdrawn",
+          "complianceValidated": "Compliance validated",
+          "signaturePackSent": "Pack sent for signature",
+          "signatureCompleted": "Signature completed",
+          "paymentConfirmed": "Payment confirmed",
+          "noteAdded": "Note added",
+          "dossierExported": "Data exported"
         },
         "origin": {
           "investor": "Investor",
@@ -1492,7 +1506,26 @@
         "causedBy": "Following the change of: {{label}}",
         "pendingModificationsOne": "1 change since the last validation",
         "pendingModificationsMany": "{{count}} changes since the last validation",
-        "recipients": "Recipients: {{recipients}}"
+        "recipients": "Recipients: {{recipients}}",
+        "domains": {
+          "subscription": "Subscription",
+          "onboarding": "Onboarding",
+          "compliance": "Compliance",
+          "signature": "Signatures",
+          "payment": "Payment",
+          "communication": "Communications",
+          "notes": "Notes and comments"
+        },
+        "activity": {
+          "title": "Subscription audit trail",
+          "description": "{{count}} actions, from the subscription's creation to today.",
+          "domainFilter": "Filter by area",
+          "allDomains": "All areas",
+          "exportAll": "Export the full trail",
+          "exportedToast": "Audit trail exported",
+          "exportedToastDesc": "{{count}} actions exported, all areas included.",
+          "open": "Audit trail"
+        }
       },
       "documentControl": {
         "rejectedToast": "Document rejected",

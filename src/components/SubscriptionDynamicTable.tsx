@@ -238,6 +238,9 @@ export function SubscriptionDynamicTable({
     lastReminder: (row) =>
       row.lastReminderAt ? <DateTimeCell date={row.lastReminderAt} /> : <span className="text-sm text-gray-400">-</span>,
 
+    lastReopenedAt: (row) =>
+      row.lastReopenedAt ? <DateTimeCell date={row.lastReopenedAt} /> : <span className="text-sm text-gray-400">-</span>,
+
     signatureChannel: (row) => (
       <Tag label={row.signatureChannel === 'e-signature' ? t('subscriptions.table.eSignature') : t('subscriptions.table.paper')} />
     ),
