@@ -6445,7 +6445,6 @@
         "label": "Files de travail",
         "all": "Tous les appels",
         "toNotify": "À notifier",
-        "sending": "Envoi en cours",
         "overdue": "Échus non soldés",
         "fundsMetric": "Fonds",
         "perFund": "{{count}} par fonds",
@@ -6992,10 +6991,10 @@
         "notified": "{{done}} / {{total}} notifiées",
         "immediate": "Publication immédiate",
         "settled": "{{done}} / {{total}} réglées",
-        "remainingDue": "{{amount}} restant dû"
+        "remainingDue": "{{amount}} restant dû",
+        "sending": "Envoi en cours"
       },
       "callStates": {
-        "sending": "Envoi en cours",
         "noticesGenerating": "Avis en génération",
         "settled": "Soldé",
         "partiallySettled": "Partiellement réglé",
@@ -7286,7 +7285,7 @@
       "filterCardGroup": {
         "title": "Groupe de cartes filtres",
         "description": "Bandeau de FilterCard au-dessus d'un listing : titre souligné d'une barre, pastille, aide et cartes en grille. Remplace les en-têtes recopiés des onglets de statut investisseurs, souscriptions, historique SMS et des files des appels de fonds.",
-        "variants": "4, 5 ou 6 colonnes ; avec ou sans pastille et aide.",
+        "variants": "3, 4, 5 ou 6 colonnes ; avec ou sans pastille et aide.",
         "states": "Carte active, carte inactive, total à zéro.",
         "exampleLabel": "Files de travail",
         "demo": {

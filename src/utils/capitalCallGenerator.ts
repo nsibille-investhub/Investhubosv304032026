@@ -145,7 +145,7 @@ export function generateCapitalCalls(funds: Fund[], today = new Date()): Capital
       const message = MESSAGES[Math.floor(random() * MESSAGES.length)];
       const attachments = ATTACHMENTS.slice(0, Math.floor(random() * 3));
       const isUpcoming = dueDate.getTime() > today.getTime();
-      const sending = isUpcoming && random() < 0.6;
+      const sending = isUpcoming && random() < 0.08;
       const lines = 4 + Math.floor(random() * 40);
       let notifiedLines: number;
       if (!isUpcoming) notifiedLines = lines;

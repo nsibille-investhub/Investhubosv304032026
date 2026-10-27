@@ -106,7 +106,7 @@ const DEFAULT_COLUMNS: ColumnKey[] = [
 ];
 const COLUMNS_STORAGE_KEY = 'investhub-columns-capital-calls-v3';
 
-type Queue = 'all' | 'toNotify' | 'sending' | 'overdue';
+type Queue = 'all' | 'toNotify' | 'overdue';
 
 /** Identifiant d'URL de l'assistant de création. */
 const NEW_CALL_ID = 'new';
@@ -264,7 +264,6 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
   const inQueue = (call: CapitalCall, id: Queue) => {
     const summary = summaryOf(call);
     if (id === 'toNotify') return summary.toNotify > 0;
-    if (id === 'sending') return call.sending;
     if (id === 'overdue') return call.dueDate < today && summary.settled < summary.lines;
     return true;
   };
@@ -561,10 +560,13 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
       render: call => {
         const summary = summaryOf(call);
         return (
-          <span className="whitespace-nowrap text-sm tabular-nums">
-            {call.publication === 'immediate' && summary.notified === 0
-              ? t(`${K}.progress.immediate`)
-              : t(`${K}.progress.notified`, { done: summary.notified, total: summary.lines })}
+          <span className="flex flex-col whitespace-nowrap text-sm tabular-nums">
+            <span>
+              {call.publication === 'immediate' && summary.notified === 0
+                ? t(`${K}.progress.immediate`)
+                : t(`${K}.progress.notified`, { done: summary.notified, total: summary.lines })}
+            </span>
+            {call.sending && <span className="text-xs text-muted-foreground">{t(`${K}.progress.sending`)}</span>}
           </span>
         );
       },
@@ -600,7 +602,7 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
           <StatusBadge
             label={t(`${K}.callStates.${state}`)}
             variant={CALL_STATE_VARIANT[state]}
-            icon={state === 'sending' || state === 'noticesGenerating' ? Loader2 : undefined}
+            icon={state === 'noticesGenerating' ? Loader2 : undefined}
           />
         );
       },
@@ -827,10 +829,9 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
             onDiscard={() => setConfirmDiscard(true)}
           />
         )}
-        <FilterCardGroup title={t(`${K}.queues.label`)} hint={t(`${K}.queues.clickToFilter`)} columns={4}>
+        <FilterCardGroup title={t(`${K}.queues.label`)} hint={t(`${K}.queues.clickToFilter`)} columns={3}>
             {queueCard('all', List, scopedCalls)}
             {queueCard('toNotify', Send, scopedCalls.filter(call => inQueue(call, 'toNotify')))}
-            {queueCard('sending', Loader2, scopedCalls.filter(call => inQueue(call, 'sending')))}
             {queueCard('overdue', CalendarX, scopedCalls.filter(call => inQueue(call, 'overdue')))}
         </FilterCardGroup>
 

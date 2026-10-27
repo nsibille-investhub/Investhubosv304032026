@@ -6445,7 +6445,6 @@
         "label": "Work queues",
         "all": "All calls",
         "toNotify": "To notify",
-        "sending": "Sending",
         "overdue": "Overdue, not settled",
         "fundsMetric": "Funds",
         "perFund": "{{count}} per fund",
@@ -6992,10 +6991,10 @@
         "notified": "{{done}} / {{total}} notified",
         "immediate": "Immediate publication",
         "settled": "{{done}} / {{total}} settled",
-        "remainingDue": "{{amount}} still due"
+        "remainingDue": "{{amount}} still due",
+        "sending": "Sending"
       },
       "callStates": {
-        "sending": "Sending",
         "noticesGenerating": "Notices generating",
         "settled": "Settled",
         "partiallySettled": "Partially settled",
@@ -7286,7 +7285,7 @@
       "filterCardGroup": {
         "title": "Filter card group",
         "description": "Band of FilterCards above a listing: title with an accent bar, badge, hint and cards in a grid. Replaces the headers copied in the investor and subscription status tabs, SMS history and capital call queues.",
-        "variants": "4, 5 or 6 columns; with or without badge and hint.",
+        "variants": "3, 4, 5 or 6 columns; with or without badge and hint.",
         "states": "Active card, inactive card, zero total.",
         "exampleLabel": "Work queues",
         "demo": {

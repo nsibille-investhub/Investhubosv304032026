@@ -226,7 +226,7 @@ export function CapitalCallDetailPage({ call, initialLines, onLinesChange, right
             <StatusBadge
               label={t(`funds.capitalCalls.callStates.${summary.state}`)}
               variant={CALL_STATE_VARIANT[summary.state]}
-              icon={summary.state === 'sending' || summary.state === 'noticesGenerating' ? Loader2 : undefined}
+              icon={summary.state === 'noticesGenerating' ? Loader2 : undefined}
             />
           </span>
         }

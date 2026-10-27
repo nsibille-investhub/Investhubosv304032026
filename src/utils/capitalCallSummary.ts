@@ -3,7 +3,6 @@ import type { CapitalCallEmail } from './capitalCallEmails';
 import type { CapitalCallLine } from './capitalCallLines';
 
 export type CallState =
-  | 'sending'
   | 'noticesGenerating'
   | 'settled'
   | 'partiallySettled'
@@ -13,11 +12,10 @@ export type CallState =
   | 'readyToNotify';
 
 /**
- * Ordre de priorité : le premier état vrai l'emporte. Un avis en échec ne change pas l'état de l'appel :
- * c'est un incident de production, suivi dans la colonne Avis et sur la fiche.
+ * Ordre de priorité : le premier état vrai l'emporte. Un avis en échec ou un envoi en cours ne change pas
+ * l'état de l'appel : ils sont signalés en second plan, dans les colonnes Avis et Notification.
  */
 export const CALL_STATES: CallState[] = [
-  'sending',
   'noticesGenerating',
   'settled',
   'partiallySettled',
@@ -85,8 +83,7 @@ export function summarizeCall(call: CapitalCall, lines: CapitalCallLine[], email
   const noticesFailed = count(line => line.noticeState === 'failed');
 
   let state: CallState = 'readyToNotify';
-  if (call.sending) state = 'sending';
-  else if (noticesGenerating > 0) state = 'noticesGenerating';
+  if (noticesGenerating > 0) state = 'noticesGenerating';
   else if (lines.length > 0 && settled === lines.length) state = 'settled';
   else if (settled > 0) state = 'partiallySettled';
   else if (lines.length > 0 && notified === lines.length) state = 'notified';
