@@ -6793,7 +6793,7 @@
         "stepsLabel": "Wizard steps",
         "steps": {
           "info": "Fund and details",
-          "amounts": "Amounts",
+          "amounts": "Breakdown by share",
           "control": "Check"
         },
         "close": "Close the wizard",
@@ -6810,7 +6810,8 @@
           "dueDate": "Enter the due date.",
           "invalidNumber": "Enter a positive number.",
           "over100": "Percentage refused: \"Limit calls to 100%\" is active.",
-          "noShare": "Enter an amount on at least one share."
+          "noShare": "Enter an amount on at least one share.",
+          "shares": "Choose at least one share."
         },
         "suspended": {
           "title": "Creation suspended",
@@ -6881,6 +6882,28 @@
               "onNotification": "When the notification is sent",
               "immediate": "Immediate pre-publication"
             }
+          },
+          "shares": "Shares called",
+          "sharesPlaceholder": "Choose shares",
+          "sharesSearch": "Search a share",
+          "sharesHint": "{{count}} of {{total}} shares selected",
+          "sections": {
+            "call": "Call",
+            "flows": "Linked flows",
+            "communication": "Communication"
+          },
+          "communication": {
+            "preview": "Preview",
+            "previewNoEmail": "Notification disabled: no email is sent.",
+            "previewNoTemplate": "No capital call notification template on the application.",
+            "previewTitle": "Preview: {{name}}",
+            "previewDescription": "Example for a sample investor. Nothing is sent.",
+            "subject": "Subject:",
+            "frameLabel": "Email preview",
+            "attachments": "Attachments:",
+            "noticeFile": "Capital call notice (PDF)",
+            "message": "Accompanying message:",
+            "noMessage": "No message"
           }
         },
         "amounts": {
@@ -7390,6 +7413,14 @@
           "default": "Nominal case",
           "noRight": "No notification right"
         }
+      },
+      "mailPreview": {
+        "title": "Email preview",
+        "description": "Preview window for an email before sending: resolved subject, optional attached items, HTML body rendered in a script-free frame. Nothing is sent. Opened from a \"Preview\" button in the header of the Communication subsection or on a recipient row.",
+        "variants": "With or without attached items under the subject (attachments, accompanying message).",
+        "states": "Open, closed. Opening button unavailable with a reason when no email is sent.",
+        "exampleLabel": "Preview of a capital call notification",
+        "open": "Preview"
       }
     }
   },

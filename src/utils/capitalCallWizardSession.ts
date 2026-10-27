@@ -9,6 +9,7 @@ import type { ShareInput } from './capitalCallWizard';
 export interface CapitalCallWizardSession {
   step: number;
   fundId: number | null;
+  shares?: string[];
   name: string;
   dueDate: string | null;
   noticeDate: string | null;

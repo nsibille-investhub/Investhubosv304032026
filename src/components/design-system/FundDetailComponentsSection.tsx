@@ -8,6 +8,7 @@ import {
   CalendarRange,
   Coins,
   Copy,
+  Eye,
   LayoutDashboard,
   Layers3,
   LineChart,
@@ -57,6 +58,7 @@ import { FilterCard, FilterCardGroup } from '../ui/filter-card';
 import { FormField, SuffixInput } from '../ui/form-field';
 import { ListingColumnsMenu, ListingIndicator, ListingNameCell } from '../ui/listing';
 import { WizardPageFooter, WizardSteps, WizardStepsBar } from '../ui/wizard-steps';
+import { MailPreviewDialog } from '../ui/mail-preview-dialog';
 import { ColorPicker } from '../ui/color-picker';
 import { ComputedSummary } from '../ui/computed-summary';
 import { DayMonthPicker, type DayMonthValue } from '../ui/day-month-picker';
@@ -921,6 +923,29 @@ function WizardFullPageDemo() {
   );
 }
 
+function MailPreviewDemo() {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+        <Eye className="mr-1.5 h-3.5 w-3.5" />
+        {t(`${K}.mailPreview.open`)}
+      </Button>
+      <MailPreviewDialog
+        open={open}
+        onOpenChange={setOpen}
+        title={t(`${K}.mailPreview.exampleLabel`)}
+        description={t('funds.capitalCalls.wizard.info.communication.previewDescription')}
+        subject={t(`${K}.mailPreview.exampleLabel`)}
+        html={`<!doctype html><html><body style="font-family:sans-serif;padding:24px"><p>${t(`${K}.mailPreview.description`)}</p></body></html>`}
+        subjectLabel={t('funds.capitalCalls.wizard.info.communication.subject')}
+        frameLabel={t('funds.capitalCalls.wizard.info.communication.frameLabel')}
+      />
+    </>
+  );
+}
+
 function FormFieldDemo() {
   const { t } = useTranslation();
   const [name, setName] = useState('');
@@ -1315,6 +1340,18 @@ export function FundDetailComponentsSection() {
       >
         <Example label={t(`${K}.listingTools.exampleLabel`)}>
           <ListingToolsDemo />
+        </Example>
+      </DocBlock>
+
+      <DocBlock
+        id="mailPreview"
+        name="MailPreviewDialog"
+        importLine="import { MailPreviewDialog } from '@/components/ui/mail-preview-dialog'"
+        usage={`<MailPreviewDialog open={open} onOpenChange={setOpen} title={...} subject={subject} html={html}
+  subjectLabel={t('...')} frameLabel={t('...')} details={<p>...</p>} />`}
+      >
+        <Example label={t(`${K}.mailPreview.exampleLabel`)}>
+          <MailPreviewDemo />
         </Example>
       </DocBlock>
 

@@ -71,9 +71,11 @@ interface CapitalCallWizardProps {
 }
 
 const infoFromSession = (session: CapitalCallWizardSession, funds: Fund[]): InfoValues => {
-  const inScope = funds.some(item => item.id === session.fundId);
+  const fund = funds.find(item => item.id === session.fundId);
+  const inScope = Boolean(fund);
   return {
     fundId: inScope ? session.fundId : null,
+    shares: fund ? session.shares ?? fund.shareClasses.map(item => item.name) : [],
     name: session.name,
     dueDate: sessionDate(session.dueDate),
     noticeDate: sessionDate(session.noticeDate),
@@ -87,6 +89,7 @@ const infoFromSession = (session: CapitalCallWizardSession, funds: Fund[]): Info
 
 const emptyInfo = (): InfoValues => ({
   fundId: null,
+  shares: [],
   name: '',
   dueDate: undefined,
   noticeDate: undefined,
@@ -132,8 +135,15 @@ export function CapitalCallWizard({
   const currency = fund ? fundCurrency(fund) : 'EUR';
   const forecasts = useMemo(() => (fund ? pendingForecasts(fund) : []), [fund]);
   const distributions = useMemo(() => (fund ? fundDistributions(fund) : []), [fund]);
-  const baseSubscriptions = useMemo(() => (fund ? fundSubscriptions(fund) : []), [fund]);
-  const shares = useMemo(() => fund?.shareClasses.map(item => item.name) ?? [], [fund]);
+  const shares = useMemo(
+    () => fund?.shareClasses.map(item => item.name).filter(share => info.shares.includes(share)) ?? [],
+    [fund, info.shares],
+  );
+  // Seules les souscriptions des parts retenues entrent dans le calcul et dans le montant à lever.
+  const baseSubscriptions = useMemo(
+    () => (fund ? fundSubscriptions(fund).filter(item => shares.includes(item.share)) : []),
+    [fund, shares],
+  );
 
   /** Souscription activée pendant la création, pour le scénario de démonstration. */
   const lateSubscription = useMemo<WizardSubscription | null>(() => {
@@ -144,16 +154,23 @@ export function CapitalCallWizard({
 
   const subscriptions = lateActivation && lateSubscription ? [...baseSubscriptions, lateSubscription] : baseSubscriptions;
 
+  // Retirer ou rajouter une part garde la saisie des autres parts ; changer de fonds repart d'une saisie vide.
+  const fundId = fund?.id ?? null;
+  const inputsFundId = useRef(fundId);
   useEffect(() => {
     const restored = restoredInputs.current;
     restoredInputs.current = null;
-    setInputs(Object.fromEntries(shares.map(share => [share, restored?.[share] ?? emptyShareInput()])));
+    const sameFund = inputsFundId.current === fundId;
+    inputsFundId.current = fundId;
+    setInputs(prev =>
+      Object.fromEntries(shares.map(share => [share, restored?.[share] ?? (sameFund ? prev[share] : undefined) ?? emptyShareInput()])),
+    );
     setAmountErrors({});
-    setLateActivation(false);
-    if (restored) return;
+    if (restored || sameFund) return;
     setMode('perShare');
     setAmountToRaise('');
-  }, [shares]);
+    setLateActivation(false);
+  }, [shares, fundId]);
 
   const simulation = useMemo(
     () => (settings && info.dueDate && step === 2 ? simulateCall(subscriptions, inputs, info.dueDate, settings) : null),
@@ -171,6 +188,7 @@ export function CapitalCallWizard({
   const validateInfo = () => {
     const errors: InfoErrors = {};
     if (!info.fundId) errors.fundId = t(`${K}.errors.fund`);
+    else if (info.shares.length === 0) errors.shares = t(`${K}.errors.shares`);
     if (!info.name.trim()) errors.name = t(`${K}.errors.name`);
     if (!info.dueDate) errors.dueDate = t(`${K}.errors.dueDate`);
     setInfoErrors(errors);
@@ -277,6 +295,7 @@ export function CapitalCallWizard({
     onSessionChange({
       step,
       fundId: info.fundId,
+      shares: info.shares,
       name: info.name,
       dueDate: info.dueDate?.toISOString() ?? null,
       noticeDate: info.noticeDate?.toISOString() ?? null,

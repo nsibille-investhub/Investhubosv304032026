@@ -6793,7 +6793,7 @@
         "stepsLabel": "Étapes de l'assistant",
         "steps": {
           "info": "Fonds et informations",
-          "amounts": "Montants",
+          "amounts": "Ventilation par part",
           "control": "Contrôle"
         },
         "close": "Fermer l'assistant",
@@ -6810,7 +6810,8 @@
           "dueDate": "Saisissez la date d'échéance.",
           "invalidNumber": "Saisissez un nombre positif.",
           "over100": "Pourcentage refusé : le paramètre \"Limiter les appels à 100 %\" est actif.",
-          "noShare": "Saisissez un montant sur au moins une part."
+          "noShare": "Saisissez un montant sur au moins une part.",
+          "shares": "Choisissez au moins une part."
         },
         "suspended": {
           "title": "Création suspendue",
@@ -6881,6 +6882,28 @@
               "onNotification": "À l'envoi de la notification",
               "immediate": "Pré-publication immédiate"
             }
+          },
+          "shares": "Parts appelées",
+          "sharesPlaceholder": "Choisir les parts",
+          "sharesSearch": "Rechercher une part",
+          "sharesHint": "{{count}} sur {{total}} parts retenues",
+          "sections": {
+            "call": "Appel",
+            "flows": "Flux liés",
+            "communication": "Communication"
+          },
+          "communication": {
+            "preview": "Aperçu",
+            "previewNoEmail": "Notification désactivée : aucun email n'est envoyé.",
+            "previewNoTemplate": "Aucun gabarit de notification d'appel sur l'application.",
+            "previewTitle": "Aperçu : {{name}}",
+            "previewDescription": "Exemple pour un investisseur fictif. Rien n'est envoyé.",
+            "subject": "Objet :",
+            "frameLabel": "Aperçu du mail",
+            "attachments": "Pièces jointes :",
+            "noticeFile": "Avis d'appel (PDF)",
+            "message": "Message d'accompagnement :",
+            "noMessage": "Aucun message"
           }
         },
         "amounts": {
@@ -7390,6 +7413,14 @@
           "default": "Cas nominal",
           "noRight": "Sans droit de notification"
         }
+      },
+      "mailPreview": {
+        "title": "Aperçu d'un mail",
+        "description": "Fenêtre d'aperçu d'un mail avant envoi : objet résolu, éléments joints facultatifs, corps HTML rendu dans un cadre sans script. Rien n'est envoyé. Ouverte depuis un bouton \"Aperçu\" placé dans l'en-tête de la sous-section Communication ou sur la ligne d'un destinataire.",
+        "variants": "Avec ou sans éléments joints sous l'objet (pièces jointes, message d'accompagnement).",
+        "states": "Ouverte, fermée. Bouton d'ouverture indisponible avec motif quand aucun mail ne part.",
+        "exampleLabel": "Aperçu de la notification d'un appel",
+        "open": "Aperçu"
       }
     }
   },
