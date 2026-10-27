@@ -8,6 +8,7 @@ import {
   CalendarRange,
   Coins,
   Copy,
+  Eye,
   LayoutDashboard,
   Layers3,
   LineChart,
@@ -56,7 +57,9 @@ import { DemoScenarioBar } from '../ui/demo-scenario-bar';
 import { FilterCard, FilterCardGroup } from '../ui/filter-card';
 import { FormField, SuffixInput } from '../ui/form-field';
 import { ListingColumnsMenu, ListingIndicator, ListingNameCell } from '../ui/listing';
-import { WizardSteps } from '../ui/wizard-steps';
+import { ProcessStepsBar, WizardPageFooter, WizardSteps, WizardStepsBar } from '../ui/wizard-steps';
+import { MailPreviewDialog } from '../ui/mail-preview-dialog';
+import { RichMultiSelect } from '../ui/rich-multiselect';
 import { ColorPicker } from '../ui/color-picker';
 import { ComputedSummary } from '../ui/computed-summary';
 import { DayMonthPicker, type DayMonthValue } from '../ui/day-month-picker';
@@ -488,6 +491,19 @@ function PageStateBannerDemo() {
       />
       <PageStateBanner variant="readOnly" />
       <PageStateBanner
+        variant="pendingWizard"
+        title={t('funds.capitalCalls.pendingWizard.title', { name: t('funds.capitalCalls.wizard.title') })}
+        description={t('funds.capitalCalls.pendingWizard.description', {
+          fund: t(`${d}.masterName`),
+          step: t('funds.capitalCalls.wizard.steps.amounts'),
+          date: '26/10/2026 10:42',
+        })}
+        resumeLabel={t('funds.capitalCalls.pendingWizard.resume')}
+        discardLabel={t('funds.capitalCalls.pendingWizard.discard')}
+        onResume={() => undefined}
+        onDiscard={() => undefined}
+      />
+      <PageStateBanner
         variant="reopened"
         author="Jean Dupont"
         date="26/10/2026 09:12"
@@ -896,6 +912,76 @@ function WizardStepsDemo() {
   );
 }
 
+function WizardFullPageDemo() {
+  const { t } = useTranslation();
+  const steps = ['info', 'amounts', 'control'].map(step => t(`${K}.wizardSteps.demo.${step}`));
+  return (
+    <div className="overflow-hidden rounded-lg border border-border bg-muted">
+      <WizardStepsBar steps={steps} current={0} ariaLabel={t(`${K}.wizardSteps.demo.ariaLabel`)} />
+      <div className="h-16" />
+      <WizardPageFooter
+        start={
+          <Button variant="ghost" size="sm">
+            {t('funds.capitalCalls.wizard.cancel')}
+          </Button>
+        }
+        end={<Button size="sm">{t('funds.capitalCalls.wizard.next')}</Button>}
+      />
+    </div>
+  );
+}
+
+function RichMultiSelectDemo() {
+  const { t } = useTranslation();
+  const d = `${K}.richMultiSelect.demo`;
+  const [value, setValue] = useState<string[]>(['SUB-1001']);
+  const options = ['SUB-1001', 'SUB-1002', 'SUB-1003'].map((id, index) => ({
+    value: id,
+    label: t(`${d}.investors.${index}`),
+    details: t('funds.capitalCalls.wizard.amounts.restriction.details', {
+      id,
+      committed: '250 000 €',
+      units: '2 500',
+      validatedAt: `0${index + 2}/03/2026`,
+    }),
+  }));
+  return (
+    <div className="max-w-md">
+      <RichMultiSelect
+        options={options}
+        value={value}
+        onChange={setValue}
+        triggerLabel={t('funds.capitalCalls.wizard.amounts.restriction.selected', { count: value.length, total: options.length })}
+        searchPlaceholder={t('funds.capitalCalls.wizard.amounts.restriction.search')}
+        emptyLabel={t('funds.capitalCalls.wizard.amounts.restriction.empty')}
+      />
+    </div>
+  );
+}
+
+function MailPreviewDemo() {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+        <Eye className="mr-1.5 h-3.5 w-3.5" />
+        {t(`${K}.mailPreview.open`)}
+      </Button>
+      <MailPreviewDialog
+        open={open}
+        onOpenChange={setOpen}
+        title={t(`${K}.mailPreview.exampleLabel`)}
+        description={t('funds.capitalCalls.wizard.info.communication.previewDescription')}
+        subject={t(`${K}.mailPreview.exampleLabel`)}
+        html={`<!doctype html><html><body style="font-family:sans-serif;padding:24px"><p>${t(`${K}.mailPreview.description`)}</p></body></html>`}
+        subjectLabel={t('funds.capitalCalls.wizard.info.communication.subject')}
+        frameLabel={t('funds.capitalCalls.wizard.info.communication.frameLabel')}
+      />
+    </>
+  );
+}
+
 function FormFieldDemo() {
   const { t } = useTranslation();
   const [name, setName] = useState('');
@@ -1295,15 +1381,60 @@ export function FundDetailComponentsSection() {
       </DocBlock>
 
       <DocBlock
+        id="richMultiSelect"
+        name="RichMultiSelect"
+        importLine="import { RichMultiSelect } from '@/components/ui/rich-multiselect'"
+        usage={`<RichMultiSelect options={items.map(item => ({ value: item.id, label: item.investor, details: ... }))}
+  value={selected} onChange={setSelected} triggerLabel={...} searchPlaceholder={t('...')} emptyLabel={t('...')} />`}
+      >
+        <Example label={t(`${K}.richMultiSelect.exampleLabel`)}>
+          <RichMultiSelectDemo />
+        </Example>
+      </DocBlock>
+
+      <DocBlock
+        id="mailPreview"
+        name="MailPreviewDialog"
+        importLine="import { MailPreviewDialog } from '@/components/ui/mail-preview-dialog'"
+        usage={`<MailPreviewDialog open={open} onOpenChange={setOpen} title={...} subject={subject} html={html}
+  subjectLabel={t('...')} frameLabel={t('...')} details={<p>...</p>} />`}
+      >
+        <Example label={t(`${K}.mailPreview.exampleLabel`)}>
+          <MailPreviewDemo />
+        </Example>
+      </DocBlock>
+
+      <DocBlock
         id="wizardSteps"
         name="WizardSteps"
-        importLine="import { WizardSteps } from '@/components/ui/wizard-steps'"
+        importLine="import { WizardPageFooter, WizardSteps, WizardStepsBar } from '@/components/ui/wizard-steps'"
         usage={`<BigModalPanelHeader icon={Plus} title={t('...')} subtitle={...} onClose={close} closeLabel={t('...')}>
   <WizardSteps steps={steps.map(id => t(\`...steps.\${id}\`))} current={step} ariaLabel={t('...')} />
-</BigModalPanelHeader>`}
+</BigModalPanelHeader>
+
+// Écran complet
+<PageHeader hideBackButton title={...} subtitle={...} />
+<WizardStepsBar steps={...} current={step} ariaLabel={t('...')} />
+<div className="flex-1 px-8 py-6">...</div>
+<WizardPageFooter start={<Button variant="ghost">...</Button>} end={<Button>...</Button>} />`}
       >
         <Example label={t(`${K}.wizardSteps.exampleLabel`)}>
           <WizardStepsDemo />
+        </Example>
+        <Example label={t(`${K}.wizardSteps.fullPageLabel`)}>
+          <WizardFullPageDemo />
+        </Example>
+        <Example label={t(`${K}.wizardSteps.processLabel`)}>
+          <div className="overflow-hidden rounded-lg border border-border">
+            <ProcessStepsBar
+              steps={['notices', 'diffusion', 'settlement', 'closed'].map(item => t(`funds.capitalCalls.detail.stages.${item}.label`))}
+              current={1}
+              ariaLabel={t('funds.capitalCalls.detail.stages.ariaLabel')}
+              title={t('funds.capitalCalls.detail.stages.diffusion.title')}
+              description={t('funds.capitalCalls.detail.stages.diffusion.description', { count: 12, total: 40 })}
+              action={<Button size="sm">{t('funds.capitalCalls.detail.stages.diffusion.action', { count: 12 })}</Button>}
+            />
+          </div>
         </Example>
       </DocBlock>
 

@@ -21,7 +21,7 @@ import {
 
 import { useTranslation } from '../../utils/languageContext';
 import { CapitalCall, CapitalCallShare, distinctNoticeDate } from '../../utils/capitalCallGenerator';
-import type { CapitalCallRights } from '../../utils/capitalCallActions';
+import type { CapitalCallAction, CapitalCallRights } from '../../utils/capitalCallActions';
 import {
   CapitalCallLine,
   expireStaleNotices,
@@ -30,26 +30,27 @@ import {
   relaunchFailedNotices,
 } from '../../utils/capitalCallLines';
 import { generateCapitalCallEmails } from '../../utils/capitalCallEmails';
-import { summarizeCall } from '../../utils/capitalCallSummary';
-import { CheckIndicator } from '../CheckIndicator';
+import { CALL_STAGES, callStage, summarizeCall } from '../../utils/capitalCallSummary';
 import { CALL_STATE_VARIANT, CapitalCallSummaryWidgets, LinesPreset } from './CapitalCallSummaryWidgets';
 import { CapitalCallEmailsTab } from './CapitalCallEmailsTab';
 import { CapitalCallJournalTab } from './CapitalCallJournalTab';
 import { CapitalCallLinesTab } from './CapitalCallLinesTab';
-import { ColumnConfig, DataTable } from '../DataTable';
 import { EmptyState } from '../EmptyState';
 import { StatusBadge } from '../StatusBadge';
-import { ListingCard } from '../ui/listing';
+import { FilterCard, FilterCardGroup } from '../ui/filter-card';
 import { AttachmentRow } from '../ui/attachment-row';
 import { DetailLink } from '../ui/detail-summary';
 import { DetailTabsList } from '../ui/detail-tabs';
 import { PageHeader, PageHeaderSubtitle, PageHeaderSubtitleItem, PageHeaderSubtitleSeparator } from '../ui/page-header';
 import { SectionCard } from '../ui/section-card';
 import { Tabs, TabsContent } from '../ui/tabs';
+import { Button } from '../ui/button';
+import { DisabledReason } from '../ui/disabled-reason';
+import { ProcessStepsBar } from '../ui/wizard-steps';
 
 const K = 'funds.capitalCalls.detail';
 
-type TabId = 'lines' | 'emails' | 'breakdown' | 'message' | 'journal';
+type TabId = 'lines' | 'emails' | 'message' | 'journal';
 
 interface CapitalCallDetailPageProps {
   call: CapitalCall;
@@ -58,6 +59,10 @@ interface CapitalCallDetailPageProps {
   onLinesChange: (lines: CapitalCallLine[]) => void;
   rights: CapitalCallRights;
   onOpenFund: (fundId: number) => void;
+  /** Action lancée depuis l'étape en cours, contrôlée comme depuis le listing. */
+  onRunAction: (action: CapitalCallAction) => void;
+  /** Motif d'indisponibilité d'une action, calculé par le serveur. */
+  actionBlocker: (action: CapitalCallAction) => string | null;
 }
 
 /** Utilisateur connecté de la maquette, affiché dans l'en-tête. */
@@ -66,10 +71,17 @@ const CURRENT_USER = 'Jean Dault';
 /** Durée simulée de production d'un avis. */
 const PRODUCTION_DELAY = 3000;
 
-export function CapitalCallDetailPage({ call, initialLines, onLinesChange, rights, onOpenFund }: CapitalCallDetailPageProps) {
+export function CapitalCallDetailPage({
+  call,
+  initialLines,
+  onLinesChange,
+  rights,
+  onOpenFund,
+  onRunAction,
+  actionBlocker,
+}: CapitalCallDetailPageProps) {
   const { t, lang } = useTranslation();
   const [tab, setTab] = useState<TabId>('lines');
-  const [hoveredRow, setHoveredRow] = useState<number | null>(null);
   // Le délai maximal est contrôlé à l'ouverture de la fiche.
   const [lines, setLines] = useState<CapitalCallLine[]>(() => expireStaleNotices(initialLines));
   const [linesPreset, setLinesPreset] = useState<(LinesPreset & { nonce: number }) | null>(null);
@@ -106,6 +118,16 @@ export function CapitalCallDetailPage({ call, initialLines, onLinesChange, right
       );
     });
   }, [lines]);
+
+  // Fin d'envoi : les lignes encore à notifier passent à l'état notifié.
+  useEffect(() => {
+    if (call.sending || call.notifiedLines < call.lines) return;
+    setLines(prev =>
+      prev.some(line => line.notifiedAt === null)
+        ? prev.map(line => (line.notifiedAt ? line : { ...line, notifiedAt: new Date(), state: 'notified' }))
+        : prev,
+    );
+  }, [call.sending, call.notifiedLines, call.lines]);
 
   const failedCount = lines.filter(line => line.noticeState === 'failed').length;
   const emails = useMemo(() => generateCapitalCallEmails(call.id, lines), [call.id, lines]);
@@ -155,66 +177,60 @@ export function CapitalCallDetailPage({ call, initialLines, onLinesChange, right
     return money(share.value);
   };
 
-  const rows = call.shares.map((share, index) => ({ ...share, id: index + 1 }));
-  const breakdownColumns: ColumnConfig<CapitalCallShare & { id: number }>[] = [
-    {
-      key: 'share',
-      label: t(`${K}.breakdown.columns.share`),
-      render: row => <span className="text-sm font-medium">{t('funds.detail.sharePrefix', { name: row.share })}</span>,
-    },
-    {
-      key: 'mode',
-      label: t(`${K}.breakdown.columns.mode`),
-      render: row => <span className="text-sm">{t(`${K}.breakdown.modes.${row.mode}`)}</span>,
-    },
-    {
-      key: 'value',
-      label: t(`${K}.breakdown.columns.value`),
-      align: 'right',
-      render: row => <span className="text-sm">{enteredValue(row)}</span>,
-    },
-    {
-      key: 'entryFees',
-      label: t(`${K}.breakdown.columns.entryFees`),
-      render: row => (
-        <CheckIndicator
-          checked={row.entryFeesCalled}
-          checkedLabel={t(`${K}.breakdown.called`)}
-          uncheckedLabel={t(`${K}.breakdown.notCalled`)}
-        />
-      ),
-    },
-    {
-      key: 'premium',
-      label: t(`${K}.breakdown.columns.premium`),
-      render: row => (
-        <CheckIndicator
-          checked={row.premiumCalled}
-          checkedLabel={t(`${K}.breakdown.called`)}
-          uncheckedLabel={t(`${K}.breakdown.notCalled`)}
-        />
-      ),
-    },
-    {
-      key: 'released',
-      label: t(`${K}.breakdown.columns.released`),
-      align: 'right',
-      render: row => (row.releasedAmount > 0 ? <span className="text-sm">{money(row.releasedAmount)}</span> : empty),
-    },
-    {
-      key: 'restriction',
-      label: t(`${K}.breakdown.columns.restriction`),
-      render: row => (
-        <span className="text-sm">
-          {row.restrictedTo === null
-            ? t(`${K}.breakdown.noRestriction`)
-            : t(row.restrictedTo === 1 ? `${K}.breakdown.restrictedOne` : `${K}.breakdown.restrictedMany`, {
-                count: row.restrictedTo,
-              })}
-        </span>
-      ),
-    },
-  ];
+  const stage = callStage(call, summary);
+  // Une étape close est franchie : la dernière étape atteinte est cochée elle aussi.
+  const stageIndex = stage === 'closed' ? CALL_STAGES.length : CALL_STAGES.indexOf(stage);
+  const stageButton = (action: CapitalCallAction, label: string, variant: 'default' | 'outline' = 'default') => {
+    const reason = actionBlocker(action);
+    return (
+      <DisabledReason reason={reason}>
+        <Button size="sm" variant={variant} onClick={() => onRunAction(action)} disabled={Boolean(reason)}>
+          {label}
+        </Button>
+      </DisabledReason>
+    );
+  };
+  const stageDescription = {
+    notices: t(`${K}.stages.notices.description`, { done: summary.noticesAvailable + summary.noticesReplaced, total: summary.lines }),
+    diffusion: call.sending
+      ? t(`${K}.stages.diffusion.sending`)
+      : t(`${K}.stages.diffusion.description`, { count: summary.toNotify, total: summary.lines }),
+    settlement: t(`${K}.stages.settlement.description`, {
+      count: summary.lines - summary.settled,
+      total: summary.lines,
+      amount: money(summary.remainingDue, 2),
+    }),
+    closed: t(`${K}.stages.closed.description`, { total: summary.lines }),
+  }[stage];
+  const stageAction = {
+    notices: null,
+    diffusion: stageButton('notify', t(`${K}.stages.diffusion.action`, { count: summary.toNotify })),
+    settlement: (
+      <>
+        {call.diffusion.notify && stageButton('relaunch', t(`${K}.stages.settlement.relaunch`), 'outline')}
+        <Button size="sm" onClick={() => openLines({ filter: 'settlement', values: ['paymentDeclared', 'unpaid'] })}>
+          {t(`${K}.stages.settlement.action`)}
+        </Button>
+      </>
+    ),
+    closed: null,
+  }[stage];
+
+  const allShares = 'all';
+  const [activeShare, setActiveShare] = useState(allShares);
+  const filterShare = (share: string) => {
+    setActiveShare(share);
+    setLinesPreset({ filter: 'share', values: share === allShares ? [] : [share], nonce: Date.now() });
+    setTab('lines');
+  };
+  const shareOptions = (share: CapitalCallShare) =>
+    [
+      share.entryFeesCalled && t(`${K}.breakdown.entryFeesShort`),
+      share.premiumCalled && t(`${K}.breakdown.premiumShort`),
+      share.releasedAmount > 0 && t(`${K}.breakdown.releasedShort`, { amount: money(share.releasedAmount) }),
+      share.restrictedTo !== null &&
+        t(share.restrictedTo === 1 ? `${K}.breakdown.restrictedOne` : `${K}.breakdown.restrictedMany`, { count: share.restrictedTo }),
+    ].filter(Boolean).join(' · ') || t(`${K}.breakdown.noOption`);
 
   return (
     <>
@@ -226,7 +242,7 @@ export function CapitalCallDetailPage({ call, initialLines, onLinesChange, right
             <StatusBadge
               label={t(`funds.capitalCalls.callStates.${summary.state}`)}
               variant={CALL_STATE_VARIANT[summary.state]}
-              icon={summary.state === 'sending' || summary.state === 'noticesGenerating' ? Loader2 : undefined}
+              icon={summary.state === 'noticesGenerating' ? Loader2 : undefined}
             />
           </span>
         }
@@ -284,17 +300,63 @@ export function CapitalCallDetailPage({ call, initialLines, onLinesChange, right
         }
       />
 
+      <ProcessStepsBar
+        steps={CALL_STAGES.map(item => t(`${K}.stages.${item}.label`))}
+        current={stageIndex}
+        ariaLabel={t(`${K}.stages.ariaLabel`)}
+        title={t(`${K}.stages.${stage}.title`)}
+        description={stageDescription}
+        action={stageAction}
+      />
+
       <div className="border-b border-border bg-card px-8 pb-6">
         <CapitalCallSummaryWidgets
           summary={summary}
           currency={call.currency}
-          publication={call.publication}
+          diffusion={call.diffusion}
           onOpenLines={openLines}
           onOpenFailedEmails={() => {
             setEmailsPreset({ values: ['failed', 'spam', 'notFound'], nonce: Date.now() });
             setTab('emails');
           }}
         />
+      </div>
+
+      <div className="border-b border-border bg-card px-8 pb-6">
+        <FilterCardGroup
+          title={t(`${K}.breakdown.title`)}
+          hint={t(`${K}.breakdown.hint`)}
+          columns={Math.min(6, Math.max(3, call.shares.length + 1)) as 3 | 4 | 5 | 6}
+          className="pb-0"
+        >
+          <FilterCard
+            status={allShares}
+            activeStatus={activeShare}
+            onStatusChange={filterShare}
+            label={t(`${K}.breakdown.allShares`)}
+            icon={Layers}
+            total={lines.length}
+            metricLabel={t(`${K}.breakdown.calledTotal`)}
+            metricValue={money(call.calledAmount)}
+            averageLabel={t(`${K}.breakdown.sharesLabel`)}
+            averageValue={String(call.shares.length)}
+          />
+          {call.shares.map(share => (
+            <FilterCard
+              key={share.share}
+              status={share.share}
+              activeStatus={activeShare}
+              onStatusChange={filterShare}
+              label={t('funds.detail.sharePrefix', { name: share.share })}
+              icon={Layers}
+              total={lines.filter(line => line.share === share.share).length}
+              metricLabel={t(`${K}.breakdown.modesShort.${share.mode}`)}
+              metricValue={enteredValue(share)}
+              averageLabel={t(`${K}.breakdown.optionsLabel`)}
+              averageValue={shareOptions(share)}
+            />
+          ))}
+        </FilterCardGroup>
       </div>
 
       <Tabs value={tab} onValueChange={value => setTab(value as TabId)} className="w-full gap-0">
@@ -304,7 +366,6 @@ export function CapitalCallDetailPage({ call, initialLines, onLinesChange, right
             items={[
               { value: 'lines', icon: Users, label: t(`${K}.tabs.lines`), badge: call.lines },
               ...(hasEmails ? [{ value: 'emails', icon: Send, label: t(`${K}.tabs.emails`), badge: emails.length }] : []),
-              { value: 'breakdown', icon: Layers, label: t(`${K}.tabs.breakdown`), badge: call.shares.length },
               { value: 'message', icon: Mail, label: t(`${K}.tabs.message`), badge: call.attachments.length || undefined },
               { value: 'journal', icon: History, label: t(`${K}.tabs.journal`) },
             ]}
@@ -328,21 +389,6 @@ export function CapitalCallDetailPage({ call, initialLines, onLinesChange, right
           </TabsContent>
           <TabsContent value="journal">
             <CapitalCallJournalTab call={call} lines={lines} />
-          </TabsContent>
-          <TabsContent value="breakdown">
-            <ListingCard>
-              <DataTable
-                data={rows}
-                columns={breakdownColumns}
-                hoveredRow={hoveredRow}
-                setHoveredRow={setHoveredRow}
-                onRowClick={() => undefined}
-                sortConfig={null}
-                onSort={() => undefined}
-                compactMode
-                hideSelection
-              />
-            </ListingCard>
           </TabsContent>
           <TabsContent value="message" className="space-y-4">
             <SectionCard mode="read" icon={MessageSquareText} title={t(`${K}.message.title`)}>

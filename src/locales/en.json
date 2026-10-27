@@ -6557,15 +6557,14 @@
         "exportNotices": "Export notices (ZIP)",
         "exportLines": "Export lines (CSV)",
         "edit": "Edit",
-        "delete": "Delete"
+        "delete": "Delete",
+        "resumePreparation": "Resume the call in preparation"
       },
       "searchPlaceholder": "Search a call or a fund",
       "queues": {
         "label": "Work queues",
         "all": "All calls",
-        "noticesFailed": "Notices failed",
         "toNotify": "To notify",
-        "sending": "Sending",
         "overdue": "Overdue, not settled",
         "fundsMetric": "Funds",
         "perFund": "{{count}} per fund",
@@ -6576,7 +6575,8 @@
         "duePeriod": "Due date period",
         "origin": "Origin",
         "reset": "Reset filters",
-        "state": "Status"
+        "state": "Status",
+        "stage": "Step"
       },
       "columns": {
         "fund": "Fund",
@@ -6640,7 +6640,8 @@
         "sending": "Sending in progress",
         "alreadyNotified": "Call already notified",
         "nothingToRelaunch": "No line to remind",
-        "missingRight": "Missing right, please contact your internal administrator"
+        "missingRight": "Missing right, please contact your internal administrator",
+        "notificationDisabled": "Notification disabled on this call"
       },
       "deleteDialog": {
         "title": "Delete {{name}}?",
@@ -6659,7 +6660,6 @@
         "tabs": {
           "lines": "Investor lines",
           "emails": "Emails",
-          "breakdown": "Breakdown by share",
           "message": "Message and attachments",
           "journal": "Journal"
         },
@@ -6683,7 +6683,22 @@
           "notCalled": "Not called",
           "noRestriction": "None",
           "restrictedOne": "{{count}} subscription",
-          "restrictedMany": "{{count}} subscriptions"
+          "restrictedMany": "{{count}} subscriptions",
+          "title": "Breakdown by share",
+          "hint": "Click a share to filter the lines",
+          "allShares": "All shares",
+          "calledTotal": "Amount called",
+          "sharesLabel": "Shares",
+          "optionsLabel": "Options",
+          "entryFeesShort": "Fees",
+          "premiumShort": "Premium",
+          "releasedShort": "Released {{amount}}",
+          "noOption": "No option",
+          "modesShort": {
+            "percent": "Percentage",
+            "totalAmount": "Total amount",
+            "perUnit": "Per unit held"
+          }
         },
         "message": {
           "title": "Accompanying message",
@@ -6715,7 +6730,7 @@
             "investor": "Investor",
             "subscription": "Subscription",
             "share": "Share",
-            "units": "Units",
+            "units": "Number of units",
             "amountPerUnit": "Amount per unit",
             "calledAmount": "Called amount",
             "fees": "Fees",
@@ -6882,14 +6897,20 @@
           },
           "notification": {
             "title": "Notification",
-            "publication": {
-              "onNotification": "Published on notification",
-              "immediate": "Immediate publication, no email"
-            },
             "notified": "Notified",
             "toNotify": "To notify",
             "reminded": "Reminded",
-            "emailsFailed": "Failed emails"
+            "emailsFailed": "Failed emails",
+            "diffusion": {
+              "portal": {
+                "onNotification": "Portal at notification",
+                "immediate": "Portal pre-published",
+                "alone": "Portal"
+              },
+              "email": "Email",
+              "documents": "Document space",
+              "none": "No distribution"
+            }
           },
           "settlement": {
             "title": "Settlement",
@@ -6899,6 +6920,33 @@
             "unpaid": "Unpaid",
             "remainingDue": "Still due on {{count}} lines"
           }
+        },
+        "stages": {
+          "ariaLabel": "Call processing steps",
+          "notices": {
+            "label": "Notice production",
+            "title": "Notices being produced",
+            "description": "{{done}} / {{total}} notices available. Distribution opens once notices are produced."
+          },
+          "diffusion": {
+            "label": "Being distributed",
+            "title": "Being distributed",
+            "description": "{{count}} of {{total}} lines to notify.",
+            "sending": "Sending in progress: actions resume when sending ends.",
+            "action": "Notify {{count}} lines"
+          },
+          "settlement": {
+            "label": "Being settled",
+            "title": "Being settled",
+            "description": "{{count}} of {{total}} lines to settle, {{amount}} outstanding.",
+            "relaunch": "Remind",
+            "action": "Validate payments"
+          },
+          "closed": {
+            "label": "Settled",
+            "title": "Call settled",
+            "description": "All {{total}} lines are paid or compensated."
+          }
         }
       },
       "wizard": {
@@ -6907,7 +6955,7 @@
         "stepsLabel": "Wizard steps",
         "steps": {
           "info": "Fund and details",
-          "amounts": "Amounts",
+          "amounts": "Breakdown by share",
           "control": "Check"
         },
         "close": "Close the wizard",
@@ -6924,7 +6972,9 @@
           "dueDate": "Enter the due date.",
           "invalidNumber": "Enter a positive number.",
           "over100": "Percentage refused: \"Limit calls to 100%\" is active.",
-          "noShare": "Enter an amount on at least one share."
+          "noShare": "Enter an amount on at least one share.",
+          "shares": "Choose at least one share.",
+          "documentFolder": "Choose the target folder for filing."
         },
         "suspended": {
           "title": "Creation suspended",
@@ -6936,9 +6986,10 @@
         },
         "abandon": {
           "title": "Abandon the creation?",
-          "description": "Nothing has been saved. The details entered will be lost.",
+          "description": "The pending preparation will be erased. No call has been created.",
           "confirm": "Abandon",
-          "cancel": "Keep editing"
+          "cancel": "Keep editing",
+          "keep": "Keep the preparation"
         },
         "info": {
           "fund": "Fund",
@@ -6949,11 +7000,6 @@
           "noticeDate": "Notice date",
           "noticeDateHint": "Optional. Printed on the notice if it differs from the due date.",
           "datePlaceholder": "Pick a date",
-          "publication": "Portal publication",
-          "publicationOptions": {
-            "onNotification": "On notification",
-            "immediate": "Immediate, no email"
-          },
           "message": "Accompanying message",
           "messagePlaceholder": "Text sent with the notice",
           "attachment": "Attachment {{index}}",
@@ -6978,7 +7024,57 @@
             "hintDesc": "PDF, Word or image",
             "ready": "File ready to attach",
             "preview": "Preview"
-          }
+          },
+          "diffusion": {
+            "label": "Notice distribution",
+            "noneHint": "No channel selected: the call will be tracked in the back office without being distributed to investors.",
+            "portal": {
+              "label": "Visible on the investor portal",
+              "description": "The call and its notice appear on the investor's subscription."
+            },
+            "notify": {
+              "label": "Notify by email",
+              "description": "The investor receives the notice by email when the notification is sent."
+            },
+            "documents": {
+              "label": "File in the document space",
+              "description": "The notice is filed in the investor's documents, at notification or at creation if the call is not notified."
+            },
+            "timing": {
+              "label": "Publication on the portal",
+              "onNotification": "When the notification is sent",
+              "immediate": "Immediate pre-publication"
+            },
+            "folder": {
+              "label": "Target folder",
+              "placeholder": "Choose a folder",
+              "hint": "Eligible folders according to the document space rules and the fund."
+            }
+          },
+          "shares": "Shares called",
+          "sharesPlaceholder": "Choose shares",
+          "sharesSearch": "Search a share",
+          "sharesHint": "{{count}} of {{total}} shares selected",
+          "sections": {
+            "call": "Call",
+            "flows": "Linked flows",
+            "communication": "Communication"
+          },
+          "communication": {
+            "preview": "Preview",
+            "previewNoEmail": "Notification disabled: no email is sent.",
+            "previewNoTemplate": "No capital call notification template on the application.",
+            "previewTitle": "Preview: {{name}}",
+            "previewDescription": "Example for a sample investor. Nothing is sent.",
+            "subject": "Subject:",
+            "frameLabel": "Email preview",
+            "attachments": "Attachments:",
+            "noticeFile": "Capital call notice (PDF)",
+            "message": "Accompanying message:",
+            "noMessage": "No message"
+          },
+          "forecastHint": "Linking a forecast flow marks it as consumed: it is no longer offered for another call, and its amount can be used as the amount to raise in the next step. Deleting the call puts it back on hold.",
+          "distributionsHint": "A compensated distribution is deducted from the amount due: the investor only settles the net amount and sees no payment action on the portal."
         },
         "amounts": {
           "modes": {
@@ -7002,7 +7098,15 @@
           "shareSummary": "Commitment {{committed}} · {{count}} subscriptions",
           "kinds": {
             "percent": "Percentage",
-            "amount": "Amount"
+            "amount": "Amount",
+            "perUnit": "Per unit",
+            "label": "Entry mode",
+            "percentRestricted": "Percentage unavailable on a restricted share.",
+            "hints": {
+              "percent": "Percentage of each subscription's commitment.",
+              "amount": "Total amount of the share, allocated across subscriptions.",
+              "perUnit": "Fixed amount per unit, multiplied by the number of units held by each subscription."
+            }
           },
           "fields": {
             "value": "Called amount",
@@ -7020,7 +7124,13 @@
           "restriction": {
             "toggle": "Restrict to some subscriptions",
             "selected": "{{count}} of {{total}} selected",
-            "hint": "Only the checked subscriptions are called on this share. Nothing checked: no restriction."
+            "hint": "Only the selected subscriptions are called on this share. No selection: all subscriptions of the share are called.",
+            "details": "{{id}} · Commitment {{committed}} · {{units}} units · Validated on {{validatedAt}}",
+            "placeholder": "Choose subscriptions",
+            "search": "Search an investor or a subscription",
+            "empty": "No subscription",
+            "remove": "Remove {{investor}}",
+            "availableAt": "Available on {{date}}"
           },
           "toRaise": {
             "label": "Amount to raise",
@@ -7040,7 +7150,8 @@
             "total": "Total"
           },
           "total": "Call total (calculated)",
-          "percentFor": "Percentage for share {{share}}"
+          "percentFor": "Percentage for share {{share}}",
+          "toRaiseRestricted": "Unavailable: a share is restricted to some subscriptions."
         },
         "control": {
           "blocked": {
@@ -7080,7 +7191,9 @@
             "remaining": "Remaining to call",
             "overRemaining": "Exceeds: {{amount}} left",
             "preview": "Notice preview",
-            "empty": "No line produced"
+            "empty": "No line produced",
+            "export": "Export (CSV)",
+            "fileName": "lines-{{name}}.csv"
           },
           "exclusions": {
             "title": "Excluded subscriptions",
@@ -7101,26 +7214,70 @@
             "dueDate": "To be paid before {{date}}",
             "combined": "This line will be grouped in a combined notice."
           }
-        }
+        },
+        "resumeLater": "Resume later",
+        "autosaved": "Entry saved automatically, visible only to you. No call exists until it is created."
       },
       "progress": {
         "notices": "{{done}} / {{total}} available",
         "noticesFailed": "{{count}} failed",
         "notified": "{{done}} / {{total}} notified",
-        "immediate": "Immediate publication",
         "settled": "{{done}} / {{total}} settled",
-        "remainingDue": "{{amount}} still due"
+        "remainingDue": "{{amount}} still due",
+        "sending": "Sending",
+        "withoutNotification": "No notification",
+        "prePublished": "Pre-published on the portal"
       },
       "callStates": {
-        "sending": "Sending",
         "noticesGenerating": "Notices generating",
-        "noticesFailed": "Notices failed",
         "settled": "Settled",
         "partiallySettled": "Partially settled",
         "notified": "Notified",
         "partiallyNotified": "Partially notified",
         "publishedWithoutSending": "Published without email",
-        "readyToNotify": "Ready to notify"
+        "readyToNotify": "Ready to notify",
+        "notDistributed": "Not distributed"
+      },
+      "pendingWizard": {
+        "title": "You have a call in preparation: {{name}}",
+        "description": "{{fund}}, step {{step}}, saved on {{date}}. This preparation is visible only to you and has no effect on calls or subscriptions.",
+        "noFund": "Fund not chosen",
+        "resume": "Resume",
+        "discard": "Abandon"
+      },
+      "notificationPanel": {
+        "title": "Recipients and notification",
+        "target": "Target:",
+        "restricted": "{{count}} subscriptions selected",
+        "principal": "Subscription address",
+        "copy": "Structure copy",
+        "export": "Export recipients (CSV)",
+        "noEmail": "Notification disabled: no email is sent.",
+        "noTemplate": "No capital call notification template",
+        "templateLine": "Notification template · {{slug}}",
+        "preview": "Preview",
+        "previewTitle": "Preview: {{name}}",
+        "previewDescription": "Example for a sample investor. Nothing is sent.",
+        "subject": "Subject:",
+        "frameLabel": "Email preview",
+        "attachments": "Attachments:",
+        "noticeFile": "Capital call notice (PDF)",
+        "message": "Accompanying message:",
+        "noMessage": "No message",
+        "channels": {
+          "portal": "Investor portal",
+          "email": "Email",
+          "documents": "Document space",
+          "none": "No distribution",
+          "documentsIn": "Document space: {{folder}}"
+        },
+        "csv": {
+          "investor": "Investor",
+          "subscriptions": "Subscriptions",
+          "contact": "Recipient",
+          "role": "Role",
+          "fileName": "recipients-{{name}}.csv"
+        }
       }
     }
   },
@@ -7214,7 +7371,7 @@
       "pageStateBanner": {
         "title": "Page state banner",
         "description": "Banner placed under the header of a detail page to explain why the page behaves differently. Built on Alert.",
-        "variants": "Archived (\"Unarchive\" action), locked by support (date and reason), mirror fund (link to the master fund), notices being sent (blocked actions), read-only for lack of right.",
+        "variants": "Archived (\"Unarchive\" action), locked by support (date and reason), mirror fund (link to the master fund), notices being sent (blocked actions), read-only for lack of right, pending preparation owned by the user (Resume, Abandon).",
         "states": "Action available, action in progress (button disabled with spinner), action unavailable (disabled, reason on hover).",
         "exampleLabel": "The five variants",
         "exampleHint": "click \"Unarchive\"; hover the second button to read the reason",
@@ -7397,7 +7554,7 @@
       "filterCardGroup": {
         "title": "Filter card group",
         "description": "Band of FilterCards above a listing: title with an accent bar, badge, hint and cards in a grid. Replaces the headers copied in the investor and subscription status tabs, SMS history and capital call queues.",
-        "variants": "4, 5 or 6 columns; with or without badge and hint.",
+        "variants": "3, 4, 5 or 6 columns; with or without badge and hint.",
         "states": "Active card, inactive card, zero total.",
         "exampleLabel": "Work queues",
         "demo": {
@@ -7428,7 +7585,7 @@
       },
       "wizardSteps": {
         "title": "Wizard steps",
-        "description": "Steps of a modal wizard, placed in the BigModalPanelHeader (new area under the title). Number, check once the step is done, current step label in bold.",
+        "description": "Wizard steps. In a modal: in the BigModalPanelHeader, under the title. Full screen: WizardStepsBar under the PageHeader, with WizardPageFooter stuck to the bottom of the screen (Cancel or Save and exit on the left, Previous / Next on the right). Number, check once the step is done, current step label in bold. ProcessStepsBar reuses the steps for processing an object that already exists (capital call sheet): completed steps checked, current step, then its state and the next action.",
         "variants": "2 to 5 steps.",
         "states": "Done step, current step, upcoming step.",
         "exampleLabel": "Three-step wizard",
@@ -7437,7 +7594,9 @@
           "info": "Information",
           "amounts": "Amounts",
           "control": "Review"
-        }
+        },
+        "fullPageLabel": "Full-screen wizard",
+        "processLabel": "Processing in steps (ProcessStepsBar)"
       },
       "formField": {
         "title": "Form field",
@@ -7475,6 +7634,28 @@
           "label": "Demo scenario",
           "default": "Nominal case",
           "noRight": "No notification right"
+        }
+      },
+      "mailPreview": {
+        "title": "Email preview",
+        "description": "Preview window for an email before sending: resolved subject, optional attached items, HTML body rendered in a script-free frame. Nothing is sent. Opened from a \"Preview\" button in the header of the Communication subsection or on a recipient row.",
+        "variants": "With or without attached items under the subject (attachments, accompanying message).",
+        "states": "Open, closed. Opening button unavailable with a reason when no email is sent.",
+        "exampleLabel": "Preview of a capital call notification",
+        "open": "Preview"
+      },
+      "richMultiSelect": {
+        "title": "Rich multi-select",
+        "description": "Checkbox dropdown to choose items described by several pieces of information (subscription: investor, reference, commitment, units, validation date). Search on the label and the reference. The selection is shown separately, in a list where each item can be removed.",
+        "variants": "With or without a detail line; trigger summarising the selection.",
+        "states": "Empty, partial selection, no option found, disabled.",
+        "exampleLabel": "Restricting a call to some subscriptions",
+        "demo": {
+          "investors": [
+            "Holding Arcadia",
+            "Fondation Horizon",
+            "Family Office Vega"
+          ]
         }
       }
     }

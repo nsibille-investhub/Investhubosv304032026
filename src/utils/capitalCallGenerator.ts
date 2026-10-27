@@ -29,6 +29,33 @@ export interface CapitalCallAttachment {
   sizeKb: number;
 }
 
+/** Diffusion d'un appel, choisie à la création : trois canaux indépendants. */
+export interface CapitalCallDiffusion {
+  /** Visible sur le portail investisseur, sur la souscription. */
+  portal: boolean;
+  /** Notification de l'avis par email. */
+  notify: boolean;
+  /** Dépôt de l'avis dans l'espace documentaire de l'investisseur. */
+  documents: boolean;
+  /** Visible et notifié : pré-publication immédiate sur le portail, ou publication à l'envoi de la notification. */
+  portalTiming: 'immediate' | 'onNotification';
+  /** Dossier de dépôt dans l'espace documentaire, obligatoire quand le dépôt est actif. */
+  documentFolder?: string | null;
+}
+
+export const DEFAULT_DIFFUSION: CapitalCallDiffusion = {
+  portal: true,
+  notify: true,
+  documents: true,
+  portalTiming: 'onNotification',
+  documentFolder: null,
+};
+
+/** Dossiers de l'espace documentaire éligibles au dépôt des avis d'un fonds (jeu de démonstration). */
+export function fundDocumentFolders(fundName: string): string[] {
+  return [`${fundName} / Appels de fonds`, `${fundName} / Avis aux investisseurs`, `${fundName} / Correspondance`];
+}
+
 export interface CapitalCall {
   id: number;
   fundId: number;
@@ -54,8 +81,7 @@ export interface CapitalCall {
   notifiedLines: number;
   /** Lignes notifiées ni payées ni compensées : celles qu'une relance cible. */
   linesToRelaunch: number;
-  /** Publication sur le portail : à la notification, ou immédiate sans email. */
-  publication: 'onNotification' | 'immediate';
+  diffusion: CapitalCallDiffusion;
   /** Appel créé dans la session : lignes à notifier, avis demandés à la création. */
   justCreated?: boolean;
 }
@@ -96,6 +122,14 @@ function seeded(seed: number) {
 }
 
 const DAY = 24 * 60 * 60 * 1000;
+
+/** Quelques appels non notifiés sont diffusés sans email, d'autres pré-publiés sur le portail. */
+function demoDiffusion(draw: number, fundName: string): CapitalCallDiffusion {
+  const base = { ...DEFAULT_DIFFUSION, documentFolder: fundDocumentFolders(fundName)[0] };
+  if (draw < 0.1) return { ...base, notify: false };
+  if (draw < 0.2) return { ...base, portalTiming: 'immediate' };
+  return base;
+}
 
 export function generateCapitalCalls(funds: Fund[], today = new Date()): CapitalCall[] {
   const calls: CapitalCall[] = [];
@@ -145,7 +179,7 @@ export function generateCapitalCalls(funds: Fund[], today = new Date()): Capital
       const message = MESSAGES[Math.floor(random() * MESSAGES.length)];
       const attachments = ATTACHMENTS.slice(0, Math.floor(random() * 3));
       const isUpcoming = dueDate.getTime() > today.getTime();
-      const sending = isUpcoming && random() < 0.6;
+      const sending = isUpcoming && random() < 0.08;
       const lines = 4 + Math.floor(random() * 40);
       let notifiedLines: number;
       if (!isUpcoming) notifiedLines = lines;
@@ -175,7 +209,7 @@ export function generateCapitalCalls(funds: Fund[], today = new Date()): Capital
         lines,
         notifiedLines,
         linesToRelaunch,
-        publication: notifiedLines === 0 && random() < 0.15 ? 'immediate' : 'onNotification',
+        diffusion: demoDiffusion(notifiedLines === 0 ? random() : 1, fund.name),
       });
     }
   });

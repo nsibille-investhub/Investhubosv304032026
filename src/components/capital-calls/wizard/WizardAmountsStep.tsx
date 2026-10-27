@@ -1,11 +1,12 @@
 import { useState, type ReactNode } from 'react';
-import { AlertTriangle, ChevronDown, ChevronRight, Layers, Target } from 'lucide-react';
+import { AlertTriangle, ChevronDown, ChevronRight, Layers, Target, X } from 'lucide-react';
 
 import { useTranslation } from '../../../utils/languageContext';
 import {
   FundCallSettings,
   ShareInput,
   WizardSubscription,
+  AmountKind,
   alreadyCalled,
   parseNumber,
   proposedPercent,
@@ -21,7 +22,9 @@ import { DisabledReason } from '../../ui/disabled-reason';
 import { FormField, SuffixInput } from '../../ui/form-field';
 import { ListingCard } from '../../ui/listing';
 import { SegmentedControl } from '../../ui/segmented-control';
-import { SidePanelSection } from '../../ui/side-panel';
+import { RichMultiSelect } from '../../ui/rich-multiselect';
+import { RowActionButton } from '../../ui/row-actions';
+import { SidePanelCard, SidePanelSection } from '../../ui/side-panel';
 import { WidgetCard } from '../../ui/widget-card';
 
 const K = 'funds.capitalCalls.wizard.amounts';
@@ -125,6 +128,7 @@ export function WizardAmountsStep({
     </div>
   );
 
+  const hasRestriction = shares.some(share => inputs[share]?.restriction);
   const toRaiseValue = parseNumber(amountToRaise) ?? 0;
   const gap = toRaiseValue - total;
 
@@ -188,11 +192,36 @@ export function WizardAmountsStep({
     },
   ];
 
+  const dateFormat = new Intl.DateTimeFormat(lang, { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const subscriptionDetails = (item: WizardSubscription) =>
+    t(`${K}.restriction.details`, {
+      id: item.id,
+      committed: money(item.committed),
+      units: new Intl.NumberFormat(lang).format(item.units),
+      validatedAt: dateFormat.format(item.validatedAt),
+    });
+
+  const setRestriction = (share: string, input: ShareInput, next: string[]) => {
+    const restricted = next.length > 0;
+    // Un appel restreint ne se saisit pas en pourcentage : l'engagement de référence ne serait plus celui de la part.
+    const patch: Partial<ShareInput> = { restriction: restricted ? next : null };
+    if (restricted && input.kind === 'percent' && !settings.perUnit) Object.assign(patch, { kind: 'amount', value: '' });
+    onShareChange(share, patch);
+  };
+
   const shareCard = (share: string): ReactNode => {
     const input = inputs[share];
     const items = perShareSubscriptions(share);
-    const restrictionOpen = openRestrictions[share] ?? input.restriction !== null;
+    const restricted = input.restriction !== null;
+    const restrictionOpen = openRestrictions[share] ?? restricted;
     const unitSuffix = t(`${K}.perUnitSuffix`, { currency: currencySymbol });
+    const perUnit = settings.perUnit || input.kind === 'perUnit';
+    const selected = items.filter(item => input.restriction?.includes(item.id));
+    const kindOptions: { value: AmountKind; label: string; disabled?: boolean }[] = [
+      { value: 'percent', label: t(`${K}.kinds.percent`), disabled: restricted },
+      { value: 'amount', label: t(`${K}.kinds.amount`) },
+      { value: 'perUnit', label: t(`${K}.kinds.perUnit`) },
+    ];
     return (
       <SidePanelSection
         key={share}
@@ -204,38 +233,32 @@ export function WizardAmountsStep({
         })}
       >
         <div className="space-y-4">
+          {!settings.perUnit && (
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-sm font-medium">{t(`${K}.kinds.label`)}</span>
+              <SegmentedControl<AmountKind>
+                options={kindOptions}
+                value={input.kind}
+                onValueChange={kind => onShareChange(share, { kind, value: '' })}
+                size="sm"
+              />
+              <span className="text-xs text-muted-foreground">
+                {t(`${K}.kinds.hints.${input.kind}`)}
+                {restricted && ` ${t(`${K}.kinds.percentRestricted`)}`}
+              </span>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            {settings.perUnit ? (
-              <NumberField
-                id={`value-${share}`}
-                label={t(`${K}.fields.perUnit`)}
-                value={input.value}
-                suffix={unitSuffix}
-                error={errors[share]}
-                onChange={value => onShareChange(share, { value })}
-              />
-            ) : (
-              <NumberField
-                id={`value-${share}`}
-                label={t(`${K}.fields.value`)}
-                value={input.value}
-                suffix={input.kind === 'percent' ? '%' : currencySymbol}
-                error={errors[share]}
-                hint={t(`${K}.notCalledPlaceholder`)}
-                labelAside={
-                  <SegmentedControl
-                    options={[
-                      { value: 'percent', label: t(`${K}.kinds.percent`) },
-                      { value: 'amount', label: t(`${K}.kinds.amount`) },
-                    ]}
-                    value={input.kind}
-                    onValueChange={kind => onShareChange(share, { kind, value: '' })}
-                    size="sm"
-                  />
-                }
-                onChange={value => onShareChange(share, { value })}
-              />
-            )}
+            <NumberField
+              id={`value-${share}`}
+              label={t(perUnit ? `${K}.fields.perUnit` : `${K}.fields.value`)}
+              value={input.value}
+              suffix={perUnit ? unitSuffix : input.kind === 'percent' ? '%' : currencySymbol}
+              error={errors[share]}
+              hint={t(`${K}.notCalledPlaceholder`)}
+              onChange={value => onShareChange(share, { value })}
+            />
             <NumberField
               id={`recall-${share}`}
               label={t(settings.perUnit ? `${K}.fields.recallPerUnit` : `${K}.fields.recall`)}
@@ -284,30 +307,58 @@ export function WizardAmountsStep({
             <CollapsibleTrigger className="inline-flex items-center gap-1.5 text-sm font-medium text-primary">
               {restrictionOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
               {t(`${K}.restriction.toggle`)}
-              {input.restriction && (
+              {restricted && (
                 <span className="text-xs text-muted-foreground">
-                  {t(`${K}.restriction.selected`, { count: input.restriction.length, total: items.length })}
+                  {t(`${K}.restriction.selected`, { count: selected.length, total: items.length })}
                 </span>
               )}
             </CollapsibleTrigger>
-            <CollapsibleContent className="mt-3 space-y-2">
+            <CollapsibleContent className="mt-3 space-y-3">
               <p className="text-xs text-muted-foreground">{t(`${K}.restriction.hint`)}</p>
-              <div className="grid max-h-60 grid-cols-1 gap-1 overflow-y-auto md:grid-cols-2">
-                {items.map(item => (
-                  <label key={item.id} className="flex cursor-pointer items-center gap-2 rounded px-1 py-1 text-sm hover:bg-muted">
-                    <Checkbox
-                      checked={input.restriction?.includes(item.id) ?? false}
-                      onCheckedChange={checked => {
-                        const current = input.restriction ?? [];
-                        const next = checked ? [...current, item.id] : current.filter(id => id !== item.id);
-                        onShareChange(share, { restriction: next.length > 0 ? next : null });
-                      }}
-                    />
-                    <span className="truncate">{item.investor}</span>
-                    <span className="text-xs text-muted-foreground tabular-nums">{item.id}</span>
-                  </label>
-                ))}
-              </div>
+              <RichMultiSelect
+                id={`restriction-${share}`}
+                options={items.map(item => ({
+                  value: item.id,
+                  label: item.investor,
+                  details: subscriptionDetails(item),
+                }))}
+                value={input.restriction ?? []}
+                onChange={next => setRestriction(share, input, next)}
+                triggerLabel={
+                  restricted
+                    ? t(`${K}.restriction.selected`, { count: selected.length, total: items.length })
+                    : t(`${K}.restriction.placeholder`)
+                }
+                searchPlaceholder={t(`${K}.restriction.search`)}
+                emptyLabel={t(`${K}.restriction.empty`)}
+              />
+              {selected.length > 0 && (
+                <SidePanelCard flush className="divide-y divide-border">
+                  {selected.map(item => (
+                    <div key={item.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">{item.investor}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {subscriptionDetails(item)}
+                          {item.availableAt.getTime() > Date.now() &&
+                            ` · ${t(`${K}.restriction.availableAt`, { date: dateFormat.format(item.availableAt) })}`}
+                        </p>
+                      </div>
+                      <RowActionButton
+                        icon={X}
+                        tooltip={t(`${K}.restriction.remove`, { investor: item.investor })}
+                        onClick={() =>
+                          setRestriction(
+                            share,
+                            input,
+                            (input.restriction ?? []).filter(id => id !== item.id),
+                          )
+                        }
+                      />
+                    </div>
+                  ))}
+                </SidePanelCard>
+              )}
             </CollapsibleContent>
           </Collapsible>
         </div>
@@ -318,11 +369,19 @@ export function WizardAmountsStep({
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <DisabledReason reason={settings.perUnit ? t(`${K}.toRaiseUnavailable`) : null}>
+        <DisabledReason
+          reason={
+            settings.perUnit
+              ? t(`${K}.toRaiseUnavailable`)
+              : hasRestriction
+                ? t(`${K}.toRaiseRestricted`)
+                : null
+          }
+        >
           <SegmentedControl<AmountsMode>
             options={[
               { value: 'perShare', label: t(`${K}.modes.perShare`) },
-              { value: 'toRaise', label: t(`${K}.modes.toRaise`), disabled: settings.perUnit },
+              { value: 'toRaise', label: t(`${K}.modes.toRaise`), disabled: settings.perUnit || hasRestriction },
             ]}
             value={mode}
             onValueChange={onModeChange}

@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Calculator, FileText, Send, Wallet } from 'lucide-react';
 
 import { useTranslation } from '../../utils/languageContext';
+import type { CapitalCallDiffusion } from '../../utils/capitalCallGenerator';
 import type { CallState, CallSummary } from '../../utils/capitalCallSummary';
 import type { StatusVariant } from '../StatusBadge';
 import { WidgetCard, WidgetMetric } from '../ui/widget-card';
@@ -10,24 +11,23 @@ import type { Tone } from '../ui/tone';
 const K = 'funds.capitalCalls.detail.summary';
 
 export const CALL_STATE_VARIANT: Record<CallState, StatusVariant> = {
-  sending: 'info',
   noticesGenerating: 'info',
-  noticesFailed: 'danger',
   settled: 'success',
   partiallySettled: 'warning',
   notified: 'info',
   partiallyNotified: 'neutral',
   publishedWithoutSending: 'outline',
+  notDistributed: 'outline',
   readyToNotify: 'neutral',
 };
 
 /** Filtre appliqué à l'onglet ouvert par un compteur. */
-export type LinesPreset = { filter: 'noticeState' | 'notification' | 'settlement'; values: string[] };
+export type LinesPreset = { filter: 'noticeState' | 'notification' | 'settlement' | 'share'; values: string[] };
 
 interface CapitalCallSummaryWidgetsProps {
   summary: CallSummary;
   currency: string;
-  publication: 'onNotification' | 'immediate';
+  diffusion: CapitalCallDiffusion;
   onOpenLines: (preset: LinesPreset | null) => void;
   onOpenFailedEmails: () => void;
 }
@@ -63,11 +63,18 @@ function Grid({ children }: { children: ReactNode }) {
 export function CapitalCallSummaryWidgets({
   summary,
   currency,
-  publication,
+  diffusion,
   onOpenLines,
   onOpenFailedEmails,
 }: CapitalCallSummaryWidgetsProps) {
   const { t, lang } = useTranslation();
+  const channels = [
+    diffusion.portal &&
+      t(diffusion.notify ? `${K}.notification.diffusion.portal.${diffusion.portalTiming}` : `${K}.notification.diffusion.portal.alone`),
+    diffusion.notify && t(`${K}.notification.diffusion.email`),
+    diffusion.documents && t(`${K}.notification.diffusion.documents`),
+  ].filter(Boolean);
+  const diffusionSummary = channels.length > 0 ? channels.join(' · ') : t(`${K}.notification.diffusion.none`);
   const money = (value: number) =>
     new Intl.NumberFormat(lang, { style: 'currency', currency, minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
   const open = (filter: LinesPreset['filter'], value: string) => () => onOpenLines({ filter, values: [value] });
@@ -89,7 +96,7 @@ export function CapitalCallSummaryWidgets({
         <Grid>
           <Counter label={t(`${K}.notices.available`)} value={summary.noticesAvailable} tone="success" onClick={open('noticeState', 'available')} />
           <Counter label={t(`${K}.notices.generating`)} value={summary.noticesGenerating} tone="info" onClick={open('noticeState', 'generating')} />
-          <Counter label={t(`${K}.notices.failed`)} value={summary.noticesFailed} tone="danger" onClick={open('noticeState', 'failed')} />
+          <Counter label={t(`${K}.notices.failed`)} value={summary.noticesFailed} onClick={open('noticeState', 'failed')} />
           <Counter label={t(`${K}.notices.replaced`)} value={summary.noticesReplaced} onClick={open('noticeState', 'replaced')} />
         </Grid>
       </WidgetCard>
@@ -97,7 +104,7 @@ export function CapitalCallSummaryWidgets({
       <WidgetCard
         icon={Send}
         title={t(`${K}.notification.title`)}
-        subtitle={t(`${K}.notification.publication.${publication}`)}
+        subtitle={diffusionSummary}
       >
         <Grid>
           <Counter label={t(`${K}.notification.notified`)} value={summary.notified} tone="info" onClick={open('notification', 'notified')} />

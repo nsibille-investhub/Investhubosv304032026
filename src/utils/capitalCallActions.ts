@@ -19,7 +19,7 @@ export const CAPITAL_CALL_ACTIONS: CapitalCallAction[] = [
   'delete',
 ];
 
-export type CapitalCallBlocker = 'sending' | 'alreadyNotified' | 'nothingToRelaunch' | 'missingRight';
+export type CapitalCallBlocker = 'notificationDisabled' | 'sending' | 'alreadyNotified' | 'nothingToRelaunch' | 'missingRight';
 
 export interface CapitalCallRights {
   manage: boolean;
@@ -50,6 +50,7 @@ export function capitalCallBlocker(
   action: CapitalCallAction,
   rights: CapitalCallRights,
 ): CapitalCallBlocker | null {
+  if ((action === 'notify' || action === 'relaunch') && !call.diffusion.notify) return 'notificationDisabled';
   if (call.sending && LOCKED_WHILE_SENDING.has(action)) return 'sending';
   if (!rights[REQUIRED_RIGHT[action]]) return 'missingRight';
   if (action === 'notify' && call.notifiedLines >= call.lines) return 'alreadyNotified';

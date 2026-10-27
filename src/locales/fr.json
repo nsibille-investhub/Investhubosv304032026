@@ -6557,15 +6557,14 @@
         "exportNotices": "Exporter les avis (ZIP)",
         "exportLines": "Exporter les lignes (CSV)",
         "edit": "Modifier",
-        "delete": "Supprimer"
+        "delete": "Supprimer",
+        "resumePreparation": "Reprendre l'appel en préparation"
       },
       "searchPlaceholder": "Rechercher un appel ou un fonds",
       "queues": {
         "label": "Files de travail",
         "all": "Tous les appels",
-        "noticesFailed": "Avis en échec",
         "toNotify": "À notifier",
-        "sending": "Envoi en cours",
         "overdue": "Échus non soldés",
         "fundsMetric": "Fonds",
         "perFund": "{{count}} par fonds",
@@ -6576,7 +6575,8 @@
         "duePeriod": "Période d'échéance",
         "origin": "Origine",
         "reset": "Réinitialiser les filtres",
-        "state": "État"
+        "state": "État",
+        "stage": "Étape"
       },
       "columns": {
         "fund": "Fonds",
@@ -6640,7 +6640,8 @@
         "sending": "Envoi en cours",
         "alreadyNotified": "Appel déjà notifié",
         "nothingToRelaunch": "Aucune ligne à relancer",
-        "missingRight": "Droit manquant, rapprochez-vous de votre administrateur interne"
+        "missingRight": "Droit manquant, rapprochez-vous de votre administrateur interne",
+        "notificationDisabled": "Notification désactivée sur cet appel"
       },
       "deleteDialog": {
         "title": "Supprimer {{name}} ?",
@@ -6659,7 +6660,6 @@
         "tabs": {
           "lines": "Lignes investisseurs",
           "emails": "Envois",
-          "breakdown": "Ventilation par part",
           "message": "Message et pièces jointes",
           "journal": "Journal"
         },
@@ -6676,14 +6676,29 @@
           "modes": {
             "percent": "Pourcentage du montant souscrit",
             "totalAmount": "Montant total de la part",
-            "perUnit": "Montant par titre"
+            "perUnit": "Montant par part"
           },
-          "perUnitValue": "{{amount}} par titre",
+          "perUnitValue": "{{amount}} par part",
           "called": "Appelés",
           "notCalled": "Non appelés",
           "noRestriction": "Aucune",
           "restrictedOne": "{{count}} souscription",
-          "restrictedMany": "{{count}} souscriptions"
+          "restrictedMany": "{{count}} souscriptions",
+          "title": "Ventilation par part",
+          "hint": "Cliquez sur une part pour filtrer les lignes",
+          "allShares": "Toutes les parts",
+          "calledTotal": "Montant appelé",
+          "sharesLabel": "Parts",
+          "optionsLabel": "Options",
+          "entryFeesShort": "Frais",
+          "premiumShort": "Prime",
+          "releasedShort": "Débloqué {{amount}}",
+          "noOption": "Aucune option",
+          "modesShort": {
+            "percent": "Pourcentage",
+            "totalAmount": "Montant total",
+            "perUnit": "Par part détenue"
+          }
         },
         "message": {
           "title": "Message d'accompagnement",
@@ -6715,8 +6730,8 @@
             "investor": "Investisseur",
             "subscription": "Souscription",
             "share": "Part",
-            "units": "Nombre de titres",
-            "amountPerUnit": "Montant par titre",
+            "units": "Nombre de parts",
+            "amountPerUnit": "Montant par part",
             "calledAmount": "Montant appelé",
             "fees": "Frais",
             "premium": "Prime",
@@ -6882,14 +6897,20 @@
           },
           "notification": {
             "title": "Notification",
-            "publication": {
-              "onNotification": "Publication à la notification",
-              "immediate": "Publication immédiate, sans email"
-            },
             "notified": "Notifiées",
             "toNotify": "À notifier",
             "reminded": "Relancées",
-            "emailsFailed": "Envois en échec"
+            "emailsFailed": "Envois en échec",
+            "diffusion": {
+              "portal": {
+                "onNotification": "Portail à la notification",
+                "immediate": "Portail pré-publié",
+                "alone": "Portail"
+              },
+              "email": "Email",
+              "documents": "Espace documentaire",
+              "none": "Aucune diffusion"
+            }
           },
           "settlement": {
             "title": "Règlement",
@@ -6899,6 +6920,33 @@
             "unpaid": "Non payées",
             "remainingDue": "Restant dû sur {{count}} lignes"
           }
+        },
+        "stages": {
+          "ariaLabel": "Étapes du traitement de l'appel",
+          "notices": {
+            "label": "Production des avis",
+            "title": "Production des avis en cours",
+            "description": "{{done}} / {{total}} avis disponibles. La diffusion s'ouvre dès que les avis sont produits."
+          },
+          "diffusion": {
+            "label": "En cours de diffusion",
+            "title": "En cours de diffusion",
+            "description": "{{count}} lignes sur {{total}} à notifier.",
+            "sending": "Envoi en cours : les actions reprennent à la fin de l'envoi.",
+            "action": "Notifier {{count}} lignes"
+          },
+          "settlement": {
+            "label": "En cours de règlement",
+            "title": "En cours de règlement",
+            "description": "{{count}} lignes sur {{total}} à régler, {{amount}} restant dû.",
+            "relaunch": "Relancer",
+            "action": "Valider des paiements"
+          },
+          "closed": {
+            "label": "Soldé",
+            "title": "Appel soldé",
+            "description": "Les {{total}} lignes sont payées ou compensées."
+          }
         }
       },
       "wizard": {
@@ -6907,7 +6955,7 @@
         "stepsLabel": "Étapes de l'assistant",
         "steps": {
           "info": "Fonds et informations",
-          "amounts": "Montants",
+          "amounts": "Ventilation par part",
           "control": "Contrôle"
         },
         "close": "Fermer l'assistant",
@@ -6924,7 +6972,9 @@
           "dueDate": "Saisissez la date d'échéance.",
           "invalidNumber": "Saisissez un nombre positif.",
           "over100": "Pourcentage refusé : le paramètre \"Limiter les appels à 100 %\" est actif.",
-          "noShare": "Saisissez un montant sur au moins une part."
+          "noShare": "Saisissez un montant sur au moins une part.",
+          "shares": "Choisissez au moins une part.",
+          "documentFolder": "Choisissez le dossier cible du dépôt."
         },
         "suspended": {
           "title": "Création suspendue",
@@ -6936,9 +6986,10 @@
         },
         "abandon": {
           "title": "Abandonner la création ?",
-          "description": "Rien n'a été enregistré. Les informations saisies seront perdues.",
+          "description": "La préparation en attente sera effacée. Aucun appel n'a été créé.",
           "confirm": "Abandonner",
-          "cancel": "Continuer la saisie"
+          "cancel": "Continuer la saisie",
+          "keep": "Garder la préparation"
         },
         "info": {
           "fund": "Fonds",
@@ -6949,11 +7000,6 @@
           "noticeDate": "Date de l'avis",
           "noticeDateHint": "Facultative. Imprimée sur l'avis si elle diffère de l'échéance.",
           "datePlaceholder": "Choisir une date",
-          "publication": "Publication sur le portail",
-          "publicationOptions": {
-            "onNotification": "À la notification",
-            "immediate": "Immédiate, sans email"
-          },
           "message": "Message d'accompagnement",
           "messagePlaceholder": "Texte envoyé avec l'avis",
           "attachment": "Pièce jointe {{index}}",
@@ -6978,49 +7024,113 @@
             "hintDesc": "PDF, Word ou image",
             "ready": "Fichier prêt à être joint",
             "preview": "Aperçu"
-          }
+          },
+          "diffusion": {
+            "label": "Diffusion de l'avis",
+            "noneHint": "Aucun canal choisi : l'appel sera suivi en back-office sans être diffusé aux investisseurs.",
+            "portal": {
+              "label": "Visible sur le portail investisseur",
+              "description": "L'appel et son avis apparaissent sur la souscription de l'investisseur."
+            },
+            "notify": {
+              "label": "Notifier par email",
+              "description": "L'investisseur reçoit l'avis par email à l'envoi de la notification."
+            },
+            "documents": {
+              "label": "Déposer dans l'espace documentaire",
+              "description": "L'avis est classé dans les documents de l'investisseur, à la notification ou dès la création si l'appel n'est pas notifié."
+            },
+            "timing": {
+              "label": "Publication sur le portail",
+              "onNotification": "À l'envoi de la notification",
+              "immediate": "Pré-publication immédiate"
+            },
+            "folder": {
+              "label": "Dossier cible",
+              "placeholder": "Choisir un dossier",
+              "hint": "Dossiers éligibles selon les règles de l'espace documentaire et le fonds."
+            }
+          },
+          "shares": "Parts appelées",
+          "sharesPlaceholder": "Choisir les parts",
+          "sharesSearch": "Rechercher une part",
+          "sharesHint": "{{count}} sur {{total}} parts retenues",
+          "sections": {
+            "call": "Appel",
+            "flows": "Flux liés",
+            "communication": "Communication"
+          },
+          "communication": {
+            "preview": "Aperçu",
+            "previewNoEmail": "Notification désactivée : aucun email n'est envoyé.",
+            "previewNoTemplate": "Aucun gabarit de notification d'appel sur l'application.",
+            "previewTitle": "Aperçu : {{name}}",
+            "previewDescription": "Exemple pour un investisseur fictif. Rien n'est envoyé.",
+            "subject": "Objet :",
+            "frameLabel": "Aperçu du mail",
+            "attachments": "Pièces jointes :",
+            "noticeFile": "Avis d'appel (PDF)",
+            "message": "Message d'accompagnement :",
+            "noMessage": "Aucun message"
+          },
+          "forecastHint": "Rattacher un flux prévisionnel le passe à l'état consommé : il n'est plus proposé pour un autre appel, et son montant peut servir de montant à lever à l'étape suivante. Supprimer l'appel le remet en attente.",
+          "distributionsHint": "Une distribution compensée vient en déduction du montant dû : l'investisseur ne règle que le net et ne voit pas d'action de paiement sur le portail."
         },
         "amounts": {
           "modes": {
             "perShare": "Par part",
             "toRaise": "Montant à lever"
           },
-          "toRaiseUnavailable": "Indisponible : l'appel est généré par titre.",
+          "toRaiseUnavailable": "Indisponible : l'appel est généré par part.",
           "settings": {
             "label": "Paramètres du fonds :",
             "none": "aucun paramètre particulier",
-            "perUnit": "Générer l'appel par titre",
+            "perUnit": "Générer l'appel par part",
             "netFlow": "Flux net",
             "capAt100": "Limiter les appels à 100 %",
             "combinedNotices": "Avis combinés"
           },
           "allocation": {
-            "perUnit": "Répartition par titre",
-            "units": "Répartition au prorata du nombre de titres",
+            "perUnit": "Répartition par part détenue",
+            "units": "Répartition au prorata du nombre de parts",
             "subscribedAmount": "Répartition au prorata du montant souscrit"
           },
           "shareSummary": "Engagement {{committed}} · {{count}} souscriptions",
           "kinds": {
             "percent": "Pourcentage",
-            "amount": "Montant"
+            "amount": "Montant",
+            "perUnit": "Par part détenue",
+            "label": "Mode de saisie",
+            "percentRestricted": "Pourcentage indisponible sur une part restreinte.",
+            "hints": {
+              "percent": "Pourcentage de l'engagement de chaque souscription.",
+              "amount": "Montant total de la part, réparti entre les souscriptions.",
+              "perUnit": "Montant fixe par part, multiplié par le nombre de parts détenues par chaque souscription."
+            }
           },
           "fields": {
             "value": "Montant appelé",
-            "perUnit": "Montant par titre",
+            "perUnit": "Montant par part",
             "recall": "Rappel de distributions provisoires",
-            "recallPerUnit": "Rappel par titre",
+            "recallPerUnit": "Rappel par part",
             "netFlow": "Flux net",
-            "netFlowPerUnit": "Flux net par titre",
+            "netFlowPerUnit": "Flux net par part",
             "entryFees": "Appeler les frais d'entrée",
             "premium": "Appeler la prime"
           },
-          "perUnitSuffix": "{{currency}}/titre",
+          "perUnitSuffix": "{{currency}}/part",
           "notCalledPlaceholder": "Vide : part non appelée",
           "shareAmount": "Montant de la part :",
           "restriction": {
             "toggle": "Restreindre à certaines souscriptions",
             "selected": "{{count}} sur {{total}} retenues",
-            "hint": "Seules les souscriptions cochées sont appelées sur cette part. Aucune case cochée : pas de restriction."
+            "hint": "Seules les souscriptions choisies sont appelées sur cette part. Aucune sélection : toutes les souscriptions de la part sont appelées.",
+            "details": "{{id}} · Engagement {{committed}} · {{units}} parts · Validée le {{validatedAt}}",
+            "placeholder": "Choisir les souscriptions",
+            "search": "Rechercher un investisseur ou une souscription",
+            "empty": "Aucune souscription",
+            "remove": "Retirer {{investor}}",
+            "availableAt": "Disponible le {{date}}"
           },
           "toRaise": {
             "label": "Montant à lever",
@@ -7040,7 +7150,8 @@
             "total": "Total"
           },
           "total": "Total de l'appel (calculé)",
-          "percentFor": "Pourcentage de la part {{share}}"
+          "percentFor": "Pourcentage de la part {{share}}",
+          "toRaiseRestricted": "Indisponible : une part est restreinte à certaines souscriptions."
         },
         "control": {
           "blocked": {
@@ -7080,7 +7191,9 @@
             "remaining": "Reste à appeler",
             "overRemaining": "Dépasse : reste {{amount}}",
             "preview": "Aperçu de l'avis",
-            "empty": "Aucune ligne produite"
+            "empty": "Aucune ligne produite",
+            "export": "Exporter (CSV)",
+            "fileName": "lignes-{{name}}.csv"
           },
           "exclusions": {
             "title": "Souscriptions exclues",
@@ -7101,26 +7214,70 @@
             "dueDate": "À régler avant le {{date}}",
             "combined": "Cette ligne sera regroupée dans un avis combiné."
           }
-        }
+        },
+        "resumeLater": "Reprendre plus tard",
+        "autosaved": "Saisie sauvegardée automatiquement, visible par vous seul. Aucun appel n'existe avant la création."
       },
       "progress": {
         "notices": "{{done}} / {{total}} disponibles",
         "noticesFailed": "{{count}} en échec",
         "notified": "{{done}} / {{total}} notifiées",
-        "immediate": "Publication immédiate",
         "settled": "{{done}} / {{total}} réglées",
-        "remainingDue": "{{amount}} restant dû"
+        "remainingDue": "{{amount}} restant dû",
+        "sending": "Envoi en cours",
+        "withoutNotification": "Sans notification",
+        "prePublished": "Pré-publié sur le portail"
       },
       "callStates": {
-        "sending": "Envoi en cours",
         "noticesGenerating": "Avis en génération",
-        "noticesFailed": "Avis en échec",
         "settled": "Soldé",
         "partiallySettled": "Partiellement réglé",
         "notified": "Notifié",
         "partiallyNotified": "Partiellement notifié",
         "publishedWithoutSending": "Publié sans envoi",
-        "readyToNotify": "Prêt à notifier"
+        "readyToNotify": "Prêt à notifier",
+        "notDistributed": "Non diffusé"
+      },
+      "pendingWizard": {
+        "title": "Vous avez un appel en préparation : {{name}}",
+        "description": "{{fund}}, étape {{step}}, sauvegardé le {{date}}. Cette préparation est visible par vous seul et n'a aucun effet sur les appels ni sur les souscriptions.",
+        "noFund": "Fonds non choisi",
+        "resume": "Reprendre",
+        "discard": "Abandonner"
+      },
+      "notificationPanel": {
+        "title": "Destinataires et notification",
+        "target": "Cible :",
+        "restricted": "{{count}} souscriptions retenues",
+        "principal": "Adresse de la souscription",
+        "copy": "Copie structure",
+        "export": "Exporter les destinataires (CSV)",
+        "noEmail": "Notification désactivée : aucun email n'est envoyé.",
+        "noTemplate": "Aucun gabarit de notification d'appel",
+        "templateLine": "Gabarit de notification · {{slug}}",
+        "preview": "Aperçu",
+        "previewTitle": "Aperçu : {{name}}",
+        "previewDescription": "Exemple pour un investisseur fictif. Rien n'est envoyé.",
+        "subject": "Objet :",
+        "frameLabel": "Aperçu du mail",
+        "attachments": "Pièces jointes :",
+        "noticeFile": "Avis d'appel (PDF)",
+        "message": "Message d'accompagnement :",
+        "noMessage": "Aucun message",
+        "channels": {
+          "portal": "Portail investisseur",
+          "email": "Email",
+          "documents": "Espace documentaire",
+          "none": "Aucune diffusion",
+          "documentsIn": "Espace documentaire : {{folder}}"
+        },
+        "csv": {
+          "investor": "Investisseur",
+          "subscriptions": "Souscriptions",
+          "contact": "Destinataire",
+          "role": "Rôle",
+          "fileName": "destinataires-{{name}}.csv"
+        }
       }
     }
   },
@@ -7214,7 +7371,7 @@
       "pageStateBanner": {
         "title": "Bandeau d'état de page",
         "description": "Bandeau placé sous l'en-tête d'une page de détail pour dire pourquoi la page se comporte autrement. Construit sur Alert.",
-        "variants": "Archivé (action \"Désarchiver\"), verrouillé par le support (date et motif), fonds miroir (lien vers le fonds maître), envoi d'avis en cours (actions bloquées), lecture seule faute de droit.",
+        "variants": "Archivé (action \"Désarchiver\"), verrouillé par le support (date et motif), fonds miroir (lien vers le fonds maître), envoi d'avis en cours (actions bloquées), lecture seule faute de droit, préparation en attente propre à l'utilisateur (Reprendre, Abandonner).",
         "states": "Action disponible, action en cours (bouton désactivé avec chargement), action indisponible (désactivée, motif au survol).",
         "exampleLabel": "Les cinq variantes",
         "exampleHint": "cliquez sur \"Désarchiver\" ; survolez le second bouton pour lire le motif",
@@ -7397,7 +7554,7 @@
       "filterCardGroup": {
         "title": "Groupe de cartes filtres",
         "description": "Bandeau de FilterCard au-dessus d'un listing : titre souligné d'une barre, pastille, aide et cartes en grille. Remplace les en-têtes recopiés des onglets de statut investisseurs, souscriptions, historique SMS et des files des appels de fonds.",
-        "variants": "4, 5 ou 6 colonnes ; avec ou sans pastille et aide.",
+        "variants": "3, 4, 5 ou 6 colonnes ; avec ou sans pastille et aide.",
         "states": "Carte active, carte inactive, total à zéro.",
         "exampleLabel": "Files de travail",
         "demo": {
@@ -7428,7 +7585,7 @@
       },
       "wizardSteps": {
         "title": "Étapes d'assistant",
-        "description": "Étapes d'un assistant en modale, placées dans l'en-tête BigModalPanelHeader (nouvelle zone sous le titre). Numéro, coche une fois l'étape franchie, libellé de l'étape en cours en gras.",
+        "description": "Étapes d'un assistant. En modale : dans l'en-tête BigModalPanelHeader, sous le titre. En écran complet : WizardStepsBar sous le PageHeader, avec WizardPageFooter collé en bas de l'écran (Annuler ou Enregistrer et quitter à gauche, Précédent / Suivant à droite). Numéro, coche une fois l'étape franchie, libellé de l'étape en cours en gras. ProcessStepsBar reprend les étapes pour le traitement d'un objet déjà créé (fiche d'un appel de fonds) : étapes franchies cochées, étape en cours, puis son état et la prochaine action.",
         "variants": "De 2 à 5 étapes.",
         "states": "Étape franchie, étape en cours, étape à venir.",
         "exampleLabel": "Assistant en trois étapes",
@@ -7437,7 +7594,9 @@
           "info": "Informations",
           "amounts": "Montants",
           "control": "Contrôle"
-        }
+        },
+        "fullPageLabel": "Assistant en écran complet",
+        "processLabel": "Traitement en étapes (ProcessStepsBar)"
       },
       "formField": {
         "title": "Champ de formulaire",
@@ -7475,6 +7634,28 @@
           "label": "Scénario de démonstration",
           "default": "Cas nominal",
           "noRight": "Sans droit de notification"
+        }
+      },
+      "mailPreview": {
+        "title": "Aperçu d'un mail",
+        "description": "Fenêtre d'aperçu d'un mail avant envoi : objet résolu, éléments joints facultatifs, corps HTML rendu dans un cadre sans script. Rien n'est envoyé. Ouverte depuis un bouton \"Aperçu\" placé dans l'en-tête de la sous-section Communication ou sur la ligne d'un destinataire.",
+        "variants": "Avec ou sans éléments joints sous l'objet (pièces jointes, message d'accompagnement).",
+        "states": "Ouverte, fermée. Bouton d'ouverture indisponible avec motif quand aucun mail ne part.",
+        "exampleLabel": "Aperçu de la notification d'un appel",
+        "open": "Aperçu"
+      },
+      "richMultiSelect": {
+        "title": "Multisélection riche",
+        "description": "Liste déroulante à cases pour choisir des éléments décrits par plusieurs informations (souscription : investisseur, référence, engagement, titres, date de validation). Recherche sur le libellé et la référence. La sélection s'affiche à part, dans une liste où chaque élément se retire.",
+        "variants": "Avec ou sans ligne de détail ; déclencheur résumant la sélection.",
+        "states": "Vide, sélection partielle, aucune option trouvée, désactivé.",
+        "exampleLabel": "Restriction d'un appel à certaines souscriptions",
+        "demo": {
+          "investors": [
+            "Holding Arcadia",
+            "Fondation Horizon",
+            "Family Office Vega"
+          ]
         }
       }
     }

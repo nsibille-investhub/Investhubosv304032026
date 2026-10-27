@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
-import { Archive, ArrowUpRight, Copy, Handshake, Loader2, Lock, RotateCcw, Send, ShieldOff } from 'lucide-react';
+import { Archive, ArrowUpRight, Clock, Copy, Handshake, Loader2, Lock, RotateCcw, Send, ShieldOff } from 'lucide-react';
 import { useTranslation } from '../../utils/languageContext';
 import { Alert, AlertDescription } from './alert';
 import { Button } from './button';
@@ -23,6 +23,17 @@ export type PageStateBannerProps =
   | { variant: 'mirror'; masterName: string; onOpenMaster: () => void; className?: string }
   | { variant: 'sendingNotices'; blockedActions: string[]; className?: string }
   | { variant: 'readOnly'; className?: string }
+  /** Préparation en attente propre à l'utilisateur (assistant de création interrompu). */
+  | {
+      variant: 'pendingWizard';
+      title: string;
+      description: string;
+      resumeLabel: string;
+      discardLabel: string;
+      onResume: () => void;
+      onDiscard: () => void;
+      className?: string;
+    }
   /** Validation KYC déléguée au partenaire : en attente, ou validée et transmise à l'analyste 1. */
   | { variant: 'delegatedReview'; partner: string; validatedBy?: string; date?: string; className?: string }
   /** Souscription rouverte pour correction, en attente de la nouvelle soumission. */
@@ -34,6 +45,7 @@ const VARIANT_STYLE: Record<PageStateBannerProps['variant'], { icon: LucideIcon;
   mirror: { icon: Copy, tone: 'info' },
   sendingNotices: { icon: Send, tone: 'warning' },
   readOnly: { icon: ShieldOff, tone: 'neutral' },
+  pendingWizard: { icon: Clock, tone: 'info' },
   delegatedReview: { icon: Handshake, tone: 'info' },
   reopened: { icon: RotateCcw, tone: 'warning' },
 };
@@ -93,6 +105,20 @@ export function PageStateBanner(props: PageStateBannerProps) {
     case 'readOnly':
       title = t('funds.stateBanner.readOnly.title');
       description = t('funds.stateBanner.readOnly.description');
+      break;
+    case 'pendingWizard':
+      title = props.title;
+      description = props.description;
+      action = (
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={props.onDiscard}>
+            {props.discardLabel}
+          </Button>
+          <Button variant="outline" size="sm" onClick={props.onResume}>
+            {props.resumeLabel}
+          </Button>
+        </div>
+      );
       break;
     case 'delegatedReview':
       if (props.validatedBy) {

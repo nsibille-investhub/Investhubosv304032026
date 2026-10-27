@@ -63,7 +63,6 @@ import {
   FORM_FIELD_LABEL_CLASS,
   type FormSectionStatus,
 } from './ui/form-section';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
 import { cn } from './ui/utils';
 import {
   HOLDING_MODE_LABEL_KEYS,
@@ -77,6 +76,7 @@ import { toast } from 'sonner';
 import { useTranslation } from '../utils/languageContext';
 import { MAIL_TEMPLATES, PREVIEW_VALUES, type MailTemplate } from '../utils/mailTemplatesMockData';
 import { buildPreviewDocument } from './settings/MailTemplateDetailPage';
+import { MailPreviewDialog } from './ui/mail-preview-dialog';
 import { createNote, isNoteComplete, isReminderInPast, NoteFormFields } from './investor-detail/NoteEditSheet';
 import type { Note } from '../utils/investorGenerator';
 
@@ -3057,41 +3057,19 @@ export function NewSubscriptionDialog({
             }
           />
         </div>
-        <Dialog open={!!previewRecipient} onOpenChange={(open) => !open && setPreviewRecipient(null)}>
-          <DialogContent
-            className="flex flex-col overflow-hidden"
-            style={{ width: 760, maxWidth: 'calc(100vw - 2rem)', maxHeight: '90vh' }}
-          >
-            <DialogHeader>
-              <DialogTitle>
-                {t('subscriptions.newDialog.preview.title', { name: previewRecipient?.template?.name ?? '' })}
-              </DialogTitle>
-              <DialogDescription>
-                {t('subscriptions.newDialog.preview.description', {
-                  recipient: previewRecipient?.name ?? '',
-                  language: t(`subscriptions.newDialog.notificationSection.languageOptions.${formData.language}`),
-                })}
-              </DialogDescription>
-            </DialogHeader>
-            {previewDocument && (
-              <div className="space-y-3">
-                <div className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm">
-                  <span className="text-muted-foreground">{t('subscriptions.newDialog.preview.subject')} </span>
-                  <span className="font-medium text-foreground">{previewDocument.subject}</span>
-                </div>
-                <div className="rounded-md border border-border bg-gray-100 p-3 overflow-auto">
-                  <iframe
-                    title={t('subscriptions.newDialog.preview.frameLabel')}
-                    srcDoc={previewDocument.html}
-                    sandbox=""
-                    className="w-full border-0 block bg-white"
-                    style={{ height: 'min(60vh, 560px)' }}
-                  />
-                </div>
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
+        <MailPreviewDialog
+          open={!!previewRecipient && !!previewDocument}
+          onOpenChange={(open) => !open && setPreviewRecipient(null)}
+          title={t('subscriptions.newDialog.preview.title', { name: previewRecipient?.template?.name ?? '' })}
+          description={t('subscriptions.newDialog.preview.description', {
+            recipient: previewRecipient?.name ?? '',
+            language: t(`subscriptions.newDialog.notificationSection.languageOptions.${formData.language}`),
+          })}
+          subject={previewDocument?.subject ?? ''}
+          html={previewDocument?.html ?? ''}
+          subjectLabel={t('subscriptions.newDialog.preview.subject')}
+          frameLabel={t('subscriptions.newDialog.preview.frameLabel')}
+        />
       </BigModalContent>
     </BigModal>
   );

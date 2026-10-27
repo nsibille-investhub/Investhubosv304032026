@@ -3,26 +3,27 @@ import type { CapitalCallEmail } from './capitalCallEmails';
 import type { CapitalCallLine } from './capitalCallLines';
 
 export type CallState =
-  | 'sending'
   | 'noticesGenerating'
-  | 'noticesFailed'
   | 'settled'
   | 'partiallySettled'
   | 'notified'
   | 'partiallyNotified'
   | 'publishedWithoutSending'
+  | 'notDistributed'
   | 'readyToNotify';
 
-/** Ordre de priorité : le premier état vrai l'emporte. */
+/**
+ * Ordre de priorité : le premier état vrai l'emporte. Un avis en échec ou un envoi en cours ne change pas
+ * l'état de l'appel : ils sont signalés en second plan, dans les colonnes Avis et Notification.
+ */
 export const CALL_STATES: CallState[] = [
-  'sending',
   'noticesGenerating',
-  'noticesFailed',
   'settled',
   'partiallySettled',
   'notified',
   'partiallyNotified',
   'publishedWithoutSending',
+  'notDistributed',
   'readyToNotify',
 ];
 
@@ -84,14 +85,14 @@ export function summarizeCall(call: CapitalCall, lines: CapitalCallLine[], email
   const noticesFailed = count(line => line.noticeState === 'failed');
 
   let state: CallState = 'readyToNotify';
-  if (call.sending) state = 'sending';
-  else if (noticesGenerating > 0) state = 'noticesGenerating';
-  else if (noticesFailed > 0) state = 'noticesFailed';
+  if (noticesGenerating > 0) state = 'noticesGenerating';
   else if (lines.length > 0 && settled === lines.length) state = 'settled';
   else if (settled > 0) state = 'partiallySettled';
   else if (lines.length > 0 && notified === lines.length) state = 'notified';
   else if (notified > 0) state = 'partiallyNotified';
-  else if (call.publication === 'immediate') state = 'publishedWithoutSending';
+  else if (!call.diffusion.notify) {
+    state = call.diffusion.portal || call.diffusion.documents ? 'publishedWithoutSending' : 'notDistributed';
+  }
 
   return {
     lines: lines.length,
@@ -103,7 +104,7 @@ export function summarizeCall(call: CapitalCall, lines: CapitalCallLine[], email
     noticesFailed,
     noticesReplaced: count(line => line.noticeState === 'replaced'),
     notified,
-    toNotify: count(line => line.notifiedAt === null),
+    toNotify: call.diffusion.notify ? count(line => line.notifiedAt === null) : 0,
     reminded: count(line => line.lastReminderAt !== null),
     emailsFailed: emails.filter(email => ['failed', 'spam', 'notFound'].includes(email.state)).length,
     paid: count(line => settlementOf(line) === 'paid'),
@@ -114,4 +115,19 @@ export function summarizeCall(call: CapitalCall, lines: CapitalCallLine[], email
     remainingDue: cents(lines.filter(line => !isSettled(line)).reduce((sum, line) => sum + line.total, 0)),
     state,
   };
+}
+
+/** Étapes du traitement d'un appel, après sa création. */
+export type CallStage = 'notices' | 'diffusion' | 'settlement' | 'closed';
+export const CALL_STAGES: CallStage[] = ['notices', 'diffusion', 'settlement', 'closed'];
+
+/**
+ * Étape en cours d'un appel. Les avis bloquent la diffusion tant qu'ils sont en génération ;
+ * un avis en échec ne bloque pas. Sans notification, l'appel passe directement au règlement.
+ */
+export function callStage(call: CapitalCall, summary: CallSummary): CallStage {
+  if (summary.lines > 0 && summary.settled === summary.lines) return 'closed';
+  if (summary.noticesGenerating > 0 && summary.notified === 0) return 'notices';
+  if (call.diffusion.notify && summary.notified < summary.lines) return 'diffusion';
+  return 'settlement';
 }
