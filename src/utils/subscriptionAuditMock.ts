@@ -19,7 +19,6 @@ export type SubscriptionAuditEventType =
   | 'mandateCreated'
   | 'investorReminded'
   | 'dossierReopened'
-  | 'dossierTakenOver'
   | 'partnerValidated'
   | 'reviewHandedOff'
   | 'finalValidation'
@@ -45,7 +44,6 @@ export const SUBSCRIPTION_AUDIT_EVENT_TYPES: SubscriptionAuditEventType[] = [
   'mandateCreated',
   'investorReminded',
   'dossierReopened',
-  'dossierTakenOver',
   'partnerValidated',
   'reviewHandedOff',
   'finalValidation',

@@ -353,8 +353,6 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   // Réouverture en attente de la nouvelle soumission de l'investisseur (statut "Rouvert").
   const [pendingReopen, setPendingReopen] = useState<ReopenRecord | null>(null);
   const [lastReopenAt, setLastReopenAt] = useState<string | null>(null);
-  // Reprise en main : l'équipe de gestion corrige elle-même, sans notification (IC-5248).
-  const [takeover, setTakeover] = useState<ReopenRecord | null>(null);
   const [liveEmails, setLiveEmails] = useState<MockEmail[]>([]);
   const emails = [...liveEmails, ...mockEmails];
 
@@ -950,13 +948,6 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
     .map((doc, idx) => ({ doc, idx }))
     .filter(({ doc }) => isMissingIssueDate(doc));
   const delegatedPartnerName = subscription.partenaire?.name ?? t('subscriptions.detail.answerAlerts.partnerFallback');
-  const awaitingPartner = reviewCircuit === 'partnerPrevalidation' && !partnerValidation;
-  const validationBlockedReason =
-    documentBlockers.length > 0
-      ? t('subscriptions.detail.documentControl.validationBlocked', { count: documentBlockers.length })
-      : awaitingPartner
-        ? t('subscriptions.detail.partnerReview.awaitingPartner', { partner: delegatedPartnerName })
-        : undefined;
 
   const onboardingNavSections: OnboardingNavSection[] = onboardingSections.map((section, idx) => ({
     id: section.id,
@@ -1245,11 +1236,9 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
 
   const reopenDisabledReason = !canManage
     ? t('subscriptions.detail.reopen.disabled.noRight')
-    : afterSignature || currentStep >= 4
+    : afterSignature
       ? t('subscriptions.detail.reopen.disabled.packSent')
-      : currentStep === 0
-        ? t('subscriptions.detail.reopen.disabled.notStarted')
-        : undefined;
+      : undefined;
 
   const nowStamp = () => {
     const now = new Date();
@@ -1257,30 +1246,10 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
     return `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
   };
 
-  const handleConfirmReopen = ({ mode, itemIds, comments, message }: ReopenSubmission) => {
+  const handleConfirmReopen = ({ itemIds, comments, message }: ReopenSubmission) => {
     const at = nowStamp();
     const recipient = reopenRecipient.email;
     const items = reopenItems.filter(item => itemIds.includes(item.id));
-    const itemLines = items.map(item => (comments[item.id] ? `${item.label} : ${comments[item.id]}` : item.label));
-
-    if (mode === 'operator') {
-      // Ni email, ni compteur, ni webhook : les pièces restent au dossier, l'opérateur les remplace.
-      setTakeover({ by: CURRENT_OPERATOR, at, itemIds, recipient: '' });
-      setComplianceStatus({ status: 'awaitingValidation', by: null, at: null });
-      const sections = Array.from(new Set(items.map(item => (item.kind === 'document' ? 'documents' : sectionOf(item.id)))));
-      setOpenSections(prev => Array.from(new Set([...prev, ...sections])));
-      logAudit({
-        type: 'dossierTakenOver',
-        newValue: [t('subscriptions.detail.reopen.takeoverAuditSummary', { count: items.length }), ...itemLines].join(' · '),
-      });
-      setReopenOpen(false);
-      setActiveTab('onboarding');
-      setCurrentStep(1);
-      toast.success(t('subscriptions.detail.reopen.takeoverToast'), {
-        description: t('subscriptions.detail.reopen.takeoverToastDesc', { count: items.length }),
-      });
-      return;
-    }
 
     if (!KEEP_DOCS_AT_REOPEN) {
       items
@@ -1303,7 +1272,9 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
       reason: message || undefined,
       newValue: [
         t('subscriptions.detail.reopen.auditSummary', { count: items.length, recipient }),
-        ...itemLines,
+        ...items.map(item =>
+          comments[item.id] ? `${item.label} : ${comments[item.id]}` : item.label,
+        ),
       ].join(' · '),
     });
     setLiveEmails(prev => [
@@ -1789,7 +1760,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
         title={
           <span className="inline-flex items-center gap-3">
             {subscription.name}
-            <SubscriptionStatusBadge status={pendingReopen ? 'Rouvert' : takeover ? 'Onboarding' : subscription.status} />
+            <SubscriptionStatusBadge status={pendingReopen ? 'Rouvert' : subscription.status} />
           </span>
         }
         subtitle={
@@ -1862,12 +1833,6 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
           label: t('subscriptions.detail.header.exportData'),
           icon: <Download className="w-4 h-4" />,
           onClick: handleExportDossier,
-        }}
-        secondaryAction={{
-          label: t('subscriptions.detail.reopen.action'),
-          icon: <RotateCcw className="w-4 h-4" />,
-          onClick: () => setReopenOpen(true),
-          disabledReason: reopenDisabledReason,
         }}
       />
 
@@ -2116,14 +2081,6 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                   {currentStep === 1 && (
                     // Onboarding en cours — KPI de completion, navigation par section, sections
                     <div className="space-y-6">
-                      {takeover && (
-                        <PageStateBanner
-                          variant="takenOver"
-                          author={takeover.by}
-                          date={takeover.at}
-                          itemCount={takeover.itemIds.length}
-                        />
-                      )}
                       {pendingReopen && (
                         <PageStateBanner
                           variant="reopened"
@@ -2656,14 +2613,24 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
 
                             {/* Action — passer à l'étape suivante */}
 
-                            <div className="flex justify-end pt-4">
-                              <DisabledReason reason={validationBlockedReason}>
+                            <div className="flex justify-end gap-2 pt-4">
+                              {reopenItems.length > 0 && (
+                                <DisabledReason reason={reopenDisabledReason}>
+                                  <Button
+                                    variant="outline"
+                                    className="gap-2"
+                                    disabled={Boolean(reopenDisabledReason)}
+                                    onClick={() => setReopenOpen(true)}
+                                  >
+                                    <RotateCcw className="w-4 h-4" />
+                                    {t('subscriptions.detail.reopen.action')}
+                                  </Button>
+                                </DisabledReason>
+                              )}
                               <Button
                                 style={{ background: PRIMARY_BUTTON_GRADIENT }}
                                 className="gap-2 text-white hover:opacity-90"
-                                disabled={Boolean(validationBlockedReason)}
                                 onClick={() => {
-                                  setTakeover(null);
                                   setCurrentStep(2);
                                   toast.success(t('subscriptions.detail.onboarding.submittedForValidation'));
                                 }}
@@ -2671,7 +2638,6 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                 <ChevronRight className="w-4 h-4" />
                                 {t('subscriptions.detail.onboarding.proceedToValidation')}
                               </Button>
-                              </DisabledReason>
                             </div>
                           </div>
                         </div>

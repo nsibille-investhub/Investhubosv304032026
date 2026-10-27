@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
-import { Archive, ArrowUpRight, Copy, Handshake, Loader2, Lock, RotateCcw, Send, ShieldOff, UserCog } from 'lucide-react';
+import { Archive, ArrowUpRight, Copy, Handshake, Loader2, Lock, RotateCcw, Send, ShieldOff } from 'lucide-react';
 import { useTranslation } from '../../utils/languageContext';
 import { Alert, AlertDescription } from './alert';
 import { Button } from './button';
@@ -26,9 +26,7 @@ export type PageStateBannerProps =
   /** Validation KYC déléguée au partenaire : en attente, ou validée et transmise à l'analyste 1. */
   | { variant: 'delegatedReview'; partner: string; validatedBy?: string; date?: string; className?: string }
   /** Souscription rouverte pour correction, en attente de la nouvelle soumission. */
-  | { variant: 'reopened'; author: string; date: string; itemCount: number; recipient: string; className?: string }
-  /** Dossier repris en main par l'équipe de gestion : correction interne, sans notification. */
-  | { variant: 'takenOver'; author: string; date: string; itemCount: number; className?: string };
+  | { variant: 'reopened'; author: string; date: string; itemCount: number; recipient: string; className?: string };
 
 const VARIANT_STYLE: Record<PageStateBannerProps['variant'], { icon: LucideIcon; tone: Tone }> = {
   archived: { icon: Archive, tone: 'strong' },
@@ -38,7 +36,6 @@ const VARIANT_STYLE: Record<PageStateBannerProps['variant'], { icon: LucideIcon;
   readOnly: { icon: ShieldOff, tone: 'neutral' },
   delegatedReview: { icon: Handshake, tone: 'info' },
   reopened: { icon: RotateCcw, tone: 'warning' },
-  takenOver: { icon: UserCog, tone: 'info' },
 };
 
 /** Bandeau d'état placé sous l'en-tête d'une page de détail (PRD Détail d'un fonds V3, section 6.1). */
@@ -117,15 +114,6 @@ export function PageStateBanner(props: PageStateBannerProps) {
           ? 'subscriptions.stateBanner.reopened.descriptionOne'
           : 'subscriptions.stateBanner.reopened.descriptionMany',
         { count: props.itemCount, recipient: props.recipient },
-      );
-      break;
-    case 'takenOver':
-      title = t('subscriptions.stateBanner.takenOver.title', { author: props.author, date: props.date });
-      description = t(
-        props.itemCount === 1
-          ? 'subscriptions.stateBanner.takenOver.descriptionOne'
-          : 'subscriptions.stateBanner.takenOver.descriptionMany',
-        { count: props.itemCount },
       );
       break;
   }
