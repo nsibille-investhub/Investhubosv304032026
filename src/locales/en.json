@@ -1608,7 +1608,11 @@
           "subscription": "Subscription",
           "investor": "Investor record",
           "partner": "Partner",
-          "participation": "Holding"
+          "participation": "Holding",
+          "flaminem": "Flaminem",
+          "salesforce": "Salesforce",
+          "dynamo": "Dynamo",
+          "crm": "CRM"
         },
         "fields": {
           "nationality": "Nationality",
@@ -1685,7 +1689,22 @@
         "synced": "Synced",
         "notSynced": "Not synced",
         "sectionTitle": "Updated records",
-        "sectionDescription": "{{count}} data points copied from the answers to the subscription and the investor profile."
+        "sectionDescription": "{{count}} data points copied from the answers to InvestHub objects (subscription, investor profile, partner, participation).",
+        "failed": "Sending failed",
+        "retry": "Retry sending",
+        "retriedToast": "Sending retried",
+        "externalTitle": "External partners",
+        "externalDescription": "{{count}} data items sent to connected tools (KYC, CRM, registry).",
+        "externalDescriptionFailed": "{{count}} data items sent to connected tools (KYC, CRM, registry), {{failed}} of them failed.",
+        "filters": {
+          "title": "Filter",
+          "source": "Source",
+          "destination": "Destination",
+          "allSources": "All sections",
+          "allDestinations": "All destinations",
+          "emptyTitle": "No data",
+          "emptyDescription": "No synchronised data matches these filters."
+        }
       },
       "partnerReview": {
         "simulate": "Simulate the partner's review",

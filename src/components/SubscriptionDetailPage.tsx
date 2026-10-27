@@ -108,6 +108,7 @@ import {
   type MockEmail,
   type MockLinkedTarget,
   type MockRequiredDocument,
+  isExternalLinkedObject,
 } from '../utils/subscriptionDetailMockData';
 import {
   AUDIT_DOCUMENTS_SECTION,
@@ -616,12 +617,19 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   };
 
   const [reportOpen, setReportOpen] = useState(false);
+  // Démonstration : envois externes relancés avec succès depuis le panneau de synchronisation.
+  const [retriedSyncs, setRetriedSyncs] = useState<string[]>([]);
+  const handleRetrySync = (questionId: string, target: MockLinkedTarget) => {
+    setRetriedSyncs(prev => [...prev, linkedKey(questionId, target.object, target.field)]);
+    toast.success(t('subscriptions.detail.report.retriedToast'), { description: targetLabelOf(target) });
+  };
   const submissionReportRows: SubmissionReportRow[] = [
     ...onboardingSections.flatMap(section =>
       section.questions.flatMap((question, idx) =>
         (question.targets ?? []).map((target): SubmissionReportRow => {
           const questionId = `${section.id}-${idx}`;
           const value = linkedValueOf(questionId, question, target);
+          const failed = target.syncFailed && !retriedSyncs.includes(linkedKey(questionId, target.object, target.field));
           return {
             key: `${questionId}-${target.object}-${target.field}`,
             icon: Link2,
@@ -629,9 +637,14 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
             value,
             origin: question.question.replace(/\s*\*\s*$/, ''),
             originSection: t(section.titleKey),
-            state: value !== responseOf(section.id, idx, question) ? 'gap' : 'inSync',
+            sourceKey: section.id,
+            destinationKey: target.object,
+            external: isExternalLinkedObject(target.object),
+            direction: target.direction ?? 'toTarget',
+            state: failed ? 'failed' : value !== responseOf(section.id, idx, question) ? 'gap' : 'inSync',
             previousValue: target.previousValue,
             onPropagate: canManage ? () => handlePropagateReported(section.id, idx, target) : undefined,
+            onRetry: canManage && failed ? () => handleRetrySync(questionId, target) : undefined,
           };
         }),
       ),
@@ -647,6 +660,8 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                 value: MOCK_SUBMISSION_REPORT.mandateReference,
                 origin: t('subscriptions.detail.report.mandateOrigin'),
                 originSection: t(section.titleKey),
+                sourceKey: section.id,
+                destinationKey: 'subscription',
                 state: 'created',
               },
             ]
@@ -659,10 +674,12 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
       label: targetLabelOf({ object: 'investor', field: doc.field }),
       value: t(doc.nameKey),
       origin: t('subscriptions.detail.sections.documents'),
+      sourceKey: 'documents',
+      destinationKey: 'investor',
       state: 'copied',
     })),
   ];
-  const submissionReportSynced = submissionReportRows.every(row => row.state !== 'gap');
+  const submissionReportSynced = submissionReportRows.every(row => row.state !== 'gap' && row.state !== 'failed');
 
   const questionLabelOf = (questionId: string) => {
     const sectionId = sectionOf(questionId);
@@ -2171,6 +2188,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                             onOpenChange={setReportOpen}
                             submittedAt={MOCK_SUBMISSION_REPORT.submittedAt}
                             rows={submissionReportRows}
+                            sources={onboardingSections.map(section => ({ value: section.id, label: t(section.titleKey) }))}
                           />
 
                           <div className="space-y-4">

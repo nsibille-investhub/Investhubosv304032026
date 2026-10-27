@@ -1608,7 +1608,11 @@
           "subscription": "Souscription",
           "investor": "Fiche investisseur",
           "partner": "Partenaire",
-          "participation": "Participation"
+          "participation": "Participation",
+          "flaminem": "Flaminem",
+          "salesforce": "Salesforce",
+          "dynamo": "Dynamo",
+          "crm": "CRM"
         },
         "fields": {
           "nationality": "Nationalité",
@@ -1685,7 +1689,22 @@
         "synced": "Synchronisé",
         "notSynced": "Non synchronisé",
         "sectionTitle": "Objets mis à jour",
-        "sectionDescription": "{{count}} données copiées depuis les réponses vers la souscription et la fiche investisseur."
+        "sectionDescription": "{{count}} données copiées depuis les réponses vers les objets InvestHub (souscription, fiche investisseur, partenaire, participation).",
+        "failed": "Échec de l'envoi",
+        "retry": "Relancer l'envoi",
+        "retriedToast": "Envoi relancé",
+        "externalTitle": "Partenaires externes",
+        "externalDescription": "{{count}} données envoyées aux outils connectés (KYC, CRM, registre).",
+        "externalDescriptionFailed": "{{count}} données envoyées aux outils connectés (KYC, CRM, registre), dont {{failed}} en échec.",
+        "filters": {
+          "title": "Filtrer",
+          "source": "Source",
+          "destination": "Destination",
+          "allSources": "Toutes les sections",
+          "allDestinations": "Toutes les destinations",
+          "emptyTitle": "Aucune donnée",
+          "emptyDescription": "Aucune donnée synchronisée ne correspond à ces filtres."
+        }
       },
       "partnerReview": {
         "simulate": "Simuler le contrôle du partenaire",
