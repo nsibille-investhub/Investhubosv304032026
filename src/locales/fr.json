@@ -6455,7 +6455,8 @@
         "duePeriod": "Période d'échéance",
         "origin": "Origine",
         "reset": "Réinitialiser les filtres",
-        "state": "État"
+        "state": "État",
+        "stage": "Étape"
       },
       "columns": {
         "fund": "Fonds",

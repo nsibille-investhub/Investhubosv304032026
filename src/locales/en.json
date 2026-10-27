@@ -6455,7 +6455,8 @@
         "duePeriod": "Due date period",
         "origin": "Origin",
         "reset": "Reset filters",
-        "state": "Status"
+        "state": "Status",
+        "stage": "Step"
       },
       "columns": {
         "fund": "Fund",

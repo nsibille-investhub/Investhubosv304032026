@@ -33,7 +33,7 @@ import {
   writeWizardSession,
 } from '../../utils/capitalCallWizardSession';
 import { CapitalCallLine, expireStaleNotices, generateCapitalCallLines } from '../../utils/capitalCallLines';
-import { CALL_STATES, CallSummary, summarizeCall } from '../../utils/capitalCallSummary';
+import { CALL_STAGES, CALL_STATES, CallSummary, callStage, summarizeCall } from '../../utils/capitalCallSummary';
 import {
   CapitalCallAction,
   CapitalCallRights,
@@ -278,6 +278,13 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
       { id: 'fund', label: t(`${K}.filters.funds`), type: 'multiselect', isPrimary: true, options: fundOptions },
       { id: 'duePeriod', label: t(`${K}.filters.duePeriod`), type: 'dateRange', isPrimary: true },
       {
+        id: 'stage',
+        label: t(`${K}.filters.stage`),
+        type: 'multiselect',
+        isPrimary: true,
+        options: CALL_STAGES.map(item => ({ value: item, label: t(`${K}.detail.stages.${item}.label`) })),
+      },
+      {
         id: 'state',
         label: t(`${K}.filters.state`),
         type: 'multiselect',
@@ -302,9 +309,11 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
     const to = parseIsoDay(toIso, true);
     const origin = typeof activeFilters.origin === 'string' ? activeFilters.origin : undefined;
     const states = Array.isArray(activeFilters.state) ? activeFilters.state : [];
+    const stages = Array.isArray(activeFilters.stage) ? activeFilters.stage : [];
     return scopedCalls.filter(call => {
       if (!inQueue(call, queue)) return false;
       if (states.length > 0 && !states.includes(summaryOf(call).state)) return false;
+      if (stages.length > 0 && !stages.includes(callStage(call, summaryOf(call)))) return false;
       if (term && !call.name.toLowerCase().includes(term) && !call.fundName.toLowerCase().includes(term)) return false;
       if (fundIds.length > 0 && !fundIds.includes(String(call.fundId))) return false;
       if (from && call.dueDate < from) return false;
