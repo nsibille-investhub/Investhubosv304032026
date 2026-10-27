@@ -76,6 +76,7 @@ import {
   Trash2,
   KeyRound,
   type LucideIcon,
+  ShieldAlert,
 } from 'lucide-react';
 import * as React from 'react';
 import { motion } from 'motion/react';
@@ -616,7 +617,14 @@ const investorListingColumnSpecs = [
     component: 'ListingStackCell + ListingStackRow (ui/listing)',
     functional: 'Afficher une donnée multiple (rôles par structure, signature, matrice des droits d’accès) : premier élément en clair, « +n autres », carte de détail au clic.',
     guidelines: 'Même rendu que la colonne Structure : icône 12px, texte xs gris tronqué, chevron ; « +n autres » en primaire. Carte w-96, en-tête icône + titre + sous-titre, lignes ListingStackRow (intitulé à gauche, Tags à droite, passage à la ligne si besoin).',
-    variants: 'Vide (—), un élément, plusieurs éléments ; carte groupée par type (fonds, structures, souscriptions).',
+    variants: 'Vide (—), un élément, plusieurs éléments ; carte groupée par type (fonds, structures, souscriptions). Variant « tag » (variant="tag") pour des catégories : premier élément en Tag, « +n autres » accolé en primaire (colonne Matches du listing Entités).',
+  },
+  {
+    column: 'CELLULE MULTIPLE (TAG)',
+    component: 'ListingStackCell variant="tag" + ListingStackRow (ui/listing)',
+    functional: 'Afficher une liste de catégories (listes de screening d’une entité) : première catégorie en Tag, « +n autres », carte de détail au clic avec le nombre de hits par liste.',
+    guidelines: 'Tag neutre + « +n autres » text-xs primaire + chevron ; catégories triées par nombre de hits décroissant ; même carte que la cellule multiple.',
+    variants: 'Une catégorie (Tag + chevron), plusieurs catégories (Tag + « +n autres »).',
   },
   {
     column: 'CARTE LISTING',
@@ -802,6 +810,22 @@ function renderInvestorColumnPreview(column: string) {
             </ListingStackRow>
             <ListingStackRow icon={Building2} label="Holding Durand">
               <Tag label="Administrateur" />
+            </ListingStackRow>
+          </div>
+        </ListingStackCell>
+      );
+    case 'CELLULE MULTIPLE (TAG)':
+      return (
+        <ListingStackCell variant="tag" icon={ShieldAlert} items={['Sanctions', 'PPE', 'Presse négative']} title="Listes de Thomas Walker" subtitle="3 listes · 9 hits au total">
+          <div className="space-y-2">
+            <ListingStackRow icon={ShieldAlert} label="Sanctions">
+              <Tag label="5 hits" />
+            </ListingStackRow>
+            <ListingStackRow icon={ShieldAlert} label="PPE">
+              <Tag label="3 hits" />
+            </ListingStackRow>
+            <ListingStackRow icon={ShieldAlert} label="Presse négative">
+              <Tag label="1 hit" />
             </ListingStackRow>
           </div>
         </ListingStackCell>

@@ -5086,6 +5086,13 @@
       "searchPlaceholder": "Rechercher une entité...",
       "empty": "Aucune entité ne correspond aux filtres actuels.",
       "noMatches": "Aucun match",
+      "matchesCard": {
+        "title": "Listes de {{name}}",
+        "subtitleOne": "{{count}} liste · {{hits}} hits au total",
+        "subtitleMany": "{{count}} listes · {{hits}} hits au total",
+        "hitsOne": "{{count}} hit",
+        "hitsMany": "{{count}} hits"
+      },
       "idLabel": "ID",
       "copyId": "Copier l'identifiant",
       "columns": {
