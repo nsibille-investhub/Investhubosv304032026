@@ -59,6 +59,7 @@ import { FormField, SuffixInput } from '../ui/form-field';
 import { ListingColumnsMenu, ListingIndicator, ListingNameCell } from '../ui/listing';
 import { WizardPageFooter, WizardSteps, WizardStepsBar } from '../ui/wizard-steps';
 import { MailPreviewDialog } from '../ui/mail-preview-dialog';
+import { RichMultiSelect } from '../ui/rich-multiselect';
 import { ColorPicker } from '../ui/color-picker';
 import { ComputedSummary } from '../ui/computed-summary';
 import { DayMonthPicker, type DayMonthValue } from '../ui/day-month-picker';
@@ -923,6 +924,34 @@ function WizardFullPageDemo() {
   );
 }
 
+function RichMultiSelectDemo() {
+  const { t } = useTranslation();
+  const d = `${K}.richMultiSelect.demo`;
+  const [value, setValue] = useState<string[]>(['SUB-1001']);
+  const options = ['SUB-1001', 'SUB-1002', 'SUB-1003'].map((id, index) => ({
+    value: id,
+    label: t(`${d}.investors.${index}`),
+    details: t('funds.capitalCalls.wizard.amounts.restriction.details', {
+      id,
+      committed: '250 000 €',
+      units: '2 500',
+      validatedAt: `0${index + 2}/03/2026`,
+    }),
+  }));
+  return (
+    <div className="max-w-md">
+      <RichMultiSelect
+        options={options}
+        value={value}
+        onChange={setValue}
+        triggerLabel={t('funds.capitalCalls.wizard.amounts.restriction.selected', { count: value.length, total: options.length })}
+        searchPlaceholder={t('funds.capitalCalls.wizard.amounts.restriction.search')}
+        emptyLabel={t('funds.capitalCalls.wizard.amounts.restriction.empty')}
+      />
+    </div>
+  );
+}
+
 function MailPreviewDemo() {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -1340,6 +1369,18 @@ export function FundDetailComponentsSection() {
       >
         <Example label={t(`${K}.listingTools.exampleLabel`)}>
           <ListingToolsDemo />
+        </Example>
+      </DocBlock>
+
+      <DocBlock
+        id="richMultiSelect"
+        name="RichMultiSelect"
+        importLine="import { RichMultiSelect } from '@/components/ui/rich-multiselect'"
+        usage={`<RichMultiSelect options={items.map(item => ({ value: item.id, label: item.investor, details: ... }))}
+  value={selected} onChange={setSelected} triggerLabel={...} searchPlaceholder={t('...')} emptyLabel={t('...')} />`}
+      >
+        <Example label={t(`${K}.richMultiSelect.exampleLabel`)}>
+          <RichMultiSelectDemo />
         </Example>
       </DocBlock>
 

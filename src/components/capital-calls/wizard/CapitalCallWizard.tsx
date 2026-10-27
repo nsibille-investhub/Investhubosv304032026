@@ -256,7 +256,7 @@ export function CapitalCallWizard({
         const value = parseNumber(input.value) ?? 0;
         return {
           share,
-          mode: settings?.perUnit ? 'perUnit' : input.kind === 'percent' ? 'percent' : 'totalAmount',
+          mode: settings?.perUnit || input.kind === 'perUnit' ? 'perUnit' : input.kind === 'percent' ? 'percent' : 'totalAmount',
           value,
           entryFeesCalled: input.callEntryFees,
           premiumCalled: input.callPremium,

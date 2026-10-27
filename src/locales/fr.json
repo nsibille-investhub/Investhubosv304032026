@@ -6904,7 +6904,9 @@
             "noticeFile": "Avis d'appel (PDF)",
             "message": "Message d'accompagnement :",
             "noMessage": "Aucun message"
-          }
+          },
+          "forecastHint": "Rattacher un flux prévisionnel le passe à l'état consommé : il n'est plus proposé pour un autre appel, et son montant peut servir de montant à lever à l'étape suivante. Supprimer l'appel le remet en attente.",
+          "distributionsHint": "Une distribution compensée vient en déduction du montant dû : l'investisseur ne règle que le net et ne voit pas d'action de paiement sur le portail."
         },
         "amounts": {
           "modes": {
@@ -6928,7 +6930,15 @@
           "shareSummary": "Engagement {{committed}} · {{count}} souscriptions",
           "kinds": {
             "percent": "Pourcentage",
-            "amount": "Montant"
+            "amount": "Montant",
+            "perUnit": "Par titre",
+            "label": "Mode de saisie",
+            "percentRestricted": "Pourcentage indisponible sur une part restreinte.",
+            "hints": {
+              "percent": "Pourcentage de l'engagement de chaque souscription.",
+              "amount": "Montant total de la part, réparti entre les souscriptions.",
+              "perUnit": "Montant fixe par titre, multiplié par le nombre de titres détenus par chaque souscription."
+            }
           },
           "fields": {
             "value": "Montant appelé",
@@ -6946,7 +6956,13 @@
           "restriction": {
             "toggle": "Restreindre à certaines souscriptions",
             "selected": "{{count}} sur {{total}} retenues",
-            "hint": "Seules les souscriptions cochées sont appelées sur cette part. Aucune case cochée : pas de restriction."
+            "hint": "Seules les souscriptions choisies sont appelées sur cette part. Aucune sélection : toutes les souscriptions de la part sont appelées.",
+            "details": "{{id}} · Engagement {{committed}} · {{units}} titres · Validée le {{validatedAt}}",
+            "placeholder": "Choisir les souscriptions",
+            "search": "Rechercher un investisseur ou une souscription",
+            "empty": "Aucune souscription",
+            "remove": "Retirer {{investor}}",
+            "availableAt": "Disponible le {{date}}"
           },
           "toRaise": {
             "label": "Montant à lever",
@@ -6966,7 +6982,8 @@
             "total": "Total"
           },
           "total": "Total de l'appel (calculé)",
-          "percentFor": "Pourcentage de la part {{share}}"
+          "percentFor": "Pourcentage de la part {{share}}",
+          "toRaiseRestricted": "Indisponible : une part est restreinte à certaines souscriptions."
         },
         "control": {
           "blocked": {
@@ -7421,6 +7438,20 @@
         "states": "Ouverte, fermée. Bouton d'ouverture indisponible avec motif quand aucun mail ne part.",
         "exampleLabel": "Aperçu de la notification d'un appel",
         "open": "Aperçu"
+      },
+      "richMultiSelect": {
+        "title": "Multisélection riche",
+        "description": "Liste déroulante à cases pour choisir des éléments décrits par plusieurs informations (souscription : investisseur, référence, engagement, titres, date de validation). Recherche sur le libellé et la référence. La sélection s'affiche à part, dans une liste où chaque élément se retire.",
+        "variants": "Avec ou sans ligne de détail ; déclencheur résumant la sélection.",
+        "states": "Vide, sélection partielle, aucune option trouvée, désactivé.",
+        "exampleLabel": "Restriction d'un appel à certaines souscriptions",
+        "demo": {
+          "investors": [
+            "Holding Arcadia",
+            "Fondation Horizon",
+            "Family Office Vega"
+          ]
+        }
       }
     }
   },

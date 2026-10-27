@@ -23,6 +23,8 @@ export interface WizardSubscription {
   /** Rappels de distributions provisoires inclus dans le cumul appelé. */
   recalled: number;
   availableAt: Date;
+  /** Date de validation de la souscription par la société de gestion. */
+  validatedAt: Date;
 }
 
 export interface PendingForecast {
@@ -113,6 +115,7 @@ export function fundSubscriptions(fund: Fund, today = new Date()): WizardSubscri
       const committed = Math.round((fund.totalCommitments / shares.length / perShare) * (0.5 + random()) / 1000) * 1000;
       const calledGross = Math.round((committed * random() * 0.6) / 100) * 100;
       const recalled = random() < 0.2 ? Math.round((calledGross * 0.3) / 100) * 100 : 0;
+      const availableAt = new Date(today.getTime() + (random() < 0.12 ? 120 : -30) * DAY);
       subscriptions.push({
         id: `SUB-${String(fund.id).padStart(2, '0')}${shareIndex + 1}${String(index + 1).padStart(2, '0')}`,
         investor: INVESTORS[(fund.id + shareIndex * 5 + index) % INVESTORS.length],
@@ -121,7 +124,8 @@ export function fundSubscriptions(fund: Fund, today = new Date()): WizardSubscri
         units: Math.round(committed / 100),
         calledGross,
         recalled,
-        availableAt: new Date(today.getTime() + (random() < 0.12 ? 120 : -30) * DAY),
+        availableAt,
+        validatedAt: new Date(availableAt.getTime() - (15 + Math.floor(random() * 400)) * DAY),
       });
     }
   });
@@ -137,7 +141,8 @@ export function remainingToCall(subscription: WizardSubscription) {
   return subscription.committed - alreadyCalled(subscription);
 }
 
-export type AmountKind = 'percent' | 'amount';
+/** Pourcentage de l'engagement, montant total de la part, ou montant fixe par titre détenu. */
+export type AmountKind = 'percent' | 'amount' | 'perUnit';
 
 export interface ShareInput {
   kind: AmountKind;
@@ -161,11 +166,24 @@ export function parseNumber(value: string): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-/** Montant appelé sur une part, à partir du pourcentage de l'engagement, d'un montant ou d'un montant par titre. */
-export function shareAmount(input: ShareInput, subscriptions: WizardSubscription[], settings: FundCallSettings) {
+export function isPerUnit(input: ShareInput, settings: FundCallSettings) {
+  return settings.perUnit || input.kind === 'perUnit';
+}
+
+/** Souscriptions de la part comprises dans la restriction ; toutes sans restriction. */
+export function restrictedSubscriptions(input: ShareInput, subscriptions: WizardSubscription[]) {
+  return input.restriction ? subscriptions.filter(item => input.restriction!.includes(item.id)) : subscriptions;
+}
+
+/**
+ * Montant appelé sur une part, à partir du pourcentage de l'engagement, d'un montant ou d'un montant par titre.
+ * Le pourcentage et le montant par titre portent sur les souscriptions retenues par la restriction.
+ */
+export function shareAmount(input: ShareInput, shareSubscriptions: WizardSubscription[], settings: FundCallSettings) {
   const value = parseNumber(input.value);
   if (value === null || value <= 0) return 0;
-  if (settings.perUnit) return value * subscriptions.reduce((sum, item) => sum + item.units, 0);
+  const subscriptions = restrictedSubscriptions(input, shareSubscriptions);
+  if (isPerUnit(input, settings)) return value * subscriptions.reduce((sum, item) => sum + item.units, 0);
   if (input.kind === 'amount') return value;
   return (value / 100) * subscriptions.reduce((sum, item) => sum + item.committed, 0);
 }
@@ -234,9 +252,16 @@ export function simulateCall(
 
     const weight = (item: WizardSubscription) => (settings.allocation === 'units' ? item.units : item.committed);
     const weightTotal = retained.reduce((sum, item) => sum + weight(item), 0);
+    // Montant par titre : chaque souscription paie le montant fixé multiplié par ses titres, sans prorata.
+    const perUnitValue = isPerUnit(input, settings) ? parseNumber(input.value) ?? 0 : null;
     let linesTotal = 0;
     retained.forEach(subscription => {
-      const amount = weightTotal > 0 ? Math.floor((entered * weight(subscription) * 100) / weightTotal) / 100 : 0;
+      const amount =
+        perUnitValue !== null
+          ? toCents(perUnitValue * subscription.units)
+          : weightTotal > 0
+            ? Math.floor((entered * weight(subscription) * 100) / weightTotal) / 100
+            : 0;
       if (amount <= 0) {
         exclusions.push({ subscription, reason: 'zeroShare' });
         return;

@@ -6904,7 +6904,9 @@
             "noticeFile": "Capital call notice (PDF)",
             "message": "Accompanying message:",
             "noMessage": "No message"
-          }
+          },
+          "forecastHint": "Linking a forecast flow marks it as consumed: it is no longer offered for another call, and its amount can be used as the amount to raise in the next step. Deleting the call puts it back on hold.",
+          "distributionsHint": "A compensated distribution is deducted from the amount due: the investor only settles the net amount and sees no payment action on the portal."
         },
         "amounts": {
           "modes": {
@@ -6928,7 +6930,15 @@
           "shareSummary": "Commitment {{committed}} · {{count}} subscriptions",
           "kinds": {
             "percent": "Percentage",
-            "amount": "Amount"
+            "amount": "Amount",
+            "perUnit": "Per unit",
+            "label": "Entry mode",
+            "percentRestricted": "Percentage unavailable on a restricted share.",
+            "hints": {
+              "percent": "Percentage of each subscription's commitment.",
+              "amount": "Total amount of the share, allocated across subscriptions.",
+              "perUnit": "Fixed amount per unit, multiplied by the number of units held by each subscription."
+            }
           },
           "fields": {
             "value": "Called amount",
@@ -6946,7 +6956,13 @@
           "restriction": {
             "toggle": "Restrict to some subscriptions",
             "selected": "{{count}} of {{total}} selected",
-            "hint": "Only the checked subscriptions are called on this share. Nothing checked: no restriction."
+            "hint": "Only the selected subscriptions are called on this share. No selection: all subscriptions of the share are called.",
+            "details": "{{id}} · Commitment {{committed}} · {{units}} units · Validated on {{validatedAt}}",
+            "placeholder": "Choose subscriptions",
+            "search": "Search an investor or a subscription",
+            "empty": "No subscription",
+            "remove": "Remove {{investor}}",
+            "availableAt": "Available on {{date}}"
           },
           "toRaise": {
             "label": "Amount to raise",
@@ -6966,7 +6982,8 @@
             "total": "Total"
           },
           "total": "Call total (calculated)",
-          "percentFor": "Percentage for share {{share}}"
+          "percentFor": "Percentage for share {{share}}",
+          "toRaiseRestricted": "Unavailable: a share is restricted to some subscriptions."
         },
         "control": {
           "blocked": {
@@ -7421,6 +7438,20 @@
         "states": "Open, closed. Opening button unavailable with a reason when no email is sent.",
         "exampleLabel": "Preview of a capital call notification",
         "open": "Preview"
+      },
+      "richMultiSelect": {
+        "title": "Rich multi-select",
+        "description": "Checkbox dropdown to choose items described by several pieces of information (subscription: investor, reference, commitment, units, validation date). Search on the label and the reference. The selection is shown separately, in a list where each item can be removed.",
+        "variants": "With or without a detail line; trigger summarising the selection.",
+        "states": "Empty, partial selection, no option found, disabled.",
+        "exampleLabel": "Restricting a call to some subscriptions",
+        "demo": {
+          "investors": [
+            "Holding Arcadia",
+            "Fondation Horizon",
+            "Family Office Vega"
+          ]
+        }
       }
     }
   },

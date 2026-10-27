@@ -213,7 +213,7 @@ export function WizardInfoStep({
           <FormField
             id="call-forecast"
             label={t(`${K}.forecast`)}
-            hint={values.fundId && forecasts.length === 0 ? t(`${K}.noForecast`) : undefined}
+            hint={values.fundId && forecasts.length === 0 ? t(`${K}.noForecast`) : t(`${K}.forecastHint`)}
           >
             <Select
               value={values.forecastId ? String(values.forecastId) : NO_FORECAST}
@@ -236,7 +236,7 @@ export function WizardInfoStep({
           <FormField
             id="call-distributions"
             label={t(`${K}.distributions`)}
-            hint={values.fundId && distributions.length === 0 ? t(`${K}.noDistribution`) : undefined}
+            hint={values.fundId && distributions.length === 0 ? t(`${K}.noDistribution`) : t(`${K}.distributionsHint`)}
           >
             <div id="call-distributions" className="space-y-2">
               {distributions.map(distribution => (
