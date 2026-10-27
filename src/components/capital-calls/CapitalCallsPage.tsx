@@ -397,7 +397,8 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
         updateCall(call.id, () => ({ sending: true }));
         toast.info(t(`${K}.toast.notifyStarted`, { name: call.name }));
         later(NOTIFY_DURATION, () => {
-          updateCall(call.id, current => ({ sending: false, notifiedLines: current.lines }));
+          // Les lignes notifiées et non réglées deviennent relançables.
+          updateCall(call.id, current => ({ sending: false, notifiedLines: current.lines, linesToRelaunch: current.lines }));
           toast.success(t(`${K}.toast.notifyDone`, { name: call.name }));
         });
         break;
@@ -779,6 +780,8 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
           onLinesChange={lines => setLinesOverrides(prev => ({ ...prev, [selectedCall.id]: lines }))}
           rights={rights}
           onOpenFund={onOpenFund}
+          onRunAction={action => runAction(selectedCall.id, action)}
+          actionBlocker={action => blockerReason(selectedCall, action)}
         />
       </div>
     );

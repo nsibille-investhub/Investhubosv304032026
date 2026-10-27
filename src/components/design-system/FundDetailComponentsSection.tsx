@@ -57,7 +57,7 @@ import { DemoScenarioBar } from '../ui/demo-scenario-bar';
 import { FilterCard, FilterCardGroup } from '../ui/filter-card';
 import { FormField, SuffixInput } from '../ui/form-field';
 import { ListingColumnsMenu, ListingIndicator, ListingNameCell } from '../ui/listing';
-import { WizardPageFooter, WizardSteps, WizardStepsBar } from '../ui/wizard-steps';
+import { ProcessStepsBar, WizardPageFooter, WizardSteps, WizardStepsBar } from '../ui/wizard-steps';
 import { MailPreviewDialog } from '../ui/mail-preview-dialog';
 import { RichMultiSelect } from '../ui/rich-multiselect';
 import { ColorPicker } from '../ui/color-picker';
@@ -1415,6 +1415,18 @@ export function FundDetailComponentsSection() {
         </Example>
         <Example label={t(`${K}.wizardSteps.fullPageLabel`)}>
           <WizardFullPageDemo />
+        </Example>
+        <Example label={t(`${K}.wizardSteps.processLabel`)}>
+          <div className="overflow-hidden rounded-lg border border-border">
+            <ProcessStepsBar
+              steps={['notices', 'diffusion', 'settlement', 'closed'].map(item => t(`funds.capitalCalls.detail.stages.${item}.label`))}
+              current={1}
+              ariaLabel={t('funds.capitalCalls.detail.stages.ariaLabel')}
+              title={t('funds.capitalCalls.detail.stages.diffusion.title')}
+              description={t('funds.capitalCalls.detail.stages.diffusion.description', { count: 12, total: 40 })}
+              action={<Button size="sm">{t('funds.capitalCalls.detail.stages.diffusion.action', { count: 12 })}</Button>}
+            />
+          </div>
         </Example>
       </DocBlock>
 

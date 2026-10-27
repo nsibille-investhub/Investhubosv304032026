@@ -55,3 +55,31 @@ export function WizardPageFooter({ start, end }: { start?: ReactNode; end?: Reac
     </div>
   );
 }
+
+interface ProcessStepsBarProps extends WizardStepsProps {
+  /** Étape en cours, en une phrase : où en est l'objet. */
+  title: ReactNode;
+  /** Précision sous le titre : compteurs, blocages. */
+  description?: ReactNode;
+  /** Prochaine action attendue sur l'étape en cours. */
+  action?: ReactNode;
+}
+
+/**
+ * Traitement d'un objet en étapes distinctes (fiche d'un appel de fonds) : étapes franchies cochées,
+ * étape en cours mise en avant, puis l'état de cette étape et la prochaine action.
+ */
+export function ProcessStepsBar({ title, description, action, ...steps }: ProcessStepsBarProps) {
+  return (
+    <div className="space-y-3 border-b border-border bg-card px-8 py-4">
+      <WizardSteps {...steps} />
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border px-4 py-3">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-foreground">{title}</p>
+          {description && <p className="text-xs text-muted-foreground">{description}</p>}
+        </div>
+        {action && <div className="flex shrink-0 items-center gap-2">{action}</div>}
+      </div>
+    </div>
+  );
+}

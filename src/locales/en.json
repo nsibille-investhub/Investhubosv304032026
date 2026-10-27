@@ -6799,6 +6799,33 @@
             "unpaid": "Unpaid",
             "remainingDue": "Still due on {{count}} lines"
           }
+        },
+        "stages": {
+          "ariaLabel": "Call processing steps",
+          "notices": {
+            "label": "Notice production",
+            "title": "Notices being produced",
+            "description": "{{done}} / {{total}} notices available. Distribution opens once notices are produced."
+          },
+          "diffusion": {
+            "label": "Being distributed",
+            "title": "Being distributed",
+            "description": "{{count}} of {{total}} lines to notify.",
+            "sending": "Sending in progress: actions resume when sending ends.",
+            "action": "Notify {{count}} lines"
+          },
+          "settlement": {
+            "label": "Being settled",
+            "title": "Being settled",
+            "description": "{{count}} of {{total}} lines to settle, {{amount}} outstanding.",
+            "relaunch": "Remind",
+            "action": "Validate payments"
+          },
+          "closed": {
+            "label": "Settled",
+            "title": "Call settled",
+            "description": "All {{total}} lines are paid or compensated."
+          }
         }
       },
       "wizard": {
@@ -7430,7 +7457,7 @@
       },
       "wizardSteps": {
         "title": "Wizard steps",
-        "description": "Wizard steps. In a modal: in the BigModalPanelHeader, under the title. Full screen: WizardStepsBar under the PageHeader, with WizardPageFooter stuck to the bottom of the screen (Cancel or Save and exit on the left, Previous / Next on the right). Number, check once the step is done, current step label in bold.",
+        "description": "Wizard steps. In a modal: in the BigModalPanelHeader, under the title. Full screen: WizardStepsBar under the PageHeader, with WizardPageFooter stuck to the bottom of the screen (Cancel or Save and exit on the left, Previous / Next on the right). Number, check once the step is done, current step label in bold. ProcessStepsBar reuses the steps for processing an object that already exists (capital call sheet): completed steps checked, current step, then its state and the next action.",
         "variants": "2 to 5 steps.",
         "states": "Done step, current step, upcoming step.",
         "exampleLabel": "Three-step wizard",
@@ -7440,7 +7467,8 @@
           "amounts": "Amounts",
           "control": "Review"
         },
-        "fullPageLabel": "Full-screen wizard"
+        "fullPageLabel": "Full-screen wizard",
+        "processLabel": "Processing in steps (ProcessStepsBar)"
       },
       "formField": {
         "title": "Form field",

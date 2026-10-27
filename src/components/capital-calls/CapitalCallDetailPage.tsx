@@ -21,7 +21,7 @@ import {
 
 import { useTranslation } from '../../utils/languageContext';
 import { CapitalCall, CapitalCallShare, distinctNoticeDate } from '../../utils/capitalCallGenerator';
-import type { CapitalCallRights } from '../../utils/capitalCallActions';
+import type { CapitalCallAction, CapitalCallRights } from '../../utils/capitalCallActions';
 import {
   CapitalCallLine,
   expireStaleNotices,
@@ -30,7 +30,7 @@ import {
   relaunchFailedNotices,
 } from '../../utils/capitalCallLines';
 import { generateCapitalCallEmails } from '../../utils/capitalCallEmails';
-import { summarizeCall } from '../../utils/capitalCallSummary';
+import { CALL_STAGES, callStage, summarizeCall } from '../../utils/capitalCallSummary';
 import { CALL_STATE_VARIANT, CapitalCallSummaryWidgets, LinesPreset } from './CapitalCallSummaryWidgets';
 import { CapitalCallEmailsTab } from './CapitalCallEmailsTab';
 import { CapitalCallJournalTab } from './CapitalCallJournalTab';
@@ -44,6 +44,9 @@ import { DetailTabsList } from '../ui/detail-tabs';
 import { PageHeader, PageHeaderSubtitle, PageHeaderSubtitleItem, PageHeaderSubtitleSeparator } from '../ui/page-header';
 import { SectionCard } from '../ui/section-card';
 import { Tabs, TabsContent } from '../ui/tabs';
+import { Button } from '../ui/button';
+import { DisabledReason } from '../ui/disabled-reason';
+import { ProcessStepsBar } from '../ui/wizard-steps';
 
 const K = 'funds.capitalCalls.detail';
 
@@ -56,6 +59,10 @@ interface CapitalCallDetailPageProps {
   onLinesChange: (lines: CapitalCallLine[]) => void;
   rights: CapitalCallRights;
   onOpenFund: (fundId: number) => void;
+  /** Action lancée depuis l'étape en cours, contrôlée comme depuis le listing. */
+  onRunAction: (action: CapitalCallAction) => void;
+  /** Motif d'indisponibilité d'une action, calculé par le serveur. */
+  actionBlocker: (action: CapitalCallAction) => string | null;
 }
 
 /** Utilisateur connecté de la maquette, affiché dans l'en-tête. */
@@ -64,7 +71,15 @@ const CURRENT_USER = 'Jean Dault';
 /** Durée simulée de production d'un avis. */
 const PRODUCTION_DELAY = 3000;
 
-export function CapitalCallDetailPage({ call, initialLines, onLinesChange, rights, onOpenFund }: CapitalCallDetailPageProps) {
+export function CapitalCallDetailPage({
+  call,
+  initialLines,
+  onLinesChange,
+  rights,
+  onOpenFund,
+  onRunAction,
+  actionBlocker,
+}: CapitalCallDetailPageProps) {
   const { t, lang } = useTranslation();
   const [tab, setTab] = useState<TabId>('lines');
   // Le délai maximal est contrôlé à l'ouverture de la fiche.
@@ -103,6 +118,16 @@ export function CapitalCallDetailPage({ call, initialLines, onLinesChange, right
       );
     });
   }, [lines]);
+
+  // Fin d'envoi : les lignes encore à notifier passent à l'état notifié.
+  useEffect(() => {
+    if (call.sending || call.notifiedLines < call.lines) return;
+    setLines(prev =>
+      prev.some(line => line.notifiedAt === null)
+        ? prev.map(line => (line.notifiedAt ? line : { ...line, notifiedAt: new Date(), state: 'notified' }))
+        : prev,
+    );
+  }, [call.sending, call.notifiedLines, call.lines]);
 
   const failedCount = lines.filter(line => line.noticeState === 'failed').length;
   const emails = useMemo(() => generateCapitalCallEmails(call.id, lines), [call.id, lines]);
@@ -151,6 +176,45 @@ export function CapitalCallDetailPage({ call, initialLines, onLinesChange, right
     if (share.mode === 'perUnit') return t(`${K}.breakdown.perUnitValue`, { amount: money(share.value, 2) });
     return money(share.value);
   };
+
+  const stage = callStage(call, summary);
+  // Une étape close est franchie : la dernière étape atteinte est cochée elle aussi.
+  const stageIndex = stage === 'closed' ? CALL_STAGES.length : CALL_STAGES.indexOf(stage);
+  const stageButton = (action: CapitalCallAction, label: string, variant: 'default' | 'outline' = 'default') => {
+    const reason = actionBlocker(action);
+    return (
+      <DisabledReason reason={reason}>
+        <Button size="sm" variant={variant} onClick={() => onRunAction(action)} disabled={Boolean(reason)}>
+          {label}
+        </Button>
+      </DisabledReason>
+    );
+  };
+  const stageDescription = {
+    notices: t(`${K}.stages.notices.description`, { done: summary.noticesAvailable + summary.noticesReplaced, total: summary.lines }),
+    diffusion: call.sending
+      ? t(`${K}.stages.diffusion.sending`)
+      : t(`${K}.stages.diffusion.description`, { count: summary.toNotify, total: summary.lines }),
+    settlement: t(`${K}.stages.settlement.description`, {
+      count: summary.lines - summary.settled,
+      total: summary.lines,
+      amount: money(summary.remainingDue, 2),
+    }),
+    closed: t(`${K}.stages.closed.description`, { total: summary.lines }),
+  }[stage];
+  const stageAction = {
+    notices: null,
+    diffusion: stageButton('notify', t(`${K}.stages.diffusion.action`, { count: summary.toNotify })),
+    settlement: (
+      <>
+        {call.diffusion.notify && stageButton('relaunch', t(`${K}.stages.settlement.relaunch`), 'outline')}
+        <Button size="sm" onClick={() => openLines({ filter: 'settlement', values: ['paymentDeclared', 'unpaid'] })}>
+          {t(`${K}.stages.settlement.action`)}
+        </Button>
+      </>
+    ),
+    closed: null,
+  }[stage];
 
   const allShares = 'all';
   const [activeShare, setActiveShare] = useState(allShares);
@@ -234,6 +298,15 @@ export function CapitalCallDetailPage({ call, initialLines, onLinesChange, right
             </PageHeaderSubtitleItem>
           </PageHeaderSubtitle>
         }
+      />
+
+      <ProcessStepsBar
+        steps={CALL_STAGES.map(item => t(`${K}.stages.${item}.label`))}
+        current={stageIndex}
+        ariaLabel={t(`${K}.stages.ariaLabel`)}
+        title={t(`${K}.stages.${stage}.title`)}
+        description={stageDescription}
+        action={stageAction}
       />
 
       <div className="border-b border-border bg-card px-8 pb-6">

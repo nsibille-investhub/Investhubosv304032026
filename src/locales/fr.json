@@ -6799,6 +6799,33 @@
             "unpaid": "Non payées",
             "remainingDue": "Restant dû sur {{count}} lignes"
           }
+        },
+        "stages": {
+          "ariaLabel": "Étapes du traitement de l'appel",
+          "notices": {
+            "label": "Production des avis",
+            "title": "Production des avis en cours",
+            "description": "{{done}} / {{total}} avis disponibles. La diffusion s'ouvre dès que les avis sont produits."
+          },
+          "diffusion": {
+            "label": "En cours de diffusion",
+            "title": "En cours de diffusion",
+            "description": "{{count}} lignes sur {{total}} à notifier.",
+            "sending": "Envoi en cours : les actions reprennent à la fin de l'envoi.",
+            "action": "Notifier {{count}} lignes"
+          },
+          "settlement": {
+            "label": "En cours de règlement",
+            "title": "En cours de règlement",
+            "description": "{{count}} lignes sur {{total}} à régler, {{amount}} restant dû.",
+            "relaunch": "Relancer",
+            "action": "Valider des paiements"
+          },
+          "closed": {
+            "label": "Soldé",
+            "title": "Appel soldé",
+            "description": "Les {{total}} lignes sont payées ou compensées."
+          }
         }
       },
       "wizard": {
@@ -7430,7 +7457,7 @@
       },
       "wizardSteps": {
         "title": "Étapes d'assistant",
-        "description": "Étapes d'un assistant. En modale : dans l'en-tête BigModalPanelHeader, sous le titre. En écran complet : WizardStepsBar sous le PageHeader, avec WizardPageFooter collé en bas de l'écran (Annuler ou Enregistrer et quitter à gauche, Précédent / Suivant à droite). Numéro, coche une fois l'étape franchie, libellé de l'étape en cours en gras.",
+        "description": "Étapes d'un assistant. En modale : dans l'en-tête BigModalPanelHeader, sous le titre. En écran complet : WizardStepsBar sous le PageHeader, avec WizardPageFooter collé en bas de l'écran (Annuler ou Enregistrer et quitter à gauche, Précédent / Suivant à droite). Numéro, coche une fois l'étape franchie, libellé de l'étape en cours en gras. ProcessStepsBar reprend les étapes pour le traitement d'un objet déjà créé (fiche d'un appel de fonds) : étapes franchies cochées, étape en cours, puis son état et la prochaine action.",
         "variants": "De 2 à 5 étapes.",
         "states": "Étape franchie, étape en cours, étape à venir.",
         "exampleLabel": "Assistant en trois étapes",
@@ -7440,7 +7467,8 @@
           "amounts": "Montants",
           "control": "Contrôle"
         },
-        "fullPageLabel": "Assistant en écran complet"
+        "fullPageLabel": "Assistant en écran complet",
+        "processLabel": "Traitement en étapes (ProcessStepsBar)"
       },
       "formField": {
         "title": "Champ de formulaire",
