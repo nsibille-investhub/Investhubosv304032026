@@ -1099,7 +1099,9 @@
         "replace": "Remplacer",
         "verification": "Vérification",
         "validateDocument": "Valider le document",
-        "rejectDocument": "Demander une correction"
+        "rejectDocument": "Demander une correction",
+        "validated": "Validé",
+        "rejected": "Invalidé"
       },
       "notes": {
         "mock1": "Vérifier la double nationalité mentionnée lors de l'entretien initial",

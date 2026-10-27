@@ -1099,7 +1099,9 @@
         "replace": "Replace",
         "verification": "Verification",
         "validateDocument": "Validate document",
-        "rejectDocument": "Request a correction"
+        "rejectDocument": "Request a correction",
+        "validated": "Validated",
+        "rejected": "Invalidated"
       },
       "notes": {
         "mock1": "Verify the dual nationality mentioned during the initial interview",

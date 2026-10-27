@@ -6,7 +6,6 @@ import {
   Store,
   TrendingUp,
   Check,
-  X,
   Edit2,
   Eye,
   FileText,
@@ -81,6 +80,7 @@ import { getShareableUrl } from '../utils/routing';
 import { SubscriptionInfoPopover } from './SubscriptionInfoPopover';
 import { PartyTypeBadge } from './ui/party-type-badge';
 import { QuestionActions, QuestionStatus } from './QuestionActions';
+import { ReviewControls } from './ui/review-controls';
 import { QuestionCommentThread } from './QuestionCommentThread';
 import { IntegrationsTab } from './IntegrationsTab';
 import { SectionCard, SectionFieldRow } from './ui/section-card';
@@ -2381,7 +2381,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                       <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider w-28">
                                         {t('subscriptions.detail.docsTable.action')}
                                       </th>
-                                      <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider w-28 ds-sticky-actions">
+                                      <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider w-36 ds-sticky-actions">
                                         {t('subscriptions.detail.docsTable.verification')}
                                       </th>
                                     </tr>
@@ -2466,44 +2466,29 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                               </Badge>
                                             </div>
                                           ) : (
-                                            <div className="flex items-center justify-center gap-1">
-                                              <DisabledReason
-                                                reason={
+                                            <div className="flex justify-center">
+                                              <ReviewControls
+                                                status={
+                                                  docState === 'validated'
+                                                    ? 'approved'
+                                                    : docState === 'awaitingCorrection'
+                                                      ? 'rejected'
+                                                      : 'pending'
+                                                }
+                                                onApprove={() => handleApproveDocument(idx)}
+                                                onReject={() => handleRejectDocument(idx)}
+                                                approveDisabledReason={
                                                   isMissingIssueDate(doc)
                                                     ? t('subscriptions.detail.documentControl.missingIssueDate')
                                                     : undefined
                                                 }
-                                              >
-                                              <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                title={t('subscriptions.detail.docsTable.validateDocument')}
-                                                aria-label={t('subscriptions.detail.docsTable.validateDocument')}
-                                                disabled={isMissingIssueDate(doc)}
-                                                onClick={() => handleApproveDocument(idx)}
-                                                className={`h-7 w-7 p-0 hover:bg-emerald-50 ${
-                                                  docState === 'validated'
-                                                    ? 'bg-emerald-50 text-emerald-600'
-                                                    : 'text-muted-foreground'
-                                                }`}
-                                              >
-                                                <Check className="w-3.5 h-3.5" />
-                                              </Button>
-                                              </DisabledReason>
-                                              <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                title={t('subscriptions.detail.docsTable.rejectDocument')}
-                                                aria-label={t('subscriptions.detail.docsTable.rejectDocument')}
-                                                onClick={() => handleRejectDocument(idx)}
-                                                className={`h-7 w-7 p-0 hover:bg-red-50 ${
-                                                  docState === 'awaitingCorrection'
-                                                    ? 'bg-red-50 text-red-600'
-                                                    : 'text-muted-foreground'
-                                                }`}
-                                              >
-                                                <X className="w-3.5 h-3.5" />
-                                              </Button>
+                                                labels={{
+                                                  approved: t('subscriptions.detail.docsTable.validated'),
+                                                  rejected: t('subscriptions.detail.docsTable.rejected'),
+                                                  approve: t('subscriptions.detail.docsTable.validateDocument'),
+                                                  reject: t('subscriptions.detail.docsTable.rejectDocument'),
+                                                }}
+                                              />
                                             </div>
                                           )}
                                         </td>
