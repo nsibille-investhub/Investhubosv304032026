@@ -1,16 +1,6 @@
 import { motion } from 'motion/react';
-import {
-  Check,
-  X,
-  Edit2,
-  MessageSquare,
-  AlertCircle,
-  CheckCircle2,
-  XCircle,
-  History,
-  Calculator,
-} from 'lucide-react';
-import { Badge } from './ui/badge';
+import { Edit2, MessageSquare, History, Calculator } from 'lucide-react';
+import { ReviewControls } from './ui/review-controls';
 import {
   Tooltip,
   TooltipContent,
@@ -79,66 +69,20 @@ export function QuestionActions({
   return (
     <div className="flex items-center gap-2">
         <>
-          {/* Status badge */}
-          <div className="flex items-center gap-2">
-            {currentStatus === 'approved' && (
-              <Badge className="bg-emerald-100 text-emerald-700 border-emerald-300 gap-1">
-                <CheckCircle2 className="w-3 h-3" />
-                {t(`${T}.approved`)}
-              </Badge>
-            )}
-            {currentStatus === 'rejected' && (
-              <Badge className="bg-red-100 text-red-700 border-red-300 gap-1">
-                <XCircle className="w-3 h-3" />
-                {t(`${T}.rejected`)}
-              </Badge>
-            )}
-          </div>
+          <ReviewControls
+            status={currentStatus === 'approved' || currentStatus === 'rejected' ? currentStatus : 'pending'}
+            onApprove={handleApprove}
+            onReject={handleReject}
+            canControl={canControl}
+            labels={{
+              approved: t(`${T}.approved`),
+              rejected: t(`${T}.rejected`),
+              approve: t(`${T}.approve`),
+              reject: t(`${T}.reject`),
+            }}
+          />
 
-          {/* Action buttons */}
           <div className="flex items-center gap-1">
-            {/* Approve */}
-            {canControl && currentStatus !== 'approved' && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={handleApprove}
-                      className="p-1.5 rounded-md hover:bg-emerald-50 transition-colors group"
-                    >
-                      <CheckCircle2 className="w-4 h-4 text-gray-400 group-hover:text-emerald-600 transition-colors" />
-                    </motion.button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{t(`${T}.approve`)}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
-
-            {/* Reject */}
-            {canControl && currentStatus !== 'rejected' && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={handleReject}
-                      className="p-1.5 rounded-md hover:bg-red-50 transition-colors group"
-                    >
-                      <XCircle className="w-4 h-4 text-gray-400 group-hover:text-red-600 transition-colors" />
-                    </motion.button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{t(`${T}.reject`)}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
-
             {/* Edit */}
             {computed ? (
               <TooltipProvider>

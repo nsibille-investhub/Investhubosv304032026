@@ -1099,7 +1099,9 @@
         "replace": "Remplacer",
         "verification": "Vérification",
         "validateDocument": "Valider le document",
-        "rejectDocument": "Demander une correction"
+        "rejectDocument": "Demander une correction",
+        "validated": "Validé",
+        "rejected": "Invalidé"
       },
       "notes": {
         "mock1": "Vérifier la double nationalité mentionnée lors de l'entretien initial",
@@ -1550,8 +1552,10 @@
         }
       },
       "documentControl": {
-        "rejectedToast": "Document refusé",
-        "rejectedToastDesc": "{{name}} : le motif est visible de l'investisseur",
+        "approvedToast": "Document validé",
+        "approvedToastDesc": "{{name}} a été validé",
+        "rejectedToast": "Document invalidé",
+        "rejectedToastDesc": "{{name}} sera inclus dans la réouverture du dossier",
         "blockersTitleOne": "1 pièce bloque la validation du dossier",
         "blockersTitleMany": "{{count}} pièces bloquent la validation du dossier",
         "blockersDescription": "Renseignez les informations manquantes pour pouvoir valider le dossier.",
@@ -1559,13 +1563,7 @@
         "issueDateInput": "Date d'émission",
         "manualTag": "Ajout manuel",
         "reasonLine": "Motif : {{reason}}",
-        "visibleToInvestor": "Visible de l'investisseur",
-        "rejectTitle": "Refuser le document",
-        "rejectConfirm": "Refuser",
-        "reasonRequired": "Saisissez un motif pour refuser le document",
-        "reasonPlaceholder": "Exemple : document illisible, merci de transmettre une copie complète",
-        "reasonLabel": "Motif du refus",
-        "reasonVisible": "Le motif est conservé sur le document et visible de l'investisseur sur son portail."
+        "visibleToInvestor": "Visible de l'investisseur"
       },
       "manualDocument": {
         "title": "Ajouter un document",

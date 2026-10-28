@@ -1,3 +1,4 @@
+import { ReviewControls } from './ui/review-controls';
 import {
   Users,
   User,
@@ -2205,6 +2206,33 @@ const types: TimelineTypeMap<'created' | 'updated'> = {
               ))}
             </TableBody>
           </UITable>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-[#D7E0DD] dark:border-[#1F2D2A] bg-white dark:bg-[#101615] p-6">
+        <h2 className="text-lg font-semibold text-[#1F3137] dark:text-[#E8F0EE] mb-2">Contrôle d’un élément soumis</h2>
+        <p className="text-sm text-[#4F6166] dark:text-[#9DB2AE] mb-4">
+          Import&nbsp;: <code className="text-xs px-1 py-0.5 rounded bg-[#F1F5F4] dark:bg-[#1C2624] font-semibold">components/ui/review-controls</code>.
+          <code className="text-xs">ReviewControls</code> : badge Validé / Invalidé puis boutons Valider et Invalider (libellé au survol, bouton de l’état courant masqué).
+          Même composant pour les réponses du questionnaire et les pièces justificatives. Validation indisponible : <code className="text-xs">approveDisabledReason</code>.
+        </p>
+        <div className="flex flex-wrap items-center gap-8">
+          {(['pending', 'approved', 'rejected'] as const).map((status) => (
+            <ReviewControls
+              key={status}
+              status={status}
+              onApprove={() => undefined}
+              onReject={() => undefined}
+              labels={{ approved: 'Validé', rejected: 'Invalidé', approve: 'Valider', reject: 'Invalider' }}
+            />
+          ))}
+          <ReviewControls
+            status="pending"
+            onApprove={() => undefined}
+            onReject={() => undefined}
+            approveDisabledReason="Date d’émission manquante"
+            labels={{ approved: 'Validé', rejected: 'Invalidé', approve: 'Valider', reject: 'Invalider' }}
+          />
         </div>
       </section>
 
