@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import {
   BadgeCheck,
   BellRing,
+  Calculator,
   CalendarCheck,
   Download,
   FileDown,
@@ -29,11 +30,16 @@ import {
   MessageSquare,
   PencilLine,
   RefreshCw,
+  RotateCcw,
   Send,
+  ShieldAlert,
+  ListChecks,
+  UserCheck,
   TextCursorInput,
   XCircle,
 } from 'lucide-react';
 import { Button } from './ui/button';
+import { Input } from './ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Sheet, SheetContent } from './ui/sheet';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
@@ -47,7 +53,9 @@ import {
   AUDIT_DOSSIER_SCOPE,
   SUBSCRIPTION_AUDIT_DOMAINS,
   SUBSCRIPTION_AUDIT_EVENT_TYPES,
+  COMPLIANCE_JOURNAL_CATEGORIES,
   auditDomainOf,
+  complianceCategoryOf,
   countPendingModifications,
   type SubscriptionAuditEntry,
   type SubscriptionAuditEventType,
@@ -89,6 +97,15 @@ const AUDIT_ICONS: Record<SubscriptionAuditEventType, typeof History> = {
   paymentConfirmed: Wallet,
   noteAdded: StickyNote,
   dossierExported: FileDown,
+  scoreComputed: Calculator,
+  scoreRecomputed: RefreshCw,
+  manualScoreSet: PencilLine,
+  categorisationSet: UserCheck,
+  hitQualified: ListChecks,
+  providerReportDownloaded: FileDown,
+  complianceSubmitted: Send,
+  complianceReopened: RotateCcw,
+  complianceOverride: ShieldAlert,
 };
 
 const T = 'subscriptions.detail.audit';
@@ -109,6 +126,7 @@ function useAuditLabels({ sections, documents }: Omit<AuditSource, 'entries'>) {
       return section ? t(section.titleKey) : sectionId;
     };
     const elementLabel = (entry: SubscriptionAuditEntry) => {
+      if (entry.subject) return entry.subject;
       if (!entry.elementId) return t(`${T}.dossier`);
       if (entry.sectionId === AUDIT_DOCUMENTS_SECTION) {
         const doc = documents[Number(entry.elementId.replace('document-', ''))];
@@ -159,7 +177,7 @@ function AuditTimeline({
           meta: { entry },
           description: (
             <div className="space-y-0.5">
-              {showElement && (entry.elementId || auditDomainOf(entry.type) === 'onboarding') && (
+              {showElement && (entry.elementId || entry.subject || auditDomainOf(entry.type) === 'onboarding') && (
                 <div>
                   <span className="font-medium text-foreground">{elementLabel(entry)}</span>
                   {entry.elementId && <span> · {sectionLabel(entry.sectionId)}</span>}
@@ -363,6 +381,54 @@ export function SubscriptionAuditPanel({
 
 const csvField = (value: string) => (/[;"\n\r]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value);
 
+interface DownloadAuditCsvInput {
+  entries: SubscriptionAuditEntry[];
+  fileName: string;
+  groupColumn: { header: string; value: (entry: SubscriptionAuditEntry) => string };
+  sectionLabel: (sectionId?: string) => string;
+  elementLabel: (entry: SubscriptionAuditEntry) => string;
+  t: (key: string, params?: Record<string, string | number>) => string;
+  lang: string;
+}
+
+function downloadAuditCsv({ entries, fileName, groupColumn, sectionLabel, elementLabel, t, lang }: DownloadAuditCsvInput) {
+  const locale = lang === 'en' ? 'en-US' : 'fr-FR';
+  const header = [
+    t(`${T}.columns.date`),
+    t(`${T}.columns.time`),
+    groupColumn.header,
+    ...['event', 'section', 'element', 'previousValue', 'newValue', 'reason', 'author', 'origin'].map(column =>
+      t(`${T}.columns.${column}`),
+    ),
+  ];
+  const rows = [...entries]
+    .sort((a, b) => a.timestamp.localeCompare(b.timestamp))
+    .map(entry => {
+      const date = new Date(entry.timestamp);
+      const origin = t(`${T}.origin.${entry.origin}`);
+      return [
+        date.toLocaleDateString(locale),
+        date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }),
+        groupColumn.value(entry),
+        t(`${T}.types.${entry.type}`),
+        sectionLabel(entry.sectionId),
+        elementLabel(entry),
+        entry.previousValue ?? '',
+        entry.newValue ?? '',
+        entry.reason ?? '',
+        entry.actorName ?? origin,
+        origin,
+      ];
+    });
+  const csv = '\ufeff' + [header, ...rows].map(row => row.map(csvField).join(';')).join('\r\n');
+  const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 interface SubscriptionActivitySheetProps extends AuditSource {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -393,36 +459,15 @@ export function SubscriptionActivitySheet({
 
   // Toute la piste, quels que soient les filtres affichés.
   const handleExportAll = () => {
-    const locale = lang === 'en' ? 'en-US' : 'fr-FR';
-    const header = [
-      'date', 'time', 'domain', 'event', 'section', 'element', 'previousValue', 'newValue', 'reason', 'author', 'origin',
-    ].map(column => t(`${T}.columns.${column}`));
-    const rows = [...entries]
-      .sort((a, b) => a.timestamp.localeCompare(b.timestamp))
-      .map(entry => {
-        const date = new Date(entry.timestamp);
-        const origin = t(`${T}.origin.${entry.origin}`);
-        return [
-          date.toLocaleDateString(locale),
-          date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }),
-          t(`${T}.domains.${auditDomainOf(entry.type)}`),
-          t(`${T}.types.${entry.type}`),
-          sectionLabel(entry.sectionId),
-          elementLabel(entry),
-          entry.previousValue ?? '',
-          entry.newValue ?? '',
-          entry.reason ?? '',
-          entry.actorName ?? origin,
-          origin,
-        ];
-      });
-    const csv = '\ufeff' + [header, ...rows].map(row => row.map(csvField).join(';')).join('\r\n');
-    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `piste_audit_${subscriptionName}.csv`;
-    link.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    downloadAuditCsv({
+      entries,
+      fileName: `piste_audit_${subscriptionName}.csv`,
+      groupColumn: { header: t(`${T}.columns.domain`), value: entry => t(`${T}.domains.${auditDomainOf(entry.type)}`) },
+      sectionLabel,
+      elementLabel,
+      t,
+      lang,
+    });
     toast.success(t(`${T}.activity.exportedToast`), {
       description: t(`${T}.activity.exportedToastDesc`, { count: entries.length }),
     });
@@ -467,6 +512,130 @@ export function SubscriptionActivitySheet({
           <Button variant="primary" onClick={handleExportAll} className="gap-2">
             <Download className="w-4 h-4" />
             {t(`${T}.activity.exportAll`)}
+          </Button>
+        </SidePanelFooter>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+const J = 'subscriptions.detail.compliance.journal';
+
+interface SubscriptionComplianceJournalSheetProps extends AuditSource {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  subscriptionName: string;
+  onAddNote: (text: string) => void;
+}
+
+/**
+ * Panneau latéral : journal de conformité de la souscription. Ne reprend de la piste d'audit
+ * que les actions de conformité (réponses, pièces, score, catégorisation, parties tierces,
+ * dérogations, notes et validations successives).
+ */
+export function SubscriptionComplianceJournalSheet({
+  open,
+  onOpenChange,
+  entries,
+  sections,
+  documents,
+  subscriptionName,
+  onAddNote,
+}: SubscriptionComplianceJournalSheetProps) {
+  const { t, lang } = useTranslation();
+  const [category, setCategory] = useState<string>('all');
+  const [note, setNote] = useState('');
+  const { sectionLabel, elementLabel } = useAuditLabels({ sections, documents });
+
+  const journal = useMemo(
+    () =>
+      entries
+        .filter(entry => complianceCategoryOf(entry.type) !== null)
+        .sort((a, b) => b.timestamp.localeCompare(a.timestamp)),
+    [entries],
+  );
+  const countOf = (value: string) => journal.filter(entry => complianceCategoryOf(entry.type) === value).length;
+  const scoped = useMemo(
+    () => (category === 'all' ? journal : journal.filter(entry => complianceCategoryOf(entry.type) === category)),
+    [journal, category],
+  );
+
+  const handleAddNote = () => {
+    if (!note.trim()) return;
+    onAddNote(note.trim());
+    setNote('');
+  };
+
+  const handleExportAll = () => {
+    downloadAuditCsv({
+      entries: journal,
+      fileName: `journal_conformite_${subscriptionName}.csv`,
+      groupColumn: {
+        header: t(`${J}.columns.category`),
+        value: entry => t(`${J}.categories.${complianceCategoryOf(entry.type)}`),
+      },
+      sectionLabel,
+      elementLabel,
+      t,
+      lang,
+    });
+    toast.success(t(`${J}.exportedToast`), {
+      description: t(`${J}.exportedToastDesc`, { count: journal.length }),
+    });
+  };
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" style={SIDE_PANEL_WIDE_STYLE} className="h-full p-0 gap-0">
+        <SidePanelHeader title={t(`${J}.title`)} description={t(`${J}.description`, { count: journal.length })}>
+          <div className="mt-3">
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger className="h-11" aria-label={t(`${J}.categoryFilter`)}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">
+                  {t(`${J}.allCategories`)} ({journal.length})
+                </SelectItem>
+                {COMPLIANCE_JOURNAL_CATEGORIES.map(value => (
+                  <SelectItem key={value} value={value}>
+                    {t(`${J}.categories.${value}`)} ({countOf(value)})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </SidePanelHeader>
+        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+          <div className="flex items-center gap-2">
+            <Input
+              value={note}
+              onChange={event => setNote(event.target.value)}
+              onKeyDown={event => event.key === 'Enter' && handleAddNote()}
+              placeholder={t(`${J}.notePlaceholder`)}
+              aria-label={t(`${J}.notePlaceholder`)}
+              className="h-11"
+            />
+            <Button variant="outline" className="h-11 gap-2 shrink-0" onClick={handleAddNote} disabled={!note.trim()}>
+              <MessageSquare className="w-4 h-4" />
+              {t(`${J}.addNote`)}
+            </Button>
+          </div>
+          <AuditTimeline
+            entries={scoped}
+            sections={sections}
+            documents={documents}
+            exportFileName={`journal_conformite_${subscriptionName}`}
+            showElement
+          />
+        </div>
+        <SidePanelFooter className="justify-between">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            {t(`${T}.close`)}
+          </Button>
+          <Button variant="primary" onClick={handleExportAll} className="gap-2">
+            <Download className="w-4 h-4" />
+            {t(`${J}.exportAll`)}
           </Button>
         </SidePanelFooter>
       </SheetContent>

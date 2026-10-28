@@ -1323,16 +1323,28 @@
         },
         "journal": {
           "title": "Compliance log",
-          "subtitle": "Decisions, calculations and notes, with their author.",
-          "notePlaceholder": "Add a note to the file",
+          "open": "Compliance log",
+          "description": "{{count}} compliance actions: answers, documents, score, categorisation, third parties, overrides, notes and validations.",
+          "notePlaceholder": "Add a note or comment to the file",
           "addNote": "Add",
-          "screeningRun": "Screening run on the entities of the file.",
-          "hitDiscarded": "Adverse media match discarded as a namesake.",
-          "scoreComputed": "Risk score computed from the file answers.",
-          "manualScore": "Score set manually on the Source of funds component.",
-          "categorisationSet": "MiFID II categorisation recorded.",
-          "pendingValidation": "File moved to awaiting compliance validation.",
-          "reportDownloaded": "Provider report downloaded - {{name}}"
+          "categoryFilter": "Filter by category",
+          "allCategories": "All categories",
+          "categories": {
+            "answers": "Questions and answers",
+            "documents": "Documents",
+            "reviews": "Successive validations",
+            "score": "Risk score",
+            "categorisation": "Categorisation",
+            "screening": "Third parties and screening",
+            "override": "Overrides",
+            "notes": "Notes and comments"
+          },
+          "columns": {
+            "category": "Category"
+          },
+          "exportAll": "Export the full log",
+          "exportedToast": "Compliance log exported",
+          "exportedToastDesc": "{{count}} actions exported, all categories included."
         },
         "final": {
           "title": "Compliance",
@@ -1494,7 +1506,16 @@
           "signatureCompleted": "Signature completed",
           "paymentConfirmed": "Payment confirmed",
           "noteAdded": "Note added",
-          "dossierExported": "Data exported"
+          "dossierExported": "Data exported",
+          "scoreComputed": "Risk score computed",
+          "scoreRecomputed": "Risk score recomputed",
+          "manualScoreSet": "Score set manually",
+          "categorisationSet": "Categorisation changed",
+          "hitQualified": "Match qualified",
+          "providerReportDownloaded": "Provider report downloaded",
+          "complianceSubmitted": "File sent to compliance",
+          "complianceReopened": "KYC reopened",
+          "complianceOverride": "Blocking checks overridden"
         },
         "origin": {
           "investor": "Investor",

@@ -115,13 +115,19 @@ import {
   CURRENT_OPERATOR,
   buildInitialSubscriptionAudit,
   countPendingModifications,
+  complianceCategoryOf,
   createLiveAuditEntry,
   isModifiedByOperator,
   lastModificationOrigin,
   type SubscriptionAuditOrigin,
   type SubscriptionAuditEntry,
 } from '../utils/subscriptionAuditMock';
-import { SubscriptionActivitySheet, SubscriptionAuditPanel, SubscriptionAuditTab } from './SubscriptionAuditTrail';
+import {
+  SubscriptionActivitySheet,
+  SubscriptionAuditPanel,
+  SubscriptionAuditTab,
+  SubscriptionComplianceJournalSheet,
+} from './SubscriptionAuditTrail';
 import { Tag as NeutralTag } from './Tag';
 import { EmptyState } from './EmptyState';
 import { RowActionButton } from './ui/row-actions';
@@ -392,6 +398,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   }, []);
   const [auditElement, setAuditElement] = useState<{ elementId: string; sectionId: string } | null>(null);
   const [activityOpen, setActivityOpen] = useState(false);
+  const [complianceJournalOpen, setComplianceJournalOpen] = useState(false);
   const logAudit = (...entries: Parameters<typeof createLiveAuditEntry>[0][]) =>
     setAuditEntries(prev => [...prev, ...entries.map(createLiveAuditEntry)]);
   const sectionOf = (elementId: string) => elementId.slice(0, elementId.lastIndexOf('-'));
@@ -2689,6 +2696,9 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                           newValue: event.to,
                         })
                       }
+                      onAuditEvent={entry => logAudit(entry)}
+                      onOpenJournal={() => setComplianceJournalOpen(true)}
+                      journalCount={auditEntries.filter(entry => complianceCategoryOf(entry.type) !== null).length}
                       scoreValidated={riskValidated}
                       scoreValidatedBy={riskValidatedBy}
                       scoreValidatedAt={riskValidationDate}
@@ -3027,6 +3037,19 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
         sections={onboardingSections}
         documents={requiredDocuments}
         subscriptionName={String(subscription.id)}
+      />
+
+      <SubscriptionComplianceJournalSheet
+        open={complianceJournalOpen}
+        onOpenChange={setComplianceJournalOpen}
+        entries={auditEntries}
+        sections={onboardingSections}
+        documents={requiredDocuments}
+        subscriptionName={String(subscription.id)}
+        onAddNote={text => {
+          logAudit({ type: 'noteAdded', newValue: text });
+          toast.success(t('subscriptions.detail.compliance.toast.noteAdded'));
+        }}
       />
 
       <SubscriptionReopenDialog
