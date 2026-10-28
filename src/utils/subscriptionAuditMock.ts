@@ -35,7 +35,16 @@ export type SubscriptionAuditEventType =
   | 'signatureCompleted'
   | 'paymentConfirmed'
   | 'noteAdded'
-  | 'dossierExported';
+  | 'dossierExported'
+  | 'scoreComputed'
+  | 'scoreRecomputed'
+  | 'manualScoreSet'
+  | 'categorisationSet'
+  | 'hitQualified'
+  | 'providerReportDownloaded'
+  | 'complianceSubmitted'
+  | 'complianceReopened'
+  | 'complianceOverride';
 
 export const SUBSCRIPTION_AUDIT_EVENT_TYPES: SubscriptionAuditEventType[] = [
   'invitationSent',
@@ -73,6 +82,15 @@ export const SUBSCRIPTION_AUDIT_EVENT_TYPES: SubscriptionAuditEventType[] = [
   'paymentConfirmed',
   'noteAdded',
   'dossierExported',
+  'scoreComputed',
+  'scoreRecomputed',
+  'manualScoreSet',
+  'categorisationSet',
+  'hitQualified',
+  'providerReportDownloaded',
+  'complianceSubmitted',
+  'complianceReopened',
+  'complianceOverride',
 ];
 
 /** Domaine d'une action, pour filtrer la piste d'audit de toute la souscription. */
@@ -107,6 +125,15 @@ const DOMAIN_BY_TYPE: Partial<Record<SubscriptionAuditEventType, SubscriptionAud
   scoreValidated: 'compliance',
   scoreInvalidated: 'compliance',
   complianceValidated: 'compliance',
+  scoreComputed: 'compliance',
+  scoreRecomputed: 'compliance',
+  manualScoreSet: 'compliance',
+  categorisationSet: 'compliance',
+  hitQualified: 'compliance',
+  providerReportDownloaded: 'compliance',
+  complianceSubmitted: 'compliance',
+  complianceReopened: 'compliance',
+  complianceOverride: 'compliance',
   reviewHandedOff: 'compliance',
   finalValidation: 'compliance',
   signaturePackSent: 'signature',
@@ -120,6 +147,67 @@ const DOMAIN_BY_TYPE: Partial<Record<SubscriptionAuditEventType, SubscriptionAud
 /** Les actions sur les réponses, les pièces et le dossier relèvent de l'onboarding. */
 export const auditDomainOf = (type: SubscriptionAuditEventType): SubscriptionAuditDomain =>
   DOMAIN_BY_TYPE[type] ?? 'onboarding';
+
+/** Rubrique du journal de conformité. Les actions hors conformité (communications, signatures, paiement) n'y figurent pas. */
+export type ComplianceJournalCategory =
+  | 'answers'
+  | 'documents'
+  | 'reviews'
+  | 'score'
+  | 'categorisation'
+  | 'screening'
+  | 'override'
+  | 'notes';
+
+export const COMPLIANCE_JOURNAL_CATEGORIES: ComplianceJournalCategory[] = [
+  'answers',
+  'documents',
+  'reviews',
+  'score',
+  'categorisation',
+  'screening',
+  'override',
+  'notes',
+];
+
+const COMPLIANCE_CATEGORY_BY_TYPE: Partial<Record<SubscriptionAuditEventType, ComplianceJournalCategory>> = {
+  answerEntered: 'answers',
+  answerModified: 'answers',
+  answerReplayed: 'answers',
+  dataPropagated: 'answers',
+  dataReset: 'answers',
+  dataReported: 'answers',
+  documentUploaded: 'documents',
+  documentReplaced: 'documents',
+  documentDatesUpdated: 'documents',
+  answerValidated: 'reviews',
+  answerInvalidated: 'reviews',
+  documentValidated: 'reviews',
+  documentRejected: 'reviews',
+  dossierSubmitted: 'reviews',
+  dossierReopened: 'reviews',
+  partnerValidated: 'reviews',
+  reviewHandedOff: 'reviews',
+  finalValidation: 'reviews',
+  complianceSubmitted: 'reviews',
+  complianceReopened: 'reviews',
+  complianceValidated: 'reviews',
+  scoreComputed: 'score',
+  scoreRecomputed: 'score',
+  manualScoreSet: 'score',
+  scoreValidated: 'score',
+  scoreInvalidated: 'score',
+  categorisationSet: 'categorisation',
+  screeningLaunched: 'screening',
+  hitQualified: 'screening',
+  providerReportDownloaded: 'screening',
+  complianceOverride: 'override',
+  noteAdded: 'notes',
+  commentAdded: 'notes',
+};
+
+export const complianceCategoryOf = (type: SubscriptionAuditEventType): ComplianceJournalCategory | null =>
+  COMPLIANCE_CATEGORY_BY_TYPE[type] ?? null;
 
 /** Origine d'un changement, reprise de IC-5264. */
 export type SubscriptionAuditOrigin = 'investor' | 'operator' | 'partner' | 'automatic' | 'api';
@@ -135,6 +223,8 @@ export interface SubscriptionAuditEntry {
   elementId?: string;
   /** Absent pour un événement qui porte sur le dossier entier. */
   sectionId?: string;
+  /** Objet d'une action de conformité hors questionnaire : tiers, correspondance, composante du score. */
+  subject?: string;
   previousValue?: string;
   newValue?: string;
   reason?: string;
@@ -192,6 +282,7 @@ export const AUDIT_DOCUMENTS_SECTION = 'documents';
 /** Opérateur connecté dans la maquette. */
 export const CURRENT_OPERATOR = 'Jean Dupont';
 const CONTROLLER = 'Claire Martin';
+const COMPLIANCE_OFFICER = 'Marie Dubois';
 
 let liveSequence = 0;
 
@@ -208,6 +299,8 @@ export function createLiveAuditEntry(
     timestamp: new Date().toISOString(),
   };
 }
+
+export type LiveAuditInput = Parameters<typeof createLiveAuditEntry>[0];
 
 const at = (day: string, minutes: number) => {
   const base = new Date(`${day}:00`);
@@ -409,7 +502,36 @@ export function buildInitialSubscriptionAudit({
     });
   });
 
-  push({ type: 'screeningLaunched', timestamp: at('2026-05-19T16:11', 0), origin: 'automatic', newValue: 'Aucune correspondance' });
+  push({ type: 'screeningLaunched', timestamp: at('2026-05-19T16:11', 0), origin: 'automatic', newValue: 'Correspondances détectées' });
+  push({
+    type: 'hitQualified',
+    timestamp: at('2026-05-19T16:22', 0),
+    origin: 'operator',
+    actorName: COMPLIANCE_OFFICER,
+    subject: 'Presse défavorable · Société Alpha',
+    newValue: 'Faux positif',
+    reason: 'Homonymie, date de naissance différente',
+  });
+  push({ type: 'scoreComputed', timestamp: at('2026-05-19T16:24', 0), origin: 'automatic', newValue: '62' });
+  push({
+    type: 'manualScoreSet',
+    timestamp: at('2026-05-19T16:31', 0),
+    origin: 'operator',
+    actorName: COMPLIANCE_OFFICER,
+    subject: 'Origine des fonds',
+    previousValue: '6',
+    newValue: '4',
+    reason: 'Justificatif de cession fourni',
+  });
+  push({
+    type: 'categorisationSet',
+    timestamp: at('2026-05-19T16:35', 0),
+    origin: 'operator',
+    actorName: COMPLIANCE_OFFICER,
+    previousValue: 'Non professionnel',
+    newValue: 'Professionnel par nature',
+  });
+  push({ type: 'complianceSubmitted', timestamp: at('2026-05-19T16:40', 0), origin: 'automatic' });
   push({
     type: 'emailSent',
     timestamp: at('2026-05-19T16:12', 0),

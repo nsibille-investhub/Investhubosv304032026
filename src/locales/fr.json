@@ -1325,16 +1325,28 @@
         },
         "journal": {
           "title": "Journal de conformité",
-          "subtitle": "Décisions, calculs et notes, avec leur auteur.",
-          "notePlaceholder": "Ajouter une note au dossier",
+          "open": "Journal de conformité",
+          "description": "{{count}} actions de conformité : réponses, pièces, score, catégorisation, parties tierces, dérogations, notes et validations.",
+          "notePlaceholder": "Ajouter une note ou un commentaire au dossier",
           "addNote": "Ajouter",
-          "screeningRun": "Screening lancé sur les entités du dossier.",
-          "hitDiscarded": "Correspondance presse défavorable écartée pour homonymie.",
-          "scoreComputed": "Score de risque calculé à partir des réponses du dossier.",
-          "manualScore": "Score saisi manuellement sur la composante Origine des fonds.",
-          "categorisationSet": "Catégorisation MIF II enregistrée.",
-          "pendingValidation": "Dossier passé en attente de validation par la conformité.",
-          "reportDownloaded": "Rapport du fournisseur téléchargé - {{name}}"
+          "categoryFilter": "Filtrer par rubrique",
+          "allCategories": "Toutes les rubriques",
+          "categories": {
+            "answers": "Questions et réponses",
+            "documents": "Documents",
+            "reviews": "Validations successives",
+            "score": "Score de risque",
+            "categorisation": "Catégorisation",
+            "screening": "Parties tierces et screening",
+            "override": "Dérogations",
+            "notes": "Notes et commentaires"
+          },
+          "columns": {
+            "category": "Rubrique"
+          },
+          "exportAll": "Exporter le journal complet",
+          "exportedToast": "Journal de conformité exporté",
+          "exportedToastDesc": "{{count}} actions exportées, toutes rubriques confondues."
         },
         "final": {
           "title": "Conformité",
@@ -1496,7 +1508,16 @@
           "signatureCompleted": "Signature complète",
           "paymentConfirmed": "Paiement confirmé",
           "noteAdded": "Note ajoutée",
-          "dossierExported": "Données exportées"
+          "dossierExported": "Données exportées",
+          "scoreComputed": "Score de risque calculé",
+          "scoreRecomputed": "Score de risque recalculé",
+          "manualScoreSet": "Score saisi manuellement",
+          "categorisationSet": "Catégorisation modifiée",
+          "hitQualified": "Correspondance qualifiée",
+          "providerReportDownloaded": "Rapport du fournisseur téléchargé",
+          "complianceSubmitted": "Dossier transmis à la conformité",
+          "complianceReopened": "KYC rouvert",
+          "complianceOverride": "Dérogation aux contrôles bloquants"
         },
         "origin": {
           "investor": "Investisseur",

@@ -133,6 +133,8 @@ interface SubscriptionScreeningWidgetProps {
   /** Dossier validé : les décisions ne sont plus modifiables. */
   locked: boolean;
   onReportDownloaded?: (entity: ScreeningEntity) => void;
+  /** Décision prise sur des correspondances, pour le journal de conformité. */
+  onDecisionApplied?: (event: { alerts: AlertItem[]; decisionLabel: string; comments: Record<string, string> }) => void;
 }
 
 /**
@@ -140,15 +142,26 @@ interface SubscriptionScreeningWidgetProps {
  * chacun gérant ses alertes avec le tableau, les dialogues de décision et le
  * panneau latéral des sections Entités / Alertes.
  */
-export function SubscriptionScreeningWidget({ screening, locked, onReportDownloaded }: SubscriptionScreeningWidgetProps) {
+export function SubscriptionScreeningWidget({
+  screening,
+  locked,
+  onReportDownloaded,
+  onDecisionApplied,
+}: SubscriptionScreeningWidgetProps) {
   const { t } = useTranslation();
   const { qualifyMatches } = useCompliance();
 
   const [drawerAlert, setDrawerAlert] = useState<AlertItem | null>(null);
   const [dialog, setDialog] = useState<{ alerts: AlertItem[]; action: AlertBulkAction } | null>(null);
 
-  const applyDecision = (ids: string[], decision: MatchDecisionValue, comments: Record<string, string>) => {
+  const applyDecision = (
+    ids: string[],
+    decision: MatchDecisionValue,
+    comments: Record<string, string>,
+    alerts: AlertItem[],
+  ) => {
     const result = qualifyMatches(ids, decision, comments);
+    onDecisionApplied?.({ alerts, decisionLabel: t(DECISION_KEY[decision]), comments });
     toast.success(t('complianceEntities.matches.toast.qualified', { count: result.qualified + result.revised }), {
       description: t(DECISION_KEY[decision]),
     });
@@ -204,7 +217,7 @@ export function SubscriptionScreeningWidget({ screening, locked, onReportDownloa
           locked
             ? undefined
             : (alertId, decision, comment) => {
-                applyDecision([alertId], decision, { [alertId]: comment ?? '' });
+                applyDecision([alertId], decision, { [alertId]: comment ?? '' }, drawerAlert ? [drawerAlert] : []);
                 setDrawerAlert(null);
               }
         }
@@ -217,7 +230,12 @@ export function SubscriptionScreeningWidget({ screening, locked, onReportDownloa
         action={dialog?.action ?? null}
         onClose={() => setDialog(null)}
         onConfirm={(alertIds, action, comments) => {
-          applyDecision(alertIds, toDecision(action), comments);
+          applyDecision(
+            alertIds,
+            toDecision(action),
+            comments,
+            (dialog?.alerts ?? []).filter(alert => alertIds.includes(alert.id)),
+          );
           setDialog(null);
         }}
       />

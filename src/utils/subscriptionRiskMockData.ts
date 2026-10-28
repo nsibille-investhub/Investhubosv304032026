@@ -467,59 +467,6 @@ export const mockCategorisation: InvestorCategorisation = {
   reviewDueAt: '19/05/2028',
 };
 
-export interface ComplianceJournalEntry {
-  id: string;
-  at: string;
-  by: string;
-  kind: 'screening' | 'decision' | 'score' | 'status' | 'note' | 'categorisation';
-  labelKey: string;
-}
-
-export const mockComplianceJournal: ComplianceJournalEntry[] = [
-  {
-    id: 'journal-1',
-    at: '19/05/2026 16:10',
-    by: 'Automatique',
-    kind: 'screening',
-    labelKey: 'subscriptions.detail.compliance.journal.screeningRun',
-  },
-  {
-    id: 'journal-2',
-    at: '19/05/2026 16:22',
-    by: 'Marie Dubois',
-    kind: 'decision',
-    labelKey: 'subscriptions.detail.compliance.journal.hitDiscarded',
-  },
-  {
-    id: 'journal-3',
-    at: '19/05/2026 16:24',
-    by: 'Automatique',
-    kind: 'score',
-    labelKey: 'subscriptions.detail.compliance.journal.scoreComputed',
-  },
-  {
-    id: 'journal-4',
-    at: '19/05/2026 16:31',
-    by: 'Marie Dubois',
-    kind: 'score',
-    labelKey: 'subscriptions.detail.compliance.journal.manualScore',
-  },
-  {
-    id: 'journal-5',
-    at: '19/05/2026 16:35',
-    by: 'Marie Dubois',
-    kind: 'categorisation',
-    labelKey: 'subscriptions.detail.compliance.journal.categorisationSet',
-  },
-  {
-    id: 'journal-6',
-    at: '19/05/2026 16:40',
-    by: 'Systeme',
-    kind: 'status',
-    labelKey: 'subscriptions.detail.compliance.journal.pendingValidation',
-  },
-];
-
 /** Correspondances sans decision au chargement, utilisee pour le badge de l'onglet. */
 export const countUntreatedScreeningHits = () =>
   mockScreenedEntities.reduce(

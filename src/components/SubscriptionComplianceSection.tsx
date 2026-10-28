@@ -7,15 +7,13 @@ import {
   ChevronRight,
   Clock,
   FileCheck,
-  FileDown,
   Globe,
+  History,
   ListChecks,
-  MessageSquare,
   Pencil,
   Radar,
   RefreshCw,
   RotateCcw,
-  Scale,
   ShieldAlert,
   ShieldCheck,
   UserCheck,
@@ -26,7 +24,6 @@ import { useTranslation } from '../utils/languageContext';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
-import { Input } from './ui/input';
 import {
   Select,
   SelectContent,
@@ -44,7 +41,6 @@ import {
   computeProfileScore,
   findRiskTier,
   mockCategorisation,
-  mockComplianceJournal,
   mockRiskProfile,
   mockRiskScales,
   type InvestorCategory,
@@ -55,6 +51,7 @@ import {
   SubscriptionScreeningWidget,
   useSubscriptionScreening,
 } from './SubscriptionScreeningWidget';
+import type { LiveAuditInput } from '../utils/subscriptionAuditMock';
 
 export type ComplianceStatus = 'pending' | 'awaitingValidation' | 'validated';
 
@@ -480,6 +477,11 @@ interface SubscriptionComplianceSectionProps {
   reviewMode?: 'partnerPrevalidation' | 'standard' | 'fourEyes';
   reviewChain?: { partner?: { name: string; by?: string }; firstAnalyst: string; secondAnalyst: string };
   onReviewEvent?: (event: { type: 'handedOff' | 'finalValidation'; by: string; to?: string }) => void;
+  /** Inscrit une action de conformité dans la piste d'audit de la souscription. */
+  onAuditEvent?: (entry: LiveAuditInput) => void;
+  onOpenJournal?: () => void;
+  /** Nombre d'actions du journal de conformité, affiché sur le bouton d'ouverture. */
+  journalCount?: number;
 }
 
 /** Espace Validation / Conformite : widgets risque, screening, categorisation et validation. */
@@ -496,6 +498,9 @@ export function SubscriptionComplianceSection({
   reviewMode = 'standard',
   reviewChain,
   onReviewEvent,
+  onAuditEvent,
+  onOpenJournal,
+  journalCount,
 }: SubscriptionComplianceSectionProps) {
   const { t } = useTranslation();
 
@@ -516,23 +521,11 @@ export function SubscriptionComplianceSection({
   const [overrideRequested, setOverrideRequested] = useState(false);
   const [reopenedAt, setReopenedAt] = useState<string | null>(null);
   const [handedOffTo, setHandedOffTo] = useState<string | null>(null);
-  const [note, setNote] = useState('');
-  const [journalNotes, setJournalNotes] = useState<
-    { id: string; at: string; by: string; text: string; kind: 'note' | 'report' }[]
-  >([]);
 
-  const handleReportDownloaded = (entity: { name: string }) => {
-    setJournalNotes(prev => [
-      {
-        id: `report-${prev.length + 1}`,
-        at: now(),
-        by: CURRENT_OPERATOR,
-        text: t('subscriptions.detail.compliance.journal.reportDownloaded', { name: entity.name }),
-        kind: 'report',
-      },
-      ...prev,
-    ]);
-  };
+  const logAudit = (entry: LiveAuditInput) => onAuditEvent?.({ actorName: CURRENT_OPERATOR, ...entry });
+
+  const handleReportDownloaded = (entity: { name: string }) =>
+    logAudit({ type: 'providerReportDownloaded', subject: entity.name });
 
   const profileScore = computeProfileScore(manualScores);
   const profileTier = findRiskTier(mockRiskProfile.scaleId, profileScore);
@@ -553,6 +546,17 @@ export function SubscriptionComplianceSection({
   const canValidate = blockers.length === 0 || overrideRequested;
 
   const handleManualScore = (componentId: string, value: number) => {
+    const component = mockRiskProfile.classes
+      .flatMap(item => item.components)
+      .find(item => item.id === componentId);
+    const label = component ? t(component.labelKey) : componentId;
+    const previous = manualScores[componentId] ?? component?.manualScore ?? component?.score;
+    logAudit({
+      type: 'manualScoreSet',
+      subject: label,
+      previousValue: previous !== undefined && previous !== null ? String(previous) : undefined,
+      newValue: String(value),
+    });
     setManualScores(prev => ({ ...prev, [componentId]: value }));
     setComputedAt(now());
     toast.success(t('subscriptions.detail.compliance.toast.manualScoreSaved'), {
@@ -561,6 +565,7 @@ export function SubscriptionComplianceSection({
   };
 
   const handleRecompute = () => {
+    logAudit({ type: 'scoreRecomputed', origin: 'operator', newValue: String(profileScore ?? '') });
     setComputedAt(now());
     toast.success(t('subscriptions.detail.compliance.toast.recomputed'), {
       description: t('subscriptions.detail.compliance.toast.recomputedDesc'),
@@ -568,6 +573,11 @@ export function SubscriptionComplianceSection({
   };
 
   const handleCategoryChange = (next: InvestorCategory) => {
+    logAudit({
+      type: 'categorisationSet',
+      previousValue: t(`subscriptions.detail.compliance.categories.${category}`),
+      newValue: t(`subscriptions.detail.compliance.categories.${next}`),
+    });
     setCategory(next);
     setCategoryDecidedBy(CURRENT_OPERATOR);
     setCategoryDecidedAt(now());
@@ -613,6 +623,14 @@ export function SubscriptionComplianceSection({
 
   const handleValidateCompliance = () => {
     const stamp = now();
+    if (blockers.length > 0 && overrideRequested) {
+      logAudit({
+        type: 'complianceOverride',
+        actorName: currentAnalyst,
+        newValue: blockers.map(item => t(item.labelKey)).join(', '),
+        reason: t('subscriptions.detail.compliance.final.override'),
+      });
+    }
     setStatus('validated');
     setStatusBy(currentAnalyst);
     setStatusAt(stamp);
@@ -628,6 +646,7 @@ export function SubscriptionComplianceSection({
 
   const handleReopen = () => {
     const stamp = now();
+    logAudit({ type: 'complianceReopened' });
     setStatus('awaitingValidation');
     setStatusBy(CURRENT_OPERATOR);
     setStatusAt(stamp);
@@ -642,21 +661,12 @@ export function SubscriptionComplianceSection({
 
   const handleSubmitToCompliance = () => {
     const stamp = now();
+    logAudit({ type: 'complianceSubmitted' });
     setStatus('awaitingValidation');
     setStatusBy(CURRENT_OPERATOR);
     setStatusAt(stamp);
     onStatusChange?.({ status: 'awaitingValidation', by: CURRENT_OPERATOR, at: stamp });
     toast.success(t('subscriptions.detail.compliance.toast.submittedToCompliance'));
-  };
-
-  const handleAddNote = () => {
-    if (!note.trim()) return;
-    setJournalNotes(prev => [
-      { id: `note-${prev.length + 1}`, at: now(), by: CURRENT_OPERATOR, text: note.trim(), kind: 'note' },
-      ...prev,
-    ]);
-    setNote('');
-    toast.success(t('subscriptions.detail.compliance.toast.noteAdded'));
   };
 
   return (
@@ -679,6 +689,17 @@ export function SubscriptionComplianceSection({
           </div>
 
           <div className="flex flex-wrap items-center gap-2 shrink-0">
+            {onOpenJournal && (
+              <Button variant="outline" size="sm" className="gap-1.5 text-xs h-9" onClick={onOpenJournal}>
+                <History className="w-3.5 h-3.5" />
+                {t('subscriptions.detail.compliance.journal.open')}
+                {journalCount !== undefined && (
+                  <span className="rounded-full bg-muted px-1.5 text-[11px] tabular-nums text-muted-foreground">
+                    {journalCount}
+                  </span>
+                )}
+              </Button>
+            )}
             {locked ? (
               <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
                 <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
@@ -973,73 +994,19 @@ export function SubscriptionComplianceSection({
           screening={screening}
           locked={locked}
           onReportDownloaded={handleReportDownloaded}
+          onDecisionApplied={({ alerts, decisionLabel, comments }) =>
+            alerts.forEach(alert =>
+              logAudit({
+                type: 'hitQualified',
+                subject: `${alert.name} · ${alert.entityName}`,
+                newValue: decisionLabel,
+                reason: comments[alert.id] || undefined,
+              }),
+            )
+          }
         />
       </div>
 
-      {/* Widget journal de conformite */}
-      <Card className="shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b">
-          <h3 className={WIDGET_TITLE_CLASS}>
-            {t('subscriptions.detail.compliance.journal.title')}
-          </h3>
-          <p className={WIDGET_SUBTITLE_CLASS}>
-            {t('subscriptions.detail.compliance.journal.subtitle')}
-          </p>
-        </div>
-
-        <div className="px-6 py-4 space-y-3">
-          <div className="flex items-start gap-2">
-            <Input
-              value={note}
-              onChange={event => setNote(event.target.value)}
-              placeholder={t('subscriptions.detail.compliance.journal.notePlaceholder')}
-              className="h-9 text-sm"
-            />
-            <Button size="sm" className="h-9 gap-1.5 text-xs" onClick={handleAddNote}>
-              <MessageSquare className="w-3.5 h-3.5" />
-              {t('subscriptions.detail.compliance.journal.addNote')}
-            </Button>
-          </div>
-
-          <ul className="space-y-3">
-            {journalNotes.map(entry => (
-              <li key={entry.id} className="flex items-start gap-3">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted">
-                  {entry.kind === 'report' ? (
-                    <FileDown className="w-3.5 h-3.5 text-muted-foreground" />
-                  ) : (
-                    <MessageSquare className="w-3.5 h-3.5 text-muted-foreground" />
-                  )}
-                </span>
-                <div className="min-w-0">
-                  <p className="text-sm text-foreground">{entry.text}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {entry.by} · {entry.at}
-                  </p>
-                </div>
-              </li>
-            ))}
-            {mockComplianceJournal.map(entry => (
-              <li key={entry.id} className="flex items-start gap-3">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted">
-                  {entry.kind === 'screening' && <Radar className="w-3.5 h-3.5 text-muted-foreground" />}
-                  {entry.kind === 'decision' && <Check className="w-3.5 h-3.5 text-muted-foreground" />}
-                  {entry.kind === 'score' && <Scale className="w-3.5 h-3.5 text-muted-foreground" />}
-                  {entry.kind === 'status' && <ShieldAlert className="w-3.5 h-3.5 text-muted-foreground" />}
-                  {entry.kind === 'categorisation' && <UserCheck className="w-3.5 h-3.5 text-muted-foreground" />}
-                  {entry.kind === 'note' && <MessageSquare className="w-3.5 h-3.5 text-muted-foreground" />}
-                </span>
-                <div className="min-w-0">
-                  <p className="text-sm text-foreground">{t(entry.labelKey)}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {entry.by} · {entry.at}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </Card>
     </div>
   );
 }
