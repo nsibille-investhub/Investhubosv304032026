@@ -1099,7 +1099,9 @@
         "replace": "Replace",
         "verification": "Verification",
         "validateDocument": "Validate document",
-        "rejectDocument": "Request a correction"
+        "rejectDocument": "Request a correction",
+        "validated": "Validated",
+        "rejected": "Invalidated"
       },
       "notes": {
         "mock1": "Verify the dual nationality mentioned during the initial interview",
@@ -1529,8 +1531,10 @@
         }
       },
       "documentControl": {
-        "rejectedToast": "Document rejected",
-        "rejectedToastDesc": "{{name}}: the reason is visible to the investor",
+        "approvedToast": "Document validated",
+        "approvedToastDesc": "{{name}} has been validated",
+        "rejectedToast": "Document invalidated",
+        "rejectedToastDesc": "{{name}} will be included in the file reopening",
         "blockersTitleOne": "1 document blocks the file validation",
         "blockersTitleMany": "{{count}} documents block the file validation",
         "blockersDescription": "Fill in the missing information to be able to validate the file.",
@@ -1538,13 +1542,7 @@
         "issueDateInput": "Issue date",
         "manualTag": "Manual upload",
         "reasonLine": "Reason: {{reason}}",
-        "visibleToInvestor": "Visible to the investor",
-        "rejectTitle": "Reject the document",
-        "rejectConfirm": "Reject",
-        "reasonRequired": "Enter a reason to reject the document",
-        "reasonPlaceholder": "Example: unreadable document, please send a complete copy",
-        "reasonLabel": "Rejection reason",
-        "reasonVisible": "The reason is kept on the document and visible to the investor on their portal."
+        "visibleToInvestor": "Visible to the investor"
       },
       "manualDocument": {
         "title": "Add a document",

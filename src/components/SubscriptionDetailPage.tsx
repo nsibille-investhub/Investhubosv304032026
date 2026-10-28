@@ -6,7 +6,6 @@ import {
   Store,
   TrendingUp,
   Check,
-  X,
   Edit2,
   Eye,
   FileText,
@@ -81,6 +80,7 @@ import { getShareableUrl } from '../utils/routing';
 import { SubscriptionInfoPopover } from './SubscriptionInfoPopover';
 import { PartyTypeBadge } from './ui/party-type-badge';
 import { QuestionActions, QuestionStatus } from './QuestionActions';
+import { ReviewControls } from './ui/review-controls';
 import { QuestionCommentThread } from './QuestionCommentThread';
 import { IntegrationsTab } from './IntegrationsTab';
 import { SectionCard, SectionFieldRow } from './ui/section-card';
@@ -126,9 +126,7 @@ import { Tag as NeutralTag } from './Tag';
 import { EmptyState } from './EmptyState';
 import { RowActionButton } from './ui/row-actions';
 import { BlockersPanel } from './ui/blockers-panel';
-import { ConfirmDialog } from './ui/confirm-dialog';
 import { DisabledReason } from './ui/disabled-reason';
-import { Textarea } from './ui/textarea';
 import { ManualDocumentPanel, isoToDisplayDate } from './ManualDocumentPanel';
 import { QuestionRelationIcons } from './QuestionRelationIcons';
 import { AnswerEditPanel, type AnswerEditEffects, type AnswerEditTarget, type AnswerEditTriggerChange } from './AnswerEditPanel';
@@ -316,8 +314,6 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   // Verification des pieces justificatives (meme cycle de vie que les reponses)
   const [documentStatuses, setDocumentStatuses] = useState<Record<string, QuestionStatus>>(INITIAL_DOCUMENT_STATUSES);
   const [requiredDocuments, setRequiredDocuments] = useState<MockRequiredDocument[]>(mockRequiredDocuments);
-  const [documentToReject, setDocumentToReject] = useState<number | null>(null);
-  const [rejectionReason, setRejectionReason] = useState('');
   const [isManualDocumentOpen, setIsManualDocumentOpen] = useState(false);
   const updateDocument = (idx: number, patch: Partial<MockRequiredDocument>) =>
     setRequiredDocuments(prev => prev.map((doc, i) => (i === idx ? { ...doc, ...patch } : doc)));
@@ -1018,24 +1014,18 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
   const handleApproveDocument = (idx: number) => {
     setDocumentStatuses(prev => ({ ...prev, [`document-${idx}`]: 'approved' }));
     logAudit({ type: 'documentValidated', elementId: `document-${idx}`, sectionId: AUDIT_DOCUMENTS_SECTION });
+    toast.success(t('subscriptions.detail.documentControl.approvedToast'), {
+      description: t('subscriptions.detail.documentControl.approvedToastDesc', { name: docLabel(requiredDocuments[idx]) }),
+    });
   };
 
+  // Comme une réponse : le motif se saisit dans la réouverture globale, envoyée à l'investisseur.
   const handleRejectDocument = (idx: number) => {
-    setRejectionReason('');
-    setDocumentToReject(idx);
-  };
-
-  const handleConfirmRejectDocument = () => {
-    if (documentToReject === null) return;
-    const idx = documentToReject;
-    const reason = rejectionReason.trim();
     setDocumentStatuses(prev => ({ ...prev, [`document-${idx}`]: 'rejected' }));
-    updateDocument(idx, { rejectionReason: reason });
-    logAudit({ type: 'documentRejected', elementId: `document-${idx}`, sectionId: AUDIT_DOCUMENTS_SECTION, reason });
+    logAudit({ type: 'documentRejected', elementId: `document-${idx}`, sectionId: AUDIT_DOCUMENTS_SECTION });
     toast.error(t('subscriptions.detail.documentControl.rejectedToast'), {
       description: t('subscriptions.detail.documentControl.rejectedToastDesc', { name: docLabel(requiredDocuments[idx]) }),
     });
-    setDocumentToReject(null);
   };
 
   const handleIssueDateChange = (idx: number, iso: string) => {
@@ -1273,11 +1263,14 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
     const recipient = reopenRecipient.email;
     const items = reopenItems.filter(item => itemIds.includes(item.id));
 
-    if (!KEEP_DOCS_AT_REOPEN) {
-      items
-        .filter(item => item.kind === 'document')
-        .forEach(item => updateDocument(Number(item.id.slice('document-'.length)), { hasFile: false, issueDate: '' }));
-    }
+    items
+      .filter(item => item.kind === 'document')
+      .forEach(item =>
+        updateDocument(Number(item.id.slice('document-'.length)), {
+          rejectionReason: comments[item.id]?.trim() || undefined,
+          ...(KEEP_DOCS_AT_REOPEN ? {} : { hasFile: false, issueDate: '' }),
+        }),
+      );
 
     if (reopenBackToPartner) {
       // Le partenaire a déjà validé : le dossier lui revient, l'investisseur n'est pas recontacté.
@@ -2381,7 +2374,7 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                       <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider w-28">
                                         {t('subscriptions.detail.docsTable.action')}
                                       </th>
-                                      <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider w-28 ds-sticky-actions">
+                                      <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider w-36 ds-sticky-actions">
                                         {t('subscriptions.detail.docsTable.verification')}
                                       </th>
                                     </tr>
@@ -2466,44 +2459,29 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
                                               </Badge>
                                             </div>
                                           ) : (
-                                            <div className="flex items-center justify-center gap-1">
-                                              <DisabledReason
-                                                reason={
+                                            <div className="flex justify-center">
+                                              <ReviewControls
+                                                status={
+                                                  docState === 'validated'
+                                                    ? 'approved'
+                                                    : docState === 'awaitingCorrection'
+                                                      ? 'rejected'
+                                                      : 'pending'
+                                                }
+                                                onApprove={() => handleApproveDocument(idx)}
+                                                onReject={() => handleRejectDocument(idx)}
+                                                approveDisabledReason={
                                                   isMissingIssueDate(doc)
                                                     ? t('subscriptions.detail.documentControl.missingIssueDate')
                                                     : undefined
                                                 }
-                                              >
-                                              <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                title={t('subscriptions.detail.docsTable.validateDocument')}
-                                                aria-label={t('subscriptions.detail.docsTable.validateDocument')}
-                                                disabled={isMissingIssueDate(doc)}
-                                                onClick={() => handleApproveDocument(idx)}
-                                                className={`h-7 w-7 p-0 hover:bg-emerald-50 ${
-                                                  docState === 'validated'
-                                                    ? 'bg-emerald-50 text-emerald-600'
-                                                    : 'text-muted-foreground'
-                                                }`}
-                                              >
-                                                <Check className="w-3.5 h-3.5" />
-                                              </Button>
-                                              </DisabledReason>
-                                              <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                title={t('subscriptions.detail.docsTable.rejectDocument')}
-                                                aria-label={t('subscriptions.detail.docsTable.rejectDocument')}
-                                                onClick={() => handleRejectDocument(idx)}
-                                                className={`h-7 w-7 p-0 hover:bg-red-50 ${
-                                                  docState === 'awaitingCorrection'
-                                                    ? 'bg-red-50 text-red-600'
-                                                    : 'text-muted-foreground'
-                                                }`}
-                                              >
-                                                <X className="w-3.5 h-3.5" />
-                                              </Button>
+                                                labels={{
+                                                  approved: t('subscriptions.detail.docsTable.validated'),
+                                                  rejected: t('subscriptions.detail.docsTable.rejected'),
+                                                  approve: t('subscriptions.detail.docsTable.validateDocument'),
+                                                  reject: t('subscriptions.detail.docsTable.rejectDocument'),
+                                                }}
+                                              />
                                             </div>
                                           )}
                                         </td>
@@ -2916,36 +2894,6 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
           </TabsContent>
         </Tabs>
       </div>
-
-      <ConfirmDialog
-        open={documentToReject !== null}
-        onOpenChange={open => !open && setDocumentToReject(null)}
-        destructive
-        title={t('subscriptions.detail.documentControl.rejectTitle')}
-        description={
-          documentToReject !== null && requiredDocuments[documentToReject]
-            ? docLabel(requiredDocuments[documentToReject])
-            : undefined
-        }
-        confirmLabel={t('subscriptions.detail.documentControl.rejectConfirm')}
-        confirmDisabledReason={
-          rejectionReason.trim() ? undefined : t('subscriptions.detail.documentControl.reasonRequired')
-        }
-        onConfirm={handleConfirmRejectDocument}
-      >
-        <div className="space-y-2">
-          <Textarea
-            value={rejectionReason}
-            onChange={e => setRejectionReason(e.target.value)}
-            placeholder={t('subscriptions.detail.documentControl.reasonPlaceholder')}
-            aria-label={t('subscriptions.detail.documentControl.reasonLabel')}
-            rows={4}
-          />
-          <p className="text-xs text-muted-foreground">
-            {t('subscriptions.detail.documentControl.reasonVisible')}
-          </p>
-        </div>
-      </ConfirmDialog>
 
       <NotificationsPanel
         open={distributorPreview !== null}
