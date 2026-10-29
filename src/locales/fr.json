@@ -896,7 +896,8 @@
           "paid": "Payés",
           "amountMetric": "Montant",
           "perCall": "{{amount}} par appel"
-        }
+        },
+        "targetedCall": "Appeler cet investisseur"
       },
       "documentsTab": {
         "viewSwitch": "Type de documents",
@@ -6674,7 +6675,8 @@
           "calledAmount": "Montant appelé : {{amount}}",
           "origin": "Origine : {{origin}}",
           "compensatedBy": "Compensé par",
-          "createdOn": "Créé le {{date}} par {{author}}"
+          "createdOn": "Créé le {{date}} par {{author}}",
+          "internalComment": "Commentaire interne"
         },
         "tabs": {
           "lines": "Lignes investisseurs",
@@ -6759,13 +6761,18 @@
             "noticeState": "État de l'avis",
             "notifiedAt": "Date de notification",
             "lastReminderAt": "Dernière relance",
-            "paidAt": "Date de paiement"
+            "paidAt": "Date de paiement",
+            "received": "Encaissé",
+            "balance": "Reste dû"
           },
           "states": {
             "toNotify": "À notifier",
             "notified": "Notifiée",
             "paymentDeclared": "Paiement déclaré",
-            "paid": "Payée"
+            "paid": "Payée",
+            "partiallyPaid": "Payée partiellement",
+            "overpaid": "Trop-perçu",
+            "cancelled": "Annulée"
           },
           "noticeStates": {
             "generating": "En génération",
@@ -6788,7 +6795,8 @@
             "combinedNotice": "Avis combiné",
             "compensated": "Ligne compensée",
             "transferred": "Souscription transférée",
-            "hiddenOnPortal": "Ligne masquée sur le portail"
+            "hiddenOnPortal": "Ligne masquée sur le portail",
+            "comment": "Commentaire : {{text}}"
           },
           "totals": "Total des {{count}} lignes affichées",
           "empty": {
@@ -6822,7 +6830,100 @@
             "paid": "Payées",
             "compensated": "Compensées",
             "paymentDeclared": "Paiement déclaré",
-            "unpaid": "Non payées"
+            "unpaid": "Non payées",
+            "overpaid": "Trop-perçu",
+            "partiallyPaid": "Payées partiellement",
+            "cancelled": "Annulées"
+          },
+          "overpaidBalance": "Trop-perçu {{amount}}",
+          "partialTooltipOne": "{{received}} encaissés sur {{total}}, en 1 paiement",
+          "partialTooltipMany": "{{received}} encaissés sur {{total}}, en {{count}} paiements",
+          "overpaidTooltip": "Trop-perçu de {{amount}} · Traitement : {{treatment}}",
+          "cancelledTooltip": "Annulée par {{author}} : {{reason}}",
+          "treatments": {
+            "refund": "Rembourser l'investisseur",
+            "carryForward": "Garder en avance sur le prochain appel",
+            "undecided": "À décider"
+          },
+          "actions": {
+            "recordPayment": "Enregistrer un paiement",
+            "comment": "Ajouter un commentaire",
+            "editComment": "Modifier le commentaire",
+            "treatOverpayment": "Traiter l'écart",
+            "cancelLine": "Annuler la ligne",
+            "settledReason": "Ligne soldée : le montant dû est entièrement encaissé.",
+            "cancelledReason": "Ligne annulée.",
+            "cancelWithPaymentsReason": "Des paiements sont enregistrés sur cette ligne : traitez-les avant de l'annuler."
+          },
+          "payment": {
+            "title": "Enregistrer un paiement",
+            "description": "{{investor}} · {{subscription}} · {{call}}",
+            "summary": {
+              "title": "Situation de la ligne",
+              "due": "Montant dû",
+              "received": "Encaissé",
+              "remaining": "Reste dû",
+              "overpaid": "Trop-perçu"
+            },
+            "history": {
+              "title": "Paiements enregistrés",
+              "empty": "Aucun paiement enregistré sur cette ligne.",
+              "row": "Reçu le {{date}} · {{origin}}",
+              "by": "Saisi par {{name}}",
+              "automatic": "Enregistré automatiquement"
+            },
+            "form": {
+              "title": "Nouveau paiement",
+              "description": "Saisissez le montant effectivement reçu. Un virement incomplet laisse la ligne payée partiellement.",
+              "amount": "Montant reçu",
+              "valueDate": "Date de valeur",
+              "origin": "Origine",
+              "comment": "Commentaire",
+              "commentPlaceholder": "Ex. : virement reçu en deux fois, solde annoncé fin de mois",
+              "result": "Après enregistrement :",
+              "resultRemaining": "reste {{amount}} à encaisser",
+              "resultOverpaid": "{{amount}} reçus en trop"
+            },
+            "treatment": {
+              "title": "Traitement du trop-perçu",
+              "description": "Le montant reçu dépasse le montant appelé. Choisissez ce que devient l'écart.",
+              "undecided": "À décider",
+              "hints": {
+                "refund": "L'écart de {{amount}} sera remboursé à l'investisseur. Le remboursement est tracé dans le journal de l'appel.",
+                "carryForward": "L'écart de {{amount}} sera déduit du prochain appel de cette souscription.",
+                "undecided": "L'écart de {{amount}} reste signalé dans la synthèse de l'appel tant qu'aucun traitement n'est choisi."
+              }
+            },
+            "errors": {
+              "amount": "Saisissez un montant supérieur à 0.",
+              "date": "Saisissez la date de valeur."
+            },
+            "cancel": "Annuler",
+            "save": "Enregistrer",
+            "toast": {
+              "recorded": "Paiement de {{amount}} enregistré pour {{investor}}",
+              "treated": "Trop-perçu de {{investor}} : {{treatment}}"
+            }
+          },
+          "commentDialog": {
+            "title": "Commentaire sur la ligne",
+            "description": "{{investor}}",
+            "label": "Commentaire interne",
+            "hint": "Visible uniquement par votre équipe. Laissez vide pour retirer le commentaire.",
+            "confirm": "Enregistrer",
+            "cancel": "Annuler",
+            "saved": "Commentaire enregistré",
+            "removed": "Commentaire retiré"
+          },
+          "cancelDialog": {
+            "title": "Annuler la ligne ?",
+            "description": "La ligne de {{investor}} ({{amount}}) ne sera plus due. Elle reste visible dans l'appel avec l'état Annulée.",
+            "reason": "Motif de l'annulation",
+            "placeholder": "Ex. : souscription annulée avant le premier appel",
+            "reasonRequired": "Saisissez un motif.",
+            "confirm": "Annuler la ligne",
+            "cancel": "Garder la ligne",
+            "done": "Ligne de {{investor}} annulée"
           }
         },
         "emails": {
@@ -6877,7 +6978,10 @@
             "paymentValidated": "Validation de paiement",
             "paymentCancelled": "Annulation de paiement",
             "noticeReplaced": "Remplacement d'avis",
-            "notificationCancelled": "Annulation de notification"
+            "notificationCancelled": "Annulation de notification",
+            "overpaymentTreated": "Traitement de trop-perçu",
+            "lineCancelled": "Annulation de ligne",
+            "commented": "Commentaire"
           },
           "linesOne": "{{count}} ligne",
           "linesMany": "{{count}} lignes",
@@ -6896,7 +7000,9 @@
           },
           "empty": "Aucun événement",
           "emptyFiltered": "Aucun événement ne correspond aux filtres",
-          "readOnly": "Le journal ne peut être ni modifié ni supprimé."
+          "readOnly": "Le journal ne peut être ni modifié ni supprimé.",
+          "wholeCall": "Appel",
+          "quote": "\"{{text}}\""
         },
         "summary": {
           "openFiltered": "{{label}} : {{count}}, ouvrir la liste filtrée",
@@ -6937,7 +7043,11 @@
             "compensated": "Compensées",
             "paymentDeclared": "Paiement déclaré",
             "unpaid": "Non payées",
-            "remainingDue": "Restant dû sur {{count}} lignes"
+            "remainingDue": "Restant dû sur {{count}} lignes",
+            "partiallyPaid": "Payées partiellement",
+            "overpaid": "Trop-perçu",
+            "overpaidUntreated": "Trop-perçu {{amount}}, {{count}} à traiter",
+            "overpaidTreated": "Trop-perçu {{amount}}, traité"
           }
         },
         "stages": {
@@ -6966,6 +7076,14 @@
             "title": "Appel soldé",
             "description": "Les {{total}} lignes sont payées ou compensées."
           }
+        },
+        "internalComment": {
+          "title": "Commentaire interne",
+          "hint": "Visible uniquement par votre équipe : ni sur l'avis, ni dans l'email.",
+          "summary": "Modifié par {{author}} le {{date}}",
+          "empty": "Aucun commentaire interne",
+          "saved": "Commentaire interne enregistré",
+          "removed": "Commentaire interne retiré"
         }
       },
       "wizard": {
@@ -7093,7 +7211,10 @@
             "noMessage": "Aucun message"
           },
           "forecastHint": "Rattacher un flux prévisionnel le passe à l'état consommé : il n'est plus proposé pour un autre appel, et son montant peut servir de montant à lever à l'étape suivante. Supprimer l'appel le remet en attente.",
-          "distributionsHint": "Une distribution compensée vient en déduction du montant dû : l'investisseur ne règle que le net et ne voit pas d'action de paiement sur le portail."
+          "distributionsHint": "Une distribution compensée vient en déduction du montant dû : l'investisseur ne règle que le net et ne voit pas d'action de paiement sur le portail.",
+          "internalComment": "Commentaire interne",
+          "internalCommentHint": "Visible uniquement par votre équipe : il n'apparaît ni sur l'avis, ni dans l'email.",
+          "internalCommentPlaceholder": "Ex. : échéance alignée sur le décaissement prévu"
         },
         "amounts": {
           "modes": {
@@ -7297,6 +7418,14 @@
           "role": "Rôle",
           "fileName": "destinataires-{{name}}.csv"
         }
+      },
+      "targeted": {
+        "indicatorOne": "Appel ciblé : 1 souscription",
+        "indicatorMany": "Appel ciblé : {{count}} souscriptions",
+        "defaultName": "Appel ciblé {{investor}}",
+        "prepared": "Appel préparé pour {{investor}}",
+        "preparedHint": "Fonds, part et souscription sont déjà choisis : saisissez la date et le montant à appeler.",
+        "replaced": "La préparation en attente a été remplacée par cet appel ciblé."
       }
     }
   },

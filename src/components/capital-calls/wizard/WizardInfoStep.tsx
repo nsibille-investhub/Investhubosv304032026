@@ -34,6 +34,7 @@ export interface InfoValues {
   noticeDate: Date | undefined;
   diffusion: CapitalCallDiffusion;
   message: string;
+  internalComment: string;
   attachments: [AttachmentValue | null, AttachmentValue | null];
   forecastId: number | null;
   distributionIds: number[];
@@ -199,6 +200,16 @@ export function WizardInfoStep({
             </div>
           </FormField>
         </div>
+
+        <FormField id="call-internal-comment" label={t(`${K}.internalComment`)} hint={t(`${K}.internalCommentHint`)}>
+          <Textarea
+            id="call-internal-comment"
+            rows={2}
+            value={values.internalComment}
+            onChange={event => onChange({ internalComment: event.target.value })}
+            placeholder={t(`${K}.internalCommentPlaceholder`)}
+          />
+        </FormField>
       </FormSubsection>
 
       <FormSubsection icon={ArrowLeftRight} title={t(`${K}.sections.flows`)}>

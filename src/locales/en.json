@@ -896,7 +896,8 @@
           "paid": "Paid",
           "amountMetric": "Amount",
           "perCall": "{{amount}} per call"
-        }
+        },
+        "targetedCall": "Call this investor"
       },
       "documentsTab": {
         "viewSwitch": "Document type",
@@ -6674,7 +6675,8 @@
           "calledAmount": "Called amount: {{amount}}",
           "origin": "Origin: {{origin}}",
           "compensatedBy": "Offset by",
-          "createdOn": "Created on {{date}} by {{author}}"
+          "createdOn": "Created on {{date}} by {{author}}",
+          "internalComment": "Internal comment"
         },
         "tabs": {
           "lines": "Investor lines",
@@ -6759,13 +6761,18 @@
             "noticeState": "Notice status",
             "notifiedAt": "Notification date",
             "lastReminderAt": "Last reminder",
-            "paidAt": "Payment date"
+            "paidAt": "Payment date",
+            "received": "Received",
+            "balance": "Remaining due"
           },
           "states": {
             "toNotify": "To notify",
             "notified": "Notified",
             "paymentDeclared": "Payment declared",
-            "paid": "Paid"
+            "paid": "Paid",
+            "partiallyPaid": "Partially paid",
+            "overpaid": "Overpaid",
+            "cancelled": "Cancelled"
           },
           "noticeStates": {
             "generating": "Generating",
@@ -6788,7 +6795,8 @@
             "combinedNotice": "Combined notice",
             "compensated": "Offset line",
             "transferred": "Transferred subscription",
-            "hiddenOnPortal": "Line hidden on the portal"
+            "hiddenOnPortal": "Line hidden on the portal",
+            "comment": "Comment: {{text}}"
           },
           "totals": "Total of the {{count}} lines shown",
           "empty": {
@@ -6822,7 +6830,100 @@
             "paid": "Paid",
             "compensated": "Offset",
             "paymentDeclared": "Payment declared",
-            "unpaid": "Unpaid"
+            "unpaid": "Unpaid",
+            "overpaid": "Overpaid",
+            "partiallyPaid": "Partially paid",
+            "cancelled": "Cancelled"
+          },
+          "overpaidBalance": "Overpaid {{amount}}",
+          "partialTooltipOne": "{{received}} received out of {{total}}, in 1 payment",
+          "partialTooltipMany": "{{received}} received out of {{total}}, in {{count}} payments",
+          "overpaidTooltip": "Overpaid by {{amount}} · Treatment: {{treatment}}",
+          "cancelledTooltip": "Cancelled by {{author}}: {{reason}}",
+          "treatments": {
+            "refund": "Refund the investor",
+            "carryForward": "Keep as advance on next call",
+            "undecided": "To be decided"
+          },
+          "actions": {
+            "recordPayment": "Record a payment",
+            "comment": "Add a comment",
+            "editComment": "Edit comment",
+            "treatOverpayment": "Handle the difference",
+            "cancelLine": "Cancel line",
+            "settledReason": "Line settled: the amount due has been fully received.",
+            "cancelledReason": "Line cancelled.",
+            "cancelWithPaymentsReason": "Payments are recorded on this line: handle them before cancelling it."
+          },
+          "payment": {
+            "title": "Record a payment",
+            "description": "{{investor}} · {{subscription}} · {{call}}",
+            "summary": {
+              "title": "Line status",
+              "due": "Amount due",
+              "received": "Received",
+              "remaining": "Remaining due",
+              "overpaid": "Overpaid"
+            },
+            "history": {
+              "title": "Recorded payments",
+              "empty": "No payment recorded on this line.",
+              "row": "Received on {{date}} · {{origin}}",
+              "by": "Entered by {{name}}",
+              "automatic": "Recorded automatically"
+            },
+            "form": {
+              "title": "New payment",
+              "description": "Enter the amount actually received. An incomplete transfer leaves the line partially paid.",
+              "amount": "Amount received",
+              "valueDate": "Value date",
+              "origin": "Origin",
+              "comment": "Comment",
+              "commentPlaceholder": "E.g. transfer received in two instalments, balance expected at month end",
+              "result": "After saving:",
+              "resultRemaining": "{{amount}} still to be received",
+              "resultOverpaid": "{{amount}} received in excess"
+            },
+            "treatment": {
+              "title": "Overpayment treatment",
+              "description": "The amount received exceeds the amount called. Choose what happens to the difference.",
+              "undecided": "To be decided",
+              "hints": {
+                "refund": "The {{amount}} difference will be refunded to the investor. The refund is tracked in the call history.",
+                "carryForward": "The {{amount}} difference will be deducted from the next call of this subscription.",
+                "undecided": "The {{amount}} difference stays flagged in the call summary until a treatment is chosen."
+              }
+            },
+            "errors": {
+              "amount": "Enter an amount greater than 0.",
+              "date": "Enter the value date."
+            },
+            "cancel": "Cancel",
+            "save": "Save",
+            "toast": {
+              "recorded": "Payment of {{amount}} recorded for {{investor}}",
+              "treated": "Overpayment of {{investor}}: {{treatment}}"
+            }
+          },
+          "commentDialog": {
+            "title": "Comment on line",
+            "description": "{{investor}}",
+            "label": "Internal comment",
+            "hint": "Only visible to your team. Leave empty to remove the comment.",
+            "confirm": "Save",
+            "cancel": "Cancel",
+            "saved": "Comment saved",
+            "removed": "Comment removed"
+          },
+          "cancelDialog": {
+            "title": "Cancel the line?",
+            "description": "{{investor}}'s line ({{amount}}) will no longer be due. It stays visible in the call with the Cancelled status.",
+            "reason": "Cancellation reason",
+            "placeholder": "E.g. subscription cancelled before the first call",
+            "reasonRequired": "Enter a reason.",
+            "confirm": "Cancel line",
+            "cancel": "Keep line",
+            "done": "{{investor}}'s line cancelled"
           }
         },
         "emails": {
@@ -6877,7 +6978,10 @@
             "paymentValidated": "Payment validated",
             "paymentCancelled": "Payment cancelled",
             "noticeReplaced": "Notice replaced",
-            "notificationCancelled": "Notification cancelled"
+            "notificationCancelled": "Notification cancelled",
+            "overpaymentTreated": "Overpayment treatment",
+            "lineCancelled": "Line cancellation",
+            "commented": "Comment"
           },
           "linesOne": "{{count}} line",
           "linesMany": "{{count}} lines",
@@ -6896,7 +7000,9 @@
           },
           "empty": "No events",
           "emptyFiltered": "No events match the filters",
-          "readOnly": "The journal cannot be edited or deleted."
+          "readOnly": "The journal cannot be edited or deleted.",
+          "wholeCall": "Call",
+          "quote": "\"{{text}}\""
         },
         "summary": {
           "openFiltered": "{{label}}: {{count}}, open the filtered list",
@@ -6937,7 +7043,11 @@
             "compensated": "Offset",
             "paymentDeclared": "Payment declared",
             "unpaid": "Unpaid",
-            "remainingDue": "Still due on {{count}} lines"
+            "remainingDue": "Still due on {{count}} lines",
+            "partiallyPaid": "Partially paid",
+            "overpaid": "Overpaid",
+            "overpaidUntreated": "Overpaid {{amount}}, {{count}} to handle",
+            "overpaidTreated": "Overpaid {{amount}}, handled"
           }
         },
         "stages": {
@@ -6966,6 +7076,14 @@
             "title": "Call settled",
             "description": "All {{total}} lines are paid or compensated."
           }
+        },
+        "internalComment": {
+          "title": "Internal comment",
+          "hint": "Only visible to your team: not on the notice, not in the email.",
+          "summary": "Edited by {{author}} on {{date}}",
+          "empty": "No internal comment",
+          "saved": "Internal comment saved",
+          "removed": "Internal comment removed"
         }
       },
       "wizard": {
@@ -7093,7 +7211,10 @@
             "noMessage": "No message"
           },
           "forecastHint": "Linking a forecast flow marks it as consumed: it is no longer offered for another call, and its amount can be used as the amount to raise in the next step. Deleting the call puts it back on hold.",
-          "distributionsHint": "A compensated distribution is deducted from the amount due: the investor only settles the net amount and sees no payment action on the portal."
+          "distributionsHint": "A compensated distribution is deducted from the amount due: the investor only settles the net amount and sees no payment action on the portal.",
+          "internalComment": "Internal comment",
+          "internalCommentHint": "Only visible to your team: it appears neither on the notice nor in the email.",
+          "internalCommentPlaceholder": "E.g. due date aligned with the planned disbursement"
         },
         "amounts": {
           "modes": {
@@ -7297,6 +7418,14 @@
           "role": "Role",
           "fileName": "recipients-{{name}}.csv"
         }
+      },
+      "targeted": {
+        "indicatorOne": "Targeted call: 1 subscription",
+        "indicatorMany": "Targeted call: {{count}} subscriptions",
+        "defaultName": "Targeted call {{investor}}",
+        "prepared": "Call prepared for {{investor}}",
+        "preparedHint": "Fund, share and subscription are already selected: enter the date and the amount to call.",
+        "replaced": "The pending preparation was replaced by this targeted call."
       }
     }
   },

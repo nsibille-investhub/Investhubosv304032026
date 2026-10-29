@@ -119,6 +119,13 @@ export function CapitalCallSummaryWidgets({
           <Counter label={t(`${K}.settlement.paid`)} value={summary.paid} tone="success" onClick={open('settlement', 'paid')} />
           <Counter label={t(`${K}.settlement.compensated`)} value={summary.compensated} tone="success" onClick={open('settlement', 'compensated')} />
           <Counter
+            label={t(`${K}.settlement.partiallyPaid`)}
+            value={summary.partiallyPaid}
+            tone="warning"
+            onClick={open('settlement', 'partiallyPaid')}
+          />
+          <Counter label={t(`${K}.settlement.overpaid`)} value={summary.overpaid} tone="info" onClick={open('settlement', 'overpaid')} />
+          <Counter
             label={t(`${K}.settlement.paymentDeclared`)}
             value={summary.paymentDeclared}
             tone="warning"
@@ -128,8 +135,16 @@ export function CapitalCallSummaryWidgets({
         </Grid>
         <div className="mt-2 border-t border-border pt-2">
           <WidgetMetric
-            label={t(`${K}.settlement.remainingDue`, { count: summary.paymentDeclared + summary.unpaid })}
+            label={t(`${K}.settlement.remainingDue`, { count: summary.partiallyPaid + summary.paymentDeclared + summary.unpaid })}
             value={money(summary.remainingDue)}
+            secondary={
+              summary.overpaid > 0
+                ? t(summary.overpaidUntreated > 0 ? `${K}.settlement.overpaidUntreated` : `${K}.settlement.overpaidTreated`, {
+                    amount: money(summary.overpaidAmount),
+                    count: summary.overpaidUntreated,
+                  })
+                : undefined
+            }
           />
         </div>
       </WidgetCard>

@@ -1,6 +1,6 @@
 import type { CapitalCall } from './capitalCallGenerator';
 import type { CapitalCallEmail } from './capitalCallEmails';
-import type { CapitalCallLine } from './capitalCallLines';
+import { balanceOf, receivedAmount, type CapitalCallLine } from './capitalCallLines';
 
 export type CallState =
   | 'noticesGenerating'
@@ -41,31 +41,58 @@ export interface CallSummary {
   reminded: number;
   emailsFailed: number;
   paid: number;
+  overpaid: number;
   compensated: number;
+  partiallyPaid: number;
   paymentDeclared: number;
   unpaid: number;
+  cancelled: number;
   settled: number;
+  received: number;
   remainingDue: number;
+  /** Trop-perçus sans traitement décidé. */
+  overpaidUntreated: number;
+  overpaidAmount: number;
   state: CallState;
 }
 
-export type SettlementCategory = 'paid' | 'compensated' | 'paymentDeclared' | 'unpaid';
-export const SETTLEMENT_CATEGORIES: SettlementCategory[] = ['paid', 'compensated', 'paymentDeclared', 'unpaid'];
+export type SettlementCategory =
+  | 'paid'
+  | 'overpaid'
+  | 'compensated'
+  | 'partiallyPaid'
+  | 'paymentDeclared'
+  | 'unpaid'
+  | 'cancelled';
+export const SETTLEMENT_CATEGORIES: SettlementCategory[] = [
+  'paid',
+  'overpaid',
+  'compensated',
+  'partiallyPaid',
+  'paymentDeclared',
+  'unpaid',
+  'cancelled',
+];
+
+/** Lignes encore dues : celles qu'ouvre l'action "Suivre les paiements". */
+export const OPEN_SETTLEMENT_CATEGORIES: SettlementCategory[] = ['partiallyPaid', 'paymentDeclared', 'unpaid'];
 
 export type NotificationCategory = 'notified' | 'toNotify' | 'reminded';
 export const NOTIFICATION_CATEGORIES: NotificationCategory[] = ['notified', 'toNotify', 'reminded'];
 
-/** Règlement d'une ligne : une ligne est réglée si elle est payée ou compensée. */
+/** Règlement d'une ligne : une ligne est réglée si elle est payée, compensée ou annulée. */
 export function settlementOf(line: CapitalCallLine): SettlementCategory {
+  if (line.state === 'cancelled') return 'cancelled';
   if (line.state === 'paid') return 'paid';
+  if (line.state === 'overpaid') return 'overpaid';
   if (line.compensated) return 'compensated';
+  if (line.state === 'partiallyPaid') return 'partiallyPaid';
   if (line.state === 'paymentDeclared') return 'paymentDeclared';
   return 'unpaid';
 }
 
 export function isSettled(line: CapitalCallLine) {
-  const category = settlementOf(line);
-  return category === 'paid' || category === 'compensated';
+  return !OPEN_SETTLEMENT_CATEGORIES.includes(settlementOf(line));
 }
 
 /** Une ligne relancée est aussi notifiée : le filtre retient les deux catégories. */
@@ -108,11 +135,17 @@ export function summarizeCall(call: CapitalCall, lines: CapitalCallLine[], email
     reminded: count(line => line.lastReminderAt !== null),
     emailsFailed: emails.filter(email => ['failed', 'spam', 'notFound'].includes(email.state)).length,
     paid: count(line => settlementOf(line) === 'paid'),
+    overpaid: count(line => settlementOf(line) === 'overpaid'),
     compensated: count(line => settlementOf(line) === 'compensated'),
+    partiallyPaid: count(line => settlementOf(line) === 'partiallyPaid'),
     paymentDeclared: count(line => settlementOf(line) === 'paymentDeclared'),
     unpaid: count(line => settlementOf(line) === 'unpaid'),
+    cancelled: count(line => settlementOf(line) === 'cancelled'),
     settled,
-    remainingDue: cents(lines.filter(line => !isSettled(line)).reduce((sum, line) => sum + line.total, 0)),
+    received: cents(lines.reduce((sum, line) => sum + receivedAmount(line), 0)),
+    remainingDue: cents(lines.filter(line => !isSettled(line)).reduce((sum, line) => sum + balanceOf(line), 0)),
+    overpaidUntreated: count(line => line.state === 'overpaid' && !line.overpaymentTreatment),
+    overpaidAmount: cents(lines.filter(line => line.state === 'overpaid').reduce((sum, line) => sum - balanceOf(line), 0)),
     state,
   };
 }

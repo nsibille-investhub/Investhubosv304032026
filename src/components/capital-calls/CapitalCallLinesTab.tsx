@@ -1,16 +1,32 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, ArrowLeftRight, CheckCircle2, EyeOff, Layers, Loader2, Repeat, RotateCw, Users } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowLeftRight,
+  Ban,
+  Banknote,
+  CheckCircle2,
+  EyeOff,
+  Layers,
+  Loader2,
+  MessageSquareText,
+  Repeat,
+  RotateCw,
+  Scale,
+  Users,
+} from 'lucide-react';
 
 import { CapitalCallNotificationPanel } from './CapitalCallNotificationPanel';
+import { CapitalCallPaymentSheet, LINE_STATE_VARIANT, PaymentSheetResult } from './CapitalCallPaymentSheet';
 import { useTranslation } from '../../utils/languageContext';
 import type { CapitalCall } from '../../utils/capitalCallGenerator';
 import {
   CapitalCallLine,
   LINE_STATES,
-  LineState,
   NOTICE_STATES,
   NoticeState,
+  balanceOf,
   isPerUnitCall,
+  receivedAmount,
   lastFailure,
   relaunchCount,
 } from '../../utils/capitalCallLines';
@@ -29,15 +45,12 @@ import { StatusBadge, StatusVariant } from '../StatusBadge';
 import { Button } from '../ui/button';
 import { DataPagination } from '../ui/data-pagination';
 import { DisabledReason } from '../ui/disabled-reason';
+import { ConfirmDialog } from '../ui/confirm-dialog';
+import { FormField } from '../ui/form-field';
+import { TableRowActions, TableRowAction } from '../ui/row-actions';
+import { Textarea } from '../ui/textarea';
 
 const K = 'funds.capitalCalls.detail.lines';
-
-const LINE_STATE_VARIANT: Record<LineState, StatusVariant> = {
-  toNotify: 'neutral',
-  notified: 'info',
-  paymentDeclared: 'warning',
-  paid: 'success',
-};
 
 const NOTICE_STATE_VARIANT: Record<NoticeState, StatusVariant> = {
   generating: 'info',
@@ -56,6 +69,11 @@ interface CapitalCallLinesTabProps {
   onRelaunchFailed: () => void;
   /** Filtre appliqué depuis un compteur de la synthèse ; sans valeur, tous les filtres sont retirés. */
   preset?: (LinesPreset & { nonce: number }) | null;
+  /** Gestes de règlement indisponibles (droit manquant, envoi en cours). */
+  actionsDisabledReason: string | null;
+  onRecordPayment: (lineId: number, result: PaymentSheetResult) => void;
+  onCommentLine: (lineId: number, comment: string) => void;
+  onCancelLine: (lineId: number, reason: string) => void;
 }
 
 export function CapitalCallLinesTab({
@@ -65,6 +83,10 @@ export function CapitalCallLinesTab({
   relaunchDisabledReason,
   onRelaunchFailed,
   preset,
+  actionsDisabledReason,
+  onRecordPayment,
+  onCommentLine,
+  onCancelLine,
 }: CapitalCallLinesTabProps) {
   const { t, lang } = useTranslation();
   const perUnit = isPerUnitCall(call);
@@ -80,6 +102,12 @@ export function CapitalCallLinesTab({
   }, [preset]);
   const [pageSize, setPageSize] = useState(20);
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
+  const [paymentLineId, setPaymentLineId] = useState<number | null>(null);
+  const [commentDraft, setCommentDraft] = useState<{ lineId: number; text: string } | null>(null);
+  const [cancelDraft, setCancelDraft] = useState<{ lineId: number; reason: string } | null>(null);
+  const paymentLine = lines.find(line => line.id === paymentLineId) ?? null;
+  const commentLine = lines.find(line => line.id === commentDraft?.lineId) ?? null;
+  const cancelLine = lines.find(line => line.id === cancelDraft?.lineId) ?? null;
 
   const dateFormat = new Intl.DateTimeFormat(lang, { day: '2-digit', month: '2-digit', year: 'numeric' });
   const money = (value: number, digits = 2) =>
@@ -155,6 +183,10 @@ export function CapitalCallLinesTab({
   const pageRows = filtered.slice((page - 1) * pageSize, page * pageSize);
   const sum = (key: 'calledAmount' | 'fees' | 'premium' | 'total') =>
     filtered.reduce((total, line) => total + line[key], 0);
+  const receivedTotal = filtered.reduce((total, line) => total + receivedAmount(line), 0);
+  const balanceTotal = filtered
+    .filter(line => line.state !== 'cancelled')
+    .reduce((total, line) => total + Math.max(0, balanceOf(line)), 0);
 
   const resetFilters = () => {
     setSearch('');
@@ -205,17 +237,82 @@ export function CapitalCallLinesTab({
     return parts.length > 0 ? parts.join(' · ') : null;
   };
 
-  const lineStateTooltip = (line: CapitalCallLine) =>
-    line.state === 'paid' && line.paymentOrigin
+  const lineStateTooltip = (line: CapitalCallLine) => {
+    if (line.state === 'cancelled' && line.cancellation) {
+      return t(`${K}.cancelledTooltip`, { reason: line.cancellation.value, author: line.cancellation.by });
+    }
+    if (line.state === 'partiallyPaid') {
+      return t(line.payments.length === 1 ? `${K}.partialTooltipOne` : `${K}.partialTooltipMany`, {
+        received: money(receivedAmount(line)),
+        total: money(line.total),
+        count: line.payments.length,
+      });
+    }
+    if (line.state === 'overpaid') {
+      return t(`${K}.overpaidTooltip`, {
+        amount: money(-balanceOf(line)),
+        treatment: line.overpaymentTreatment
+          ? t(`${K}.treatments.${line.overpaymentTreatment.value}`)
+          : t(`${K}.treatments.undecided`),
+      });
+    }
+    return line.state === 'paid' && line.paymentOrigin
       ? t(`${K}.paidTooltip`, {
           origin: t(`${K}.paymentOrigins.${line.paymentOrigin}`),
           date: line.paidAt ? dateFormat.format(line.paidAt) : '',
         })
       : null;
+  };
+
+  const rowActions = (line: CapitalCallLine): TableRowAction[] => {
+    const cancelled = line.state === 'cancelled';
+    const paymentReason =
+      actionsDisabledReason ??
+      (cancelled ? t(`${K}.actions.cancelledReason`) : line.state === 'paid' ? t(`${K}.actions.settledReason`) : undefined);
+    const actions: TableRowAction[] = [
+      {
+        label: t(`${K}.actions.recordPayment`),
+        icon: Banknote,
+        intent: 'success',
+        disabledReason: paymentReason ?? undefined,
+        onClick: () => setPaymentLineId(line.id),
+      },
+      {
+        label: line.comment ? t(`${K}.actions.editComment`) : t(`${K}.actions.comment`),
+        icon: MessageSquareText,
+        disabledReason: actionsDisabledReason ?? undefined,
+        onClick: () => setCommentDraft({ lineId: line.id, text: line.comment?.value ?? '' }),
+      },
+    ];
+    if (line.state === 'overpaid') {
+      actions.push({
+        label: t(`${K}.actions.treatOverpayment`),
+        icon: Scale,
+        disabledReason: actionsDisabledReason ?? undefined,
+        onClick: () => setPaymentLineId(line.id),
+      });
+    }
+    actions.push({
+      label: t(`${K}.actions.cancelLine`),
+      icon: Ban,
+      intent: 'danger',
+      separatorBefore: true,
+      disabledReason:
+        actionsDisabledReason ??
+        (cancelled
+          ? t(`${K}.actions.cancelledReason`)
+          : line.payments.length > 0
+            ? t(`${K}.actions.cancelWithPaymentsReason`)
+            : undefined),
+      onClick: () => setCancelDraft({ lineId: line.id, reason: '' }),
+    });
+    return actions;
+  };
 
   const indicators = (line: CapitalCallLine) =>
     (
       [
+        [Boolean(line.comment), MessageSquareText, 'comment'],
         [line.combinedNotice, Layers, 'combinedNotice'],
         [line.compensated, ArrowLeftRight, 'compensated'],
         [line.transferred, Repeat, 'transferred'],
@@ -232,7 +329,11 @@ export function CapitalCallLinesTab({
           name={line.investor}
           searchTerm={term}
           adornment={indicators(line).map(([, Icon, key]) => (
-            <ListingIndicator key={key} icon={Icon} label={t(`${K}.indicators.${key}`)} />
+            <ListingIndicator
+              key={key}
+              icon={Icon}
+              label={key === 'comment' && line.comment ? t(`${K}.indicators.comment`, { text: line.comment.value }) : t(`${K}.indicators.${key}`)}
+            />
           ))}
         />
       ),
@@ -291,13 +392,32 @@ export function CapitalCallLinesTab({
       render: line => <span className="text-sm font-medium">{money(line.total)}</span>,
     },
     {
+      key: 'received',
+      label: t(`${K}.columns.received`),
+      align: 'right',
+      render: line => (line.payments.length > 0 ? <span className="text-sm">{money(receivedAmount(line))}</span> : empty),
+    },
+    {
+      key: 'balance',
+      label: t(`${K}.columns.balance`),
+      align: 'right',
+      render: line => {
+        if (line.state === 'cancelled') return empty;
+        const balance = balanceOf(line);
+        if (balance < 0) {
+          return <span className="whitespace-nowrap text-sm text-muted-foreground">{t(`${K}.overpaidBalance`, { amount: money(-balance) })}</span>;
+        }
+        return balance > 0 ? <span className="text-sm">{money(balance)}</span> : empty;
+      },
+    },
+    {
       key: 'state',
       label: t(`${K}.columns.state`),
       render: line => (
         <StatusBadge
           label={t(`${K}.states.${line.state}`)}
           variant={LINE_STATE_VARIANT[line.state]}
-          icon={line.state === 'paid' ? CheckCircle2 : undefined}
+          icon={line.state === 'paid' || line.state === 'overpaid' ? CheckCircle2 : undefined}
           tooltip={lineStateTooltip(line)}
         />
       ),
@@ -317,6 +437,7 @@ export function CapitalCallLinesTab({
     { key: 'notifiedAt', label: t(`${K}.columns.notifiedAt`), render: line => date(line.notifiedAt) },
     { key: 'lastReminderAt', label: t(`${K}.columns.lastReminderAt`), render: line => date(line.lastReminderAt) },
     { key: 'paidAt', label: t(`${K}.columns.paidAt`), render: line => date(line.paidAt) },
+    { key: 'actions', label: '', align: 'right', render: line => <TableRowActions actions={rowActions(line)} /> },
   ];
 
   const hasFiltering = Object.keys(activeFilters).length > 0 || search.trim().length > 0;
@@ -416,11 +537,82 @@ export function CapitalCallLinesTab({
               fees: money(sum('fees')),
               premium: money(sum('premium')),
               total: money(sum('total')),
+              received: money(receivedTotal),
+              balance: money(balanceTotal),
             }}
           />
         </>
       )}
     </ListingCard>
+
+    <CapitalCallPaymentSheet
+      line={
+        paymentLine && {
+          investor: paymentLine.investor,
+          subscription: paymentLine.subscription,
+          callName: call.name,
+          total: paymentLine.total,
+          payments: paymentLine.payments,
+          state: paymentLine.state,
+          overpaymentTreatment: paymentLine.overpaymentTreatment?.value ?? null,
+        }
+      }
+      currency={call.currency}
+      onClose={() => setPaymentLineId(null)}
+      onSave={result => {
+        if (paymentLine) onRecordPayment(paymentLine.id, result);
+        setPaymentLineId(null);
+      }}
+    />
+
+    <ConfirmDialog
+      open={Boolean(commentDraft && commentLine)}
+      onOpenChange={open => !open && setCommentDraft(null)}
+      icon={MessageSquareText}
+      title={t(`${K}.commentDialog.title`)}
+      description={commentLine ? t(`${K}.commentDialog.description`, { investor: commentLine.investor }) : undefined}
+      confirmLabel={t(`${K}.commentDialog.confirm`)}
+      cancelLabel={t(`${K}.commentDialog.cancel`)}
+      onConfirm={() => {
+        if (commentDraft) onCommentLine(commentDraft.lineId, commentDraft.text.trim());
+        setCommentDraft(null);
+      }}
+    >
+      <FormField id="line-comment" label={t(`${K}.commentDialog.label`)} hint={t(`${K}.commentDialog.hint`)}>
+        <Textarea
+          id="line-comment"
+          rows={3}
+          value={commentDraft?.text ?? ''}
+          onChange={event => setCommentDraft(prev => (prev ? { ...prev, text: event.target.value } : prev))}
+        />
+      </FormField>
+    </ConfirmDialog>
+
+    <ConfirmDialog
+      open={Boolean(cancelDraft && cancelLine)}
+      onOpenChange={open => !open && setCancelDraft(null)}
+      destructive
+      title={t(`${K}.cancelDialog.title`)}
+      description={cancelLine ? t(`${K}.cancelDialog.description`, { investor: cancelLine.investor, amount: money(cancelLine.total) }) : undefined}
+      confirmLabel={t(`${K}.cancelDialog.confirm`)}
+      cancelLabel={t(`${K}.cancelDialog.cancel`)}
+      confirmDisabledReason={cancelDraft && !cancelDraft.reason.trim() ? t(`${K}.cancelDialog.reasonRequired`) : undefined}
+      onConfirm={() => {
+        if (!cancelDraft?.reason.trim()) return;
+        onCancelLine(cancelDraft.lineId, cancelDraft.reason.trim());
+        setCancelDraft(null);
+      }}
+    >
+      <FormField id="line-cancel-reason" label={t(`${K}.cancelDialog.reason`)} required>
+        <Textarea
+          id="line-cancel-reason"
+          rows={3}
+          value={cancelDraft?.reason ?? ''}
+          onChange={event => setCancelDraft(prev => (prev ? { ...prev, reason: event.target.value } : prev))}
+          placeholder={t(`${K}.cancelDialog.placeholder`)}
+        />
+      </FormField>
+    </ConfirmDialog>
     </div>
   );
 }

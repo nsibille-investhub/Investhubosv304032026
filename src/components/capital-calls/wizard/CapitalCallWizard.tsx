@@ -47,6 +47,7 @@ export interface CapitalCallDraft {
   dueDate: Date;
   noticeDate: Date | null;
   message: string;
+  internalComment: string;
   attachments: CapitalCallAttachment[];
   forecast: { id: number; name: string } | null;
   compensations: LinkedDistribution[];
@@ -81,6 +82,7 @@ const infoFromSession = (session: CapitalCallWizardSession, funds: Fund[]): Info
     noticeDate: sessionDate(session.noticeDate),
     diffusion: session.diffusion ?? DEFAULT_DIFFUSION,
     message: session.message,
+    internalComment: session.internalComment ?? '',
     attachments: session.attachments,
     forecastId: inScope ? session.forecastId : null,
     distributionIds: inScope ? session.distributionIds : [],
@@ -95,6 +97,7 @@ const emptyInfo = (): InfoValues => ({
   noticeDate: undefined,
   diffusion: DEFAULT_DIFFUSION,
   message: '',
+  internalComment: '',
   attachments: [null, null],
   forecastId: null,
   distributionIds: [],
@@ -274,6 +277,7 @@ export function CapitalCallWizard({
       dueDate: info.dueDate,
       noticeDate: info.noticeDate ?? null,
       message: info.message,
+      internalComment: info.internalComment.trim(),
       attachments: info.attachments.filter((file): file is CapitalCallAttachment => Boolean(file)),
       forecast: forecast ? { id: forecast.id, name: forecast.name } : null,
       compensations: distributions
@@ -302,6 +306,7 @@ export function CapitalCallWizard({
       noticeDate: info.noticeDate?.toISOString() ?? null,
       diffusion: info.diffusion,
       message: info.message,
+      internalComment: info.internalComment,
       attachments: info.attachments,
       forecastId: info.forecastId,
       distributionIds: info.distributionIds,

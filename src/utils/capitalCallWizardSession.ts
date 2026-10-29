@@ -15,6 +15,7 @@ export interface CapitalCallWizardSession {
   noticeDate: string | null;
   diffusion: CapitalCallDiffusion;
   message: string;
+  internalComment?: string;
   attachments: [{ name: string; sizeKb: number } | null, { name: string; sizeKb: number } | null];
   forecastId: number | null;
   distributionIds: number[];
