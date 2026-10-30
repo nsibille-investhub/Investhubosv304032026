@@ -3,6 +3,7 @@ import { toast } from 'sonner@2.0.3';
 import {
   BellRing,
   CalendarX,
+  CheckCircle2,
   FileArchive,
   FileSpreadsheet,
   List,
@@ -110,7 +111,7 @@ const DEFAULT_COLUMNS: ColumnKey[] = [
 ];
 const COLUMNS_STORAGE_KEY = 'investhub-columns-capital-calls-v3';
 
-type Queue = 'all' | 'toNotify' | 'overdue';
+type Queue = 'all' | 'toNotify' | 'overdue' | 'settled';
 
 /** Identifiant d'URL de l'assistant de création. */
 const NEW_CALL_ID = 'new';
@@ -287,6 +288,7 @@ export function CapitalCallsPage({
     const summary = summaryOf(call);
     if (id === 'toNotify') return summary.toNotify > 0;
     if (id === 'overdue') return call.dueDate < today && summary.settled < summary.lines;
+    if (id === 'settled') return summary.lines > 0 && summary.settled === summary.lines;
     return true;
   };
 
@@ -938,10 +940,11 @@ export function CapitalCallsPage({
             onDiscard={() => setConfirmDiscard(true)}
           />
         )}
-        <FilterCardGroup title={t(`${K}.queues.label`)} hint={t(`${K}.queues.clickToFilter`)} columns={3}>
+        <FilterCardGroup title={t(`${K}.queues.label`)} hint={t(`${K}.queues.clickToFilter`)} columns={4}>
             {queueCard('all', List, scopedCalls)}
             {queueCard('toNotify', Send, scopedCalls.filter(call => inQueue(call, 'toNotify')))}
             {queueCard('overdue', CalendarX, scopedCalls.filter(call => inQueue(call, 'overdue')))}
+            {queueCard('settled', CheckCircle2, scopedCalls.filter(call => inQueue(call, 'settled')))}
         </FilterCardGroup>
 
         <ListingCard

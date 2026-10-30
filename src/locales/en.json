@@ -6586,6 +6586,7 @@
         "all": "All calls",
         "toNotify": "To notify",
         "overdue": "Overdue, not settled",
+        "settled": "Settled",
         "fundsMetric": "Funds",
         "perFund": "{{count}} per fund",
         "clickToFilter": "Click a queue to filter"

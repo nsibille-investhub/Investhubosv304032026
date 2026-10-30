@@ -6586,6 +6586,7 @@
         "all": "Tous les appels",
         "toNotify": "À notifier",
         "overdue": "Échus non soldés",
+        "settled": "Soldés",
         "fundsMetric": "Fonds",
         "perFund": "{{count}} par fonds",
         "clickToFilter": "Cliquez sur une file pour filtrer"
