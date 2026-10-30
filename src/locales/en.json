@@ -7787,7 +7787,7 @@
       },
       "mailPreview": {
         "title": "Email preview",
-        "description": "Preview window for an email before sending: resolved subject, optional attached items, HTML body rendered in a script-free frame. Nothing is sent. Opened from a \"Preview\" button in the header of the Communication subsection or on a recipient row.",
+        "description": "Side panel previewing an email before sending: resolved subject, optional attached items, HTML body rendered in a script-free frame, full height. Nothing is sent. Opened from a \"Preview\" button in the header of the Communication subsection or on a recipient row.",
         "variants": "With or without attached items under the subject (attachments, accompanying message).",
         "states": "Open, closed. Opening button unavailable with a reason when no email is sent.",
         "exampleLabel": "Preview of a capital call notification",

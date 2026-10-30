@@ -7787,7 +7787,7 @@
       },
       "mailPreview": {
         "title": "Aperçu d'un mail",
-        "description": "Fenêtre d'aperçu d'un mail avant envoi : objet résolu, éléments joints facultatifs, corps HTML rendu dans un cadre sans script. Rien n'est envoyé. Ouverte depuis un bouton \"Aperçu\" placé dans l'en-tête de la sous-section Communication ou sur la ligne d'un destinataire.",
+        "description": "Panneau latéral d'aperçu d'un mail avant envoi : objet résolu, éléments joints facultatifs, corps HTML rendu dans un cadre sans script, sur toute la hauteur. Rien n'est envoyé. Ouvert depuis un bouton \"Aperçu\" placé dans l'en-tête de la sous-section Communication ou sur la ligne d'un destinataire.",
         "variants": "Avec ou sans éléments joints sous l'objet (pièces jointes, message d'accompagnement).",
         "states": "Ouverte, fermée. Bouton d'ouverture indisponible avec motif quand aucun mail ne part.",
         "exampleLabel": "Aperçu de la notification d'un appel",
