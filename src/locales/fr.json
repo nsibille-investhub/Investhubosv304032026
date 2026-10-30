@@ -7271,7 +7271,55 @@
             "search": "Rechercher un investisseur ou une souscription",
             "empty": "Aucune souscription",
             "remove": "Retirer {{investor}}",
-            "availableAt": "Disponible le {{date}}"
+            "availableAt": "Disponible le {{date}}",
+            "edit": "Modifier la sélection ({{count}} sur {{total}})",
+            "picker": {
+              "title": "Souscriptions appelées : {{share}}",
+              "subtitle": "Filtrez la liste, puis cochez les souscriptions à appeler. Sans sélection, toute la part est appelée.",
+              "search": "Rechercher une souscription ou un investisseur",
+              "filters": {
+                "retention": "Option de conservation",
+                "retentionOptions": {
+                  "with": "Avec option de conservation",
+                  "without": "Sans option de conservation"
+                },
+                "history": "Historique",
+                "historyOptions": {
+                  "firstCall": "Premier appel",
+                  "alreadyCalled": "Déjà appelée"
+                },
+                "selection": "Sélection",
+                "selectionOptions": {
+                  "selected": "Cochées",
+                  "notSelected": "Non cochées"
+                }
+              },
+              "onAll": "Sur les {{count}} souscriptions :",
+              "onVisible": "Sur les {{count}} souscriptions affichées :",
+              "actions": {
+                "selectVisible": "Tout cocher",
+                "invert": "Inverser la sélection",
+                "clearVisible": "Tout décocher"
+              },
+              "columns": {
+                "subscription": "Souscription",
+                "investor": "Investisseur",
+                "committed": "Engagement",
+                "units": "Parts",
+                "called": "Déjà appelé",
+                "validatedAt": "Validée le"
+              },
+              "selectRow": "Sélectionner {{id}}",
+              "retention": "Option de conservation",
+              "firstCall": "Premier appel",
+              "availableAt": "Disponible le {{date}}",
+              "empty": "Aucune souscription ne correspond aux filtres.",
+              "noneSelected": "Aucune sélection : les {{total}} souscriptions de la part sont appelées",
+              "summary": "{{count}} sur {{total}} cochées · Engagement {{committed}}",
+              "cancel": "Annuler",
+              "confirm": "Restreindre à {{count}} souscriptions",
+              "confirmAll": "Appeler toute la part"
+            }
           },
           "toRaise": {
             "label": "Montant à lever",

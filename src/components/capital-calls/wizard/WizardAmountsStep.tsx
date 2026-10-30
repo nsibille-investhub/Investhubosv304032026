@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { AlertTriangle, ChevronDown, ChevronRight, Layers, Target, X } from 'lucide-react';
+import { AlertTriangle, ChevronDown, ChevronRight, Layers, ListChecks, Target, X } from 'lucide-react';
 
 import { useTranslation } from '../../../utils/languageContext';
 import {
@@ -22,10 +22,11 @@ import { DisabledReason } from '../../ui/disabled-reason';
 import { FormField, SuffixInput } from '../../ui/form-field';
 import { ListingCard } from '../../ui/listing';
 import { SegmentedControl } from '../../ui/segmented-control';
-import { RichMultiSelect } from '../../ui/rich-multiselect';
 import { RowActionButton } from '../../ui/row-actions';
 import { SidePanelCard, SidePanelSection } from '../../ui/side-panel';
 import { WidgetCard } from '../../ui/widget-card';
+import { Button } from '../../ui/button';
+import { SubscriptionPickerModal } from './SubscriptionPickerModal';
 
 const K = 'funds.capitalCalls.wizard.amounts';
 
@@ -90,6 +91,7 @@ export function WizardAmountsStep({
 }: WizardAmountsStepProps) {
   const { t, lang } = useTranslation();
   const [openRestrictions, setOpenRestrictions] = useState<Record<string, boolean>>({});
+  const [pickerShare, setPickerShare] = useState<string | null>(null);
   const money = (value: number, digits = 0) =>
     new Intl.NumberFormat(lang, {
       style: 'currency',
@@ -315,23 +317,12 @@ export function WizardAmountsStep({
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-3 space-y-3">
               <p className="text-xs text-muted-foreground">{t(`${K}.restriction.hint`)}</p>
-              <RichMultiSelect
-                id={`restriction-${share}`}
-                options={items.map(item => ({
-                  value: item.id,
-                  label: item.investor,
-                  details: subscriptionDetails(item),
-                }))}
-                value={input.restriction ?? []}
-                onChange={next => setRestriction(share, input, next)}
-                triggerLabel={
-                  restricted
-                    ? t(`${K}.restriction.selected`, { count: selected.length, total: items.length })
-                    : t(`${K}.restriction.placeholder`)
-                }
-                searchPlaceholder={t(`${K}.restriction.search`)}
-                emptyLabel={t(`${K}.restriction.empty`)}
-              />
+              <Button variant="outline" size="sm" onClick={() => setPickerShare(share)}>
+                <ListChecks className="h-4 w-4" />
+                {restricted
+                  ? t(`${K}.restriction.edit`, { count: selected.length, total: items.length })
+                  : t(`${K}.restriction.placeholder`)}
+              </Button>
               {selected.length > 0 && (
                 <SidePanelCard flush className="divide-y divide-border">
                   {selected.map(item => (
@@ -454,6 +445,19 @@ export function WizardAmountsStep({
           {money(total, 2)}
         </p>
       </WidgetCard>
+
+      <SubscriptionPickerModal
+        open={pickerShare !== null}
+        share={pickerShare ? t('funds.detail.sharePrefix', { name: pickerShare }) : ''}
+        subscriptions={pickerShare ? perShareSubscriptions(pickerShare) : []}
+        value={pickerShare ? inputs[pickerShare]?.restriction ?? [] : []}
+        money={value => money(value)}
+        onClose={() => setPickerShare(null)}
+        onConfirm={ids => {
+          if (pickerShare) setRestriction(pickerShare, inputs[pickerShare], ids);
+          setPickerShare(null);
+        }}
+      />
     </div>
   );
 }

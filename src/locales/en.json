@@ -7271,7 +7271,55 @@
             "search": "Search an investor or a subscription",
             "empty": "No subscription",
             "remove": "Remove {{investor}}",
-            "availableAt": "Available on {{date}}"
+            "availableAt": "Available on {{date}}",
+            "edit": "Edit selection ({{count}} of {{total}})",
+            "picker": {
+              "title": "Called subscriptions: {{share}}",
+              "subtitle": "Filter the list, then tick the subscriptions to call. Without a selection, the whole share is called.",
+              "search": "Search a subscription or an investor",
+              "filters": {
+                "retention": "Retention option",
+                "retentionOptions": {
+                  "with": "With retention option",
+                  "without": "Without retention option"
+                },
+                "history": "History",
+                "historyOptions": {
+                  "firstCall": "First call",
+                  "alreadyCalled": "Already called"
+                },
+                "selection": "Selection",
+                "selectionOptions": {
+                  "selected": "Ticked",
+                  "notSelected": "Not ticked"
+                }
+              },
+              "onAll": "On the {{count}} subscriptions:",
+              "onVisible": "On the {{count}} displayed subscriptions:",
+              "actions": {
+                "selectVisible": "Tick all",
+                "invert": "Invert selection",
+                "clearVisible": "Untick all"
+              },
+              "columns": {
+                "subscription": "Subscription",
+                "investor": "Investor",
+                "committed": "Commitment",
+                "units": "Units",
+                "called": "Already called",
+                "validatedAt": "Validated on"
+              },
+              "selectRow": "Select {{id}}",
+              "retention": "Retention option",
+              "firstCall": "First call",
+              "availableAt": "Available on {{date}}",
+              "empty": "No subscription matches the filters.",
+              "noneSelected": "No selection: all {{total}} subscriptions of the share are called",
+              "summary": "{{count}} of {{total}} ticked · Commitment {{committed}}",
+              "cancel": "Cancel",
+              "confirm": "Restrict to {{count}} subscriptions",
+              "confirmAll": "Call the whole share"
+            }
           },
           "toRaise": {
             "label": "Amount to raise",
