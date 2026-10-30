@@ -76,7 +76,7 @@ const infoFromSession = (session: CapitalCallWizardSession, funds: Fund[]): Info
   const inScope = Boolean(fund);
   return {
     fundId: inScope ? session.fundId : null,
-    shares: fund ? session.shares ?? fund.shareClasses.map(item => item.name) : [],
+    shares: fund ? session.shares ?? [] : [],
     name: session.name,
     dueDate: sessionDate(session.dueDate),
     noticeDate: sessionDate(session.noticeDate),

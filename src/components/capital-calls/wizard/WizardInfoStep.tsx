@@ -27,7 +27,7 @@ const K = 'funds.capitalCalls.wizard.info';
 
 export interface InfoValues {
   fundId: number | null;
-  /** Parts appelées, toutes par défaut au choix du fonds. */
+  /** Parts appelées : aucune présélection au choix du fonds, au moins une obligatoire. */
   shares: string[];
   name: string;
   dueDate: Date | undefined;
@@ -110,10 +110,9 @@ export function WizardInfoStep({
             <Select
               value={values.fundId ? String(values.fundId) : ''}
               onValueChange={value => {
-                const fund = funds.find(item => item.id === Number(value));
                 onChange({
                   fundId: Number(value),
-                  shares: fund?.shareClasses.map(item => item.name) ?? [],
+                  shares: [],
                   diffusion: { ...values.diffusion, documentFolder: null },
                   forecastId: null,
                   distributionIds: [],
