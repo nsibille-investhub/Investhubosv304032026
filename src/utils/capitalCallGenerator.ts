@@ -1,4 +1,5 @@
 import type { Fund } from './fundGenerator';
+import type { Stamped } from './capitalCallLines';
 
 export type CapitalCallOrigin = 'backOffice' | 'import' | 'api';
 
@@ -71,6 +72,8 @@ export interface CapitalCall {
   forecast: { id: number; name: string } | null;
   shares: CapitalCallShare[];
   message: string;
+  /** Commentaire interne de l'équipe de gestion : ni sur l'avis, ni dans l'email. */
+  internalComment: Stamped<string> | null;
   attachments: CapitalCallAttachment[];
   createdAt: Date;
   createdBy: string;
@@ -92,6 +95,11 @@ const MESSAGES = [
   "Madame, Monsieur,\n\nVous trouverez ci-joint votre avis d'appel de fonds. Nous vous remercions de bien vouloir procéder au virement avant la date d'échéance indiquée.\n\nL'équipe de gestion",
   "Bonjour,\n\nCet appel finance les deux investissements présentés lors du dernier comité. Le détail figure dans la lettre jointe.\n\nBien cordialement,",
   '',
+];
+
+const INTERNAL_COMMENTS = [
+  'Échéance alignée sur le décaissement prévu pour la participation Atlas.',
+  'Deux investisseurs institutionnels ont demandé un délai : relance à faire après le comité.',
 ];
 
 const ATTACHMENTS: CapitalCallAttachment[] = [
@@ -159,7 +167,10 @@ export function generateCapitalCalls(funds: Fund[], today = new Date()): Capital
       const modeDraw = random();
       const mode: ShareEntryMode = modeDraw < 0.7 ? 'percent' : modeDraw < 0.9 ? 'totalAmount' : 'perUnit';
       const shareNames = fund.shareClasses.map(item => item.name);
-      const shares: CapitalCallShare[] = shareNames.map((share, shareIndex) => {
+      // Appel ciblé : une seule souscription appelée, par exemple un investisseur entré au dernier closing.
+      const targeted = random() < 0.06;
+      const callAmount = targeted ? Math.max(1000, Math.round(calledAmount / 25 / 1000) * 1000) : calledAmount;
+      const allShares: CapitalCallShare[] = shareNames.map((share, shareIndex) => {
         const value =
           mode === 'percent'
             ? [10, 5, 15, 7.5][shareIndex % 4]
@@ -176,11 +187,19 @@ export function generateCapitalCalls(funds: Fund[], today = new Date()): Capital
           restrictedTo: random() < 0.15 ? 3 + Math.floor(random() * 10) : null,
         };
       });
+      const shares = targeted
+        ? [{ ...allShares[0], mode: 'totalAmount' as const, value: callAmount, releasedAmount: 0, restrictedTo: 1 }]
+        : allShares;
       const message = MESSAGES[Math.floor(random() * MESSAGES.length)];
+      const createdBy = CREATORS[Math.floor(random() * CREATORS.length)];
+      const internalComment: Stamped<string> | null =
+        random() < 0.35
+          ? { value: INTERNAL_COMMENTS[index % INTERNAL_COMMENTS.length], by: createdBy, at: new Date(createdAt.getTime() + DAY / 2) }
+          : null;
       const attachments = ATTACHMENTS.slice(0, Math.floor(random() * 3));
       const isUpcoming = dueDate.getTime() > today.getTime();
       const sending = isUpcoming && random() < 0.08;
-      const lines = 4 + Math.floor(random() * 40);
+      const lines = targeted ? 1 : 4 + Math.floor(random() * 40);
       let notifiedLines: number;
       if (!isUpcoming) notifiedLines = lines;
       else if (sending) notifiedLines = Math.floor(lines * random() * 0.6);
@@ -196,15 +215,16 @@ export function generateCapitalCalls(funds: Fund[], today = new Date()): Capital
         name: `Appel n°${index + 1}`,
         dueDate,
         noticeDate,
-        calledAmount,
+        calledAmount: callAmount,
         origin,
         compensations,
         forecast,
         shares,
         message,
+        internalComment,
         attachments,
         createdAt,
-        createdBy: CREATORS[Math.floor(random() * CREATORS.length)],
+        createdBy,
         sending,
         lines,
         notifiedLines,
@@ -215,6 +235,12 @@ export function generateCapitalCalls(funds: Fund[], today = new Date()): Capital
   });
 
   return calls;
+}
+
+/** Appel restreint à quelques souscriptions sur toutes ses parts : nombre de souscriptions appelées. */
+export function targetedSubscriptions(call: Pick<CapitalCall, 'shares'>): number | null {
+  if (call.shares.length === 0 || call.shares.some(share => share.restrictedTo === null)) return null;
+  return call.shares.reduce((sum, share) => sum + (share.restrictedTo ?? 0), 0);
 }
 
 export function sameDay(a: Date, b: Date) {

@@ -13,24 +13,28 @@ import {
   Mail,
   MessageSquareText,
   Paperclip,
+  StickyNote,
   Tag,
+  Target,
   Send,
   TrendingDown,
   Users,
 } from 'lucide-react';
 
 import { useTranslation } from '../../utils/languageContext';
-import { CapitalCall, CapitalCallShare, distinctNoticeDate } from '../../utils/capitalCallGenerator';
+import { CapitalCall, CapitalCallShare, distinctNoticeDate, targetedSubscriptions } from '../../utils/capitalCallGenerator';
 import type { CapitalCallAction, CapitalCallRights } from '../../utils/capitalCallActions';
 import {
   CapitalCallLine,
   expireStaleNotices,
   noticeAvailable,
   noticeFailed,
+  recordPayment,
   relaunchFailedNotices,
 } from '../../utils/capitalCallLines';
+import type { PaymentSheetResult } from './CapitalCallPaymentSheet';
 import { generateCapitalCallEmails } from '../../utils/capitalCallEmails';
-import { CALL_STAGES, callStage, summarizeCall } from '../../utils/capitalCallSummary';
+import { CALL_STAGES, OPEN_SETTLEMENT_CATEGORIES, callStage, summarizeCall } from '../../utils/capitalCallSummary';
 import { CALL_STATE_VARIANT, CapitalCallSummaryWidgets, LinesPreset } from './CapitalCallSummaryWidgets';
 import { CapitalCallEmailsTab } from './CapitalCallEmailsTab';
 import { CapitalCallJournalTab } from './CapitalCallJournalTab';
@@ -46,6 +50,7 @@ import { SectionCard } from '../ui/section-card';
 import { Tabs, TabsContent } from '../ui/tabs';
 import { Button } from '../ui/button';
 import { DisabledReason } from '../ui/disabled-reason';
+import { Textarea } from '../ui/textarea';
 import { ProcessStepsBar } from '../ui/wizard-steps';
 
 const K = 'funds.capitalCalls.detail';
@@ -129,7 +134,67 @@ export function CapitalCallDetailPage({
     );
   }, [call.sending, call.notifiedLines, call.lines]);
 
+  const [internalComment, setInternalComment] = useState(call.internalComment);
+  const [commentEdit, setCommentEdit] = useState<string | null>(null);
+  const commentCardRef = useRef<HTMLDivElement>(null);
+  const callWithComment = useMemo(() => ({ ...call, internalComment }), [call, internalComment]);
+
   const failedCount = lines.filter(line => line.noticeState === 'failed').length;
+  const settlementBlocker = call.sending
+    ? t('funds.capitalCalls.blockers.sending')
+    : !rights.manage
+      ? t('funds.capitalCalls.blockers.missingRight')
+      : null;
+
+  const updateLine = (lineId: number, update: (line: CapitalCallLine) => CapitalCallLine) =>
+    setLines(prev => prev.map(line => (line.id === lineId ? update(line) : line)));
+
+  const handleRecordPayment = (lineId: number, result: PaymentSheetResult) => {
+    const line = lines.find(item => item.id === lineId);
+    if (!line) return;
+    const now = new Date();
+    updateLine(lineId, current => {
+      let next = result.payment
+        ? recordPayment(current, { ...result.payment, id: `${lineId}-${now.getTime()}`, by: CURRENT_USER })
+        : current;
+      if (next.state === 'overpaid') {
+        next = {
+          ...next,
+          overpaymentTreatment: result.treatment ? { value: result.treatment, by: CURRENT_USER, at: now } : null,
+        };
+      }
+      return next;
+    });
+    if (result.payment) {
+      toast.success(t(`${K}.lines.payment.toast.recorded`, { investor: line.investor, amount: money(result.payment.amount, 2) }));
+    } else if (result.treatment) {
+      toast.success(t(`${K}.lines.payment.toast.treated`, { investor: line.investor, treatment: t(`${K}.lines.treatments.${result.treatment}`) }));
+    }
+  };
+
+  const handleCommentLine = (lineId: number, text: string) => {
+    updateLine(lineId, line => ({ ...line, comment: text ? { value: text, by: CURRENT_USER, at: new Date() } : null }));
+    toast.success(t(text ? `${K}.lines.commentDialog.saved` : `${K}.lines.commentDialog.removed`));
+  };
+
+  const handleCancelLine = (lineId: number, reason: string) => {
+    const line = lines.find(item => item.id === lineId);
+    updateLine(lineId, current => ({ ...current, state: 'cancelled', cancellation: { value: reason, by: CURRENT_USER, at: new Date() } }));
+    if (line) toast.success(t(`${K}.lines.cancelDialog.done`, { investor: line.investor }));
+  };
+
+  const saveInternalComment = () => {
+    if (commentEdit === null) return;
+    const text = commentEdit.trim();
+    setInternalComment(text ? { value: text, by: CURRENT_USER, at: new Date() } : null);
+    setCommentEdit(null);
+    toast.success(t(text ? `${K}.internalComment.saved` : `${K}.internalComment.removed`));
+  };
+
+  const openInternalComment = () => {
+    setTab('message');
+    window.setTimeout(() => commentCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
+  };
   const emails = useMemo(() => generateCapitalCallEmails(call.id, lines), [call.id, lines]);
   const summary = useMemo(() => summarizeCall(call, lines, emails), [call, lines, emails]);
 
@@ -177,6 +242,7 @@ export function CapitalCallDetailPage({
     return money(share.value);
   };
 
+  const targeted = targetedSubscriptions(call);
   const stage = callStage(call, summary);
   // Une étape close est franchie : la dernière étape atteinte est cochée elle aussi.
   const stageIndex = stage === 'closed' ? CALL_STAGES.length : CALL_STAGES.indexOf(stage);
@@ -208,7 +274,7 @@ export function CapitalCallDetailPage({
     settlement: (
       <>
         {call.diffusion.notify && stageButton('relaunch', t(`${K}.stages.settlement.relaunch`), 'outline')}
-        <Button size="sm" onClick={() => openLines({ filter: 'settlement', values: ['paymentDeclared', 'unpaid'] })}>
+        <Button size="sm" onClick={() => openLines({ filter: 'settlement', values: OPEN_SETTLEMENT_CATEGORIES })}>
           {t(`${K}.stages.settlement.action`)}
         </Button>
       </>
@@ -271,6 +337,24 @@ export function CapitalCallDetailPage({
             <PageHeaderSubtitleItem icon={Tag}>
               {t(`${K}.header.origin`, { origin: t(`funds.capitalCalls.origins.${call.origin}`) })}
             </PageHeaderSubtitleItem>
+            {targeted !== null && (
+              <>
+                <PageHeaderSubtitleSeparator />
+                <PageHeaderSubtitleItem icon={Target}>
+                  {t(targeted === 1 ? 'funds.capitalCalls.targeted.indicatorOne' : 'funds.capitalCalls.targeted.indicatorMany', {
+                    count: targeted,
+                  })}
+                </PageHeaderSubtitleItem>
+              </>
+            )}
+            {internalComment && (
+              <>
+                <PageHeaderSubtitleSeparator />
+                <DetailLink icon={StickyNote} className="text-sm" onClick={openInternalComment}>
+                  {t(`${K}.header.internalComment`)}
+                </DetailLink>
+              </>
+            )}
             {call.compensations.length > 0 && (
               <>
                 <PageHeaderSubtitleSeparator />
@@ -385,12 +469,56 @@ export function CapitalCallDetailPage({
               failedCount={failedCount}
               relaunchDisabledReason={relaunchReason}
               onRelaunchFailed={relaunchFailed}
+              actionsDisabledReason={settlementBlocker}
+              onRecordPayment={handleRecordPayment}
+              onCommentLine={handleCommentLine}
+              onCancelLine={handleCancelLine}
             />
           </TabsContent>
           <TabsContent value="journal">
-            <CapitalCallJournalTab call={call} lines={lines} />
+            <CapitalCallJournalTab call={callWithComment} lines={lines} />
           </TabsContent>
           <TabsContent value="message" className="space-y-4">
+            <div ref={commentCardRef}>
+              <SectionCard
+                mode={commentEdit === null ? 'read' : 'edit'}
+                icon={StickyNote}
+                title={t(`${K}.internalComment.title`)}
+                summary={
+                  internalComment
+                    ? t(`${K}.internalComment.summary`, { author: internalComment.by, date: dateFormat.format(internalComment.at) })
+                    : t(`${K}.internalComment.hint`)
+                }
+                onEdit={() => setCommentEdit(internalComment?.value ?? '')}
+                editDisabledReason={!rights.manage ? t('funds.capitalCalls.blockers.missingRight') : undefined}
+                editBar={
+                  commentEdit === null
+                    ? undefined
+                    : {
+                        dirty: commentEdit.trim() !== (internalComment?.value ?? ''),
+                        saving: false,
+                        onCancel: () => setCommentEdit(null),
+                        onSave: saveInternalComment,
+                      }
+                }
+              >
+                {commentEdit !== null ? (
+                  <div className="px-5 py-4">
+                    <Textarea
+                      aria-label={t(`${K}.internalComment.title`)}
+                      rows={3}
+                      value={commentEdit}
+                      onChange={event => setCommentEdit(event.target.value)}
+                      placeholder={t('funds.capitalCalls.wizard.info.internalCommentPlaceholder')}
+                    />
+                  </div>
+                ) : internalComment ? (
+                  <p className="whitespace-pre-line px-5 py-4 text-sm text-foreground">{internalComment.value}</p>
+                ) : (
+                  <EmptyState icon={StickyNote} title={t(`${K}.internalComment.empty`)} />
+                )}
+              </SectionCard>
+            </div>
             <SectionCard mode="read" icon={MessageSquareText} title={t(`${K}.message.title`)}>
               {call.message ? (
                 <p className="whitespace-pre-line px-5 py-4 text-sm text-foreground">{call.message}</p>

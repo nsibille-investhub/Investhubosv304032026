@@ -8,8 +8,10 @@ import {
   FilePlus,
   FileUp,
   History,
+  MessageSquareText,
   Pencil,
   RotateCw,
+  Scale,
   Send,
   Undo2,
 } from 'lucide-react';
@@ -39,6 +41,9 @@ const ICONS: Record<JournalEventType, typeof FilePlus> = {
   reminded: BellRing,
   paymentValidated: CircleCheck,
   paymentCancelled: CircleSlash,
+  overpaymentTreated: Scale,
+  lineCancelled: Ban,
+  commented: MessageSquareText,
   noticeReplaced: FileUp,
   notificationCancelled: Undo2,
 };
@@ -57,7 +62,8 @@ export function CapitalCallJournalTab({ call, lines }: { call: CapitalCall; line
   }, [t]);
 
   const describe = (entry: JournalEntry) => {
-    const parts = [t(entry.lineCount === 1 ? `${K}.linesOne` : `${K}.linesMany`, { count: entry.lineCount })];
+    const parts =
+      entry.lineCount === 0 ? [t(`${K}.wholeCall`)] : [t(entry.lineCount === 1 ? `${K}.linesOne` : `${K}.linesMany`, { count: entry.lineCount })];
     if (entry.detail?.kind === 'reason') {
       parts.push(t(`funds.capitalCalls.detail.lines.failureReasons.${entry.detail.reason}`));
     }
@@ -74,7 +80,14 @@ export function CapitalCallJournalTab({ call, lines }: { call: CapitalCall; line
         t(`${K}.paymentOrigin`, {
           origin: t(`funds.capitalCalls.detail.lines.paymentOrigins.${entry.detail.origin}`),
         }),
+        new Intl.NumberFormat(lang, { style: 'currency', currency: call.currency }).format(entry.detail.amount),
       );
+    }
+    if (entry.detail?.kind === 'treatment') {
+      parts.push(t(`funds.capitalCalls.detail.lines.treatments.${entry.detail.treatment}`));
+    }
+    if (entry.detail?.kind === 'text') {
+      parts.push(t(`${K}.quote`, { text: entry.detail.text }));
     }
     return parts.join(' · ');
   };

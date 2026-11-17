@@ -1,12 +1,20 @@
 import { useMemo, useState } from 'react';
-import { Banknote, CalendarX, CheckCircle2, Clock, Download, Eye, List, Send, Wallet, type LucideIcon } from 'lucide-react';
+import { Banknote, CalendarX, CheckCircle2, Clock, Download, Eye, List, Scale, Send, Target, Wallet, type LucideIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from '../utils/languageContext';
-import { mockCapitalCalls, type CapitalCallLineState, type MockCapitalCall } from '../utils/subscriptionDetailMockData';
+import { mockCapitalCalls, type MockCapitalCall } from '../utils/subscriptionDetailMockData';
+import {
+  LINE_STATES,
+  paymentState,
+  type LinePayment,
+  type LineState,
+  type OverpaymentTreatment,
+} from '../utils/capitalCallLines';
+import { CapitalCallPaymentSheet, LINE_STATE_VARIANT } from './capital-calls/CapitalCallPaymentSheet';
 import { DataTable, type ColumnConfig } from './DataTable';
 import { EmptyState } from './EmptyState';
 import { FilterBar, type FilterConfig } from './FilterBar';
-import { StatusBadge, type StatusVariant } from './StatusBadge';
+import { StatusBadge } from './StatusBadge';
 import { Button } from './ui/button';
 import { ListingCard, ListingNameCell } from './ui/listing';
 import { TableRowActions, type TableRowAction } from './ui/row-actions';
@@ -17,49 +25,90 @@ const K = 'subscriptions.detail.capitalCallsTab';
 const LINES = 'funds.capitalCalls.detail.lines';
 const DAY_MS = 86_400_000;
 
-const LINE_STATES: CapitalCallLineState[] = ['toNotify', 'notified', 'paymentDeclared', 'paid'];
-const LINE_STATE_VARIANT: Record<CapitalCallLineState, StatusVariant> = {
-  toNotify: 'neutral',
-  notified: 'info',
-  paymentDeclared: 'warning',
-  paid: 'success',
-};
+/** Utilisateur connecté de la maquette. */
+const CURRENT_USER = 'Jean Dault';
+
+/** Ligne réglée : plus rien n'est attendu de l'investisseur. */
+const SETTLED_STATES: LineState[] = ['paid', 'overpaid', 'cancelled'];
 
 interface Row extends MockCapitalCall {
   calledAmount: number;
   fees: number;
   premium: number;
   total: number;
+  payments: LinePayment[];
+  received: number;
+  balance: number;
 }
 
 type Filters = Record<string, string | string[]>;
 
 type Queue = 'all' | 'awaitingPayment' | 'overdue' | 'paid';
+const isSettled = (row: MockCapitalCall) => SETTLED_STATES.includes(row.state);
 const inQueue = (row: MockCapitalCall, queue: Queue) => {
   if (queue === 'all') return true;
-  if (queue === 'paid') return row.state === 'paid';
-  if (queue === 'overdue') return row.state !== 'paid' && row.dueInDays < 0;
-  return row.state !== 'paid';
+  if (queue === 'paid') return isSettled(row);
+  if (queue === 'overdue') return !isSettled(row) && row.dueInDays < 0;
+  return !isSettled(row);
 };
 
-const toRow = (call: MockCapitalCall, commitment: number, entryFeesRate: number, premium: number): Row => {
+const cents = (value: number) => Math.round(value * 100) / 100;
+
+const toRow = (
+  call: MockCapitalCall,
+  commitment: number,
+  entryFeesRate: number,
+  premium: number,
+  added: LinePayment[],
+): Row => {
   const calledAmount = (commitment * call.calledPercent) / 100;
   const fees = call.includesEntryCosts ? (commitment * entryFeesRate) / 100 : 0;
   const callPremium = call.includesEntryCosts ? premium : 0;
-  return { ...call, calledAmount, fees, premium: callPremium, total: calledAmount + fees + callPremium };
+  const total = cents(calledAmount + fees + callPremium);
+  const initial: LinePayment[] =
+    call.paidInDays !== null && call.paymentOrigin
+      ? [
+          {
+            id: `${call.id}-initial`,
+            amount: cents(total * (call.receivedRatio ?? 1)),
+            valueDate: new Date(Date.now() + call.paidInDays * DAY_MS),
+            origin: call.paymentOrigin,
+            comment: '',
+            by: call.paymentOrigin === 'manual' ? CURRENT_USER : null,
+          },
+        ]
+      : [];
+  const payments = [...initial, ...added];
+  const received = cents(payments.reduce((sum, payment) => sum + payment.amount, 0));
+  return {
+    ...call,
+    state: payments.length > 0 ? paymentState(total, received, call.state) : call.state,
+    calledAmount,
+    fees,
+    premium: callPremium,
+    total,
+    payments,
+    received,
+    balance: cents(total - received),
+  };
 };
 
 interface SubscriptionCapitalCallsTabProps {
   subscription: any;
+  /** Ouvre le wizard d'appel de fonds restreint à cette souscription. */
+  onCreateTargetedCall?: () => void;
 }
 
-export function SubscriptionCapitalCallsTab({ subscription }: SubscriptionCapitalCallsTabProps) {
+export function SubscriptionCapitalCallsTab({ subscription, onCreateTargetedCall }: SubscriptionCapitalCallsTabProps) {
   const { t, lang } = useTranslation();
-  const [calls, setCalls] = useState<MockCapitalCall[]>(mockCapitalCalls);
+  const [calls] = useState<MockCapitalCall[]>(mockCapitalCalls);
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState<Filters>({});
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
   const [queue, setQueue] = useState<Queue>('all');
+  const [addedPayments, setAddedPayments] = useState<Record<number, LinePayment[]>>({});
+  const [treatments, setTreatments] = useState<Record<number, OverpaymentTreatment | null>>({});
+  const [paymentRowId, setPaymentRowId] = useState<number | null>(null);
 
   const commitment: number = subscription?.amount ?? 0;
   const money = (value: number) =>
@@ -70,8 +119,11 @@ export function SubscriptionCapitalCallsTab({ subscription }: SubscriptionCapita
   const empty = <span className="text-sm text-muted-foreground">-</span>;
 
   const allRows = useMemo(
-    () => calls.map((call) => toRow(call, commitment, subscription?.entryFees ?? 0, subscription?.subscriptionPremium ?? 0)),
-    [calls, commitment, subscription?.entryFees, subscription?.subscriptionPremium],
+    () =>
+      calls.map((call) =>
+        toRow(call, commitment, subscription?.entryFees ?? 0, subscription?.subscriptionPremium ?? 0, addedPayments[call.id] ?? []),
+      ),
+    [calls, commitment, subscription?.entryFees, subscription?.subscriptionPremium, addedPayments],
   );
 
   const rows = useMemo(() => {
@@ -86,12 +138,7 @@ export function SubscriptionCapitalCallsTab({ subscription }: SubscriptionCapita
   }, [allRows, queue, search, filters]);
 
 
-  const setState = (row: Row, state: CapitalCallLineState) =>
-    setCalls((prev) =>
-      prev.map((call) =>
-        call.id === row.id ? { ...call, state, paidInDays: state === 'paid' ? 0 : call.paidInDays, paymentOrigin: 'manual' } : call,
-      ),
-    );
+  const paymentRow = allRows.find((row) => row.id === paymentRowId) ?? null;
 
   const actionsFor = (row: Row): TableRowAction[] => {
     const actions: TableRowAction[] = [
@@ -102,7 +149,10 @@ export function SubscriptionCapitalCallsTab({ subscription }: SubscriptionCapita
         onClick: () => toast.success(t(`${K}.toast.noticeDownloaded`, { name: row.name })),
       },
     ];
-    if (row.state !== 'paid') {
+    if (row.state === 'overpaid') {
+      actions.push({ label: t(`${LINES}.actions.treatOverpayment`), icon: Scale, onClick: () => setPaymentRowId(row.id) });
+    }
+    if (!isSettled(row)) {
       actions.push(
         {
           label: t(`${K}.actions.remind`),
@@ -114,10 +164,7 @@ export function SubscriptionCapitalCallsTab({ subscription }: SubscriptionCapita
           label: t(`${K}.actions.recordPayment`),
           icon: Banknote,
           intent: 'success',
-          onClick: () => {
-            setState(row, 'paid');
-            toast.success(t(`${K}.toast.paymentRecorded`, { name: row.name, amount: money(row.total) }));
-          },
+          onClick: () => setPaymentRowId(row.id),
         },
       );
     }
@@ -125,6 +172,20 @@ export function SubscriptionCapitalCallsTab({ subscription }: SubscriptionCapita
   };
 
   const stateTooltip = (row: Row) => {
+    if (row.state === 'partiallyPaid') {
+      return t(row.payments.length === 1 ? `${LINES}.partialTooltipOne` : `${LINES}.partialTooltipMany`, {
+        received: money(row.received),
+        total: money(row.total),
+        count: row.payments.length,
+      });
+    }
+    if (row.state === 'overpaid') {
+      const treatment = treatments[row.id];
+      return t(`${LINES}.overpaidTooltip`, {
+        amount: money(-row.balance),
+        treatment: t(`${LINES}.treatments.${treatment ?? 'undecided'}`),
+      });
+    }
     if (row.state === 'paid' && row.paymentOrigin) {
       return t(`${LINES}.paidTooltip`, { origin: t(`${LINES}.paymentOrigins.${row.paymentOrigin}`), date: date(row.paidInDays) ?? '' });
     }
@@ -134,7 +195,7 @@ export function SubscriptionCapitalCallsTab({ subscription }: SubscriptionCapita
 
   const dueCell = (row: Row) => {
     const label = date(row.dueInDays);
-    if (row.state !== 'paid' && row.dueInDays < 0) return <StatusBadge variant="danger" label={t(`${K}.overdue`, { date: label })} />;
+    if (!isSettled(row) && row.dueInDays < 0) return <StatusBadge variant="danger" label={t(`${K}.overdue`, { date: label })} />;
     return <span className="text-sm tabular-nums whitespace-nowrap">{label}</span>;
   };
 
@@ -182,13 +243,31 @@ export function SubscriptionCapitalCallsTab({ subscription }: SubscriptionCapita
       render: (row) => <span className="text-sm font-medium whitespace-nowrap">{money(row.total)}</span>,
     },
     {
+      key: 'received',
+      label: t(`${LINES}.columns.received`),
+      align: 'right',
+      render: (row) => (row.payments.length > 0 ? <span className="text-sm whitespace-nowrap">{money(row.received)}</span> : empty),
+    },
+    {
+      key: 'balance',
+      label: t(`${LINES}.columns.balance`),
+      align: 'right',
+      render: (row) => {
+        if (row.state === 'cancelled') return empty;
+        if (row.balance < 0) {
+          return <span className="text-sm whitespace-nowrap text-muted-foreground">{t(`${LINES}.overpaidBalance`, { amount: money(-row.balance) })}</span>;
+        }
+        return row.balance > 0 ? <span className="text-sm whitespace-nowrap">{money(row.balance)}</span> : empty;
+      },
+    },
+    {
       key: 'state',
       label: t(`${LINES}.columns.state`),
       render: (row) => (
         <StatusBadge
           label={t(`${LINES}.states.${row.state}`)}
           variant={LINE_STATE_VARIANT[row.state]}
-          icon={row.state === 'paid' ? CheckCircle2 : undefined}
+          icon={row.state === 'paid' || row.state === 'overpaid' ? CheckCircle2 : undefined}
           tooltip={stateTooltip(row)}
         />
       ),
@@ -204,6 +283,8 @@ export function SubscriptionCapitalCallsTab({ subscription }: SubscriptionCapita
     fees: money(sum('fees')),
     premium: money(sum('premium')),
     total: money(sum('total')),
+    received: money(rows.reduce((total, row) => total + row.received, 0)),
+    balance: money(rows.filter((row) => row.state !== 'cancelled').reduce((total, row) => total + Math.max(0, row.balance), 0)),
   };
 
   const filterConfigs: FilterConfig[] = [
@@ -227,6 +308,8 @@ export function SubscriptionCapitalCallsTab({ subscription }: SubscriptionCapita
       money(row.fees),
       money(row.premium),
       money(row.total),
+      money(row.received),
+      money(Math.max(0, row.balance)),
       t(`${LINES}.states.${row.state}`),
     ]);
     const content = [headers, ...lines].map((line) => line.join(';')).join('\n');
@@ -290,10 +373,18 @@ export function SubscriptionCapitalCallsTab({ subscription }: SubscriptionCapita
               }
               onClearAll={() => setFilters({})}
             />
-            <Button variant="outline" className="shrink-0" onClick={exportCsv}>
-              <Download className="w-4 h-4" />
-              {t(`${K}.exportCsv`)}
-            </Button>
+            <div className="flex shrink-0 items-center gap-2">
+              <Button variant="outline" onClick={exportCsv}>
+                <Download className="w-4 h-4" />
+                {t(`${K}.exportCsv`)}
+              </Button>
+              {onCreateTargetedCall && (
+                <Button onClick={onCreateTargetedCall}>
+                  <Target className="w-4 h-4" />
+                  {t(`${K}.targetedCall`)}
+                </Button>
+              )}
+            </div>
           </div>
         }
       >
@@ -326,6 +417,34 @@ export function SubscriptionCapitalCallsTab({ subscription }: SubscriptionCapita
           />
         )}
       </ListingCard>
+
+      <CapitalCallPaymentSheet
+        line={
+          paymentRow && {
+            investor: subscription?.contrepartie?.investor || subscription?.contrepartie?.name || '',
+            subscription: subscription?.id ? String(subscription.id) : '',
+            callName: paymentRow.name,
+            total: paymentRow.total,
+            payments: paymentRow.payments,
+            state: paymentRow.state,
+            overpaymentTreatment: treatments[paymentRow.id] ?? null,
+          }
+        }
+        currency="EUR"
+        onClose={() => setPaymentRowId(null)}
+        onSave={({ payment, treatment }) => {
+          if (!paymentRow) return;
+          if (payment) {
+            setAddedPayments((prev) => ({
+              ...prev,
+              [paymentRow.id]: [...(prev[paymentRow.id] ?? []), { ...payment, id: `${paymentRow.id}-${Date.now()}`, by: CURRENT_USER }],
+            }));
+            toast.success(t(`${K}.toast.paymentRecorded`, { name: paymentRow.name, amount: money(payment.amount) }));
+          }
+          setTreatments((prev) => ({ ...prev, [paymentRow.id]: treatment }));
+          setPaymentRowId(null);
+        }}
+      />
     </div>
   );
 }

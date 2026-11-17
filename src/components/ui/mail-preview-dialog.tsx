@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './dialog';
+import { Sheet, SheetContent } from './sheet';
+import { SIDE_PANEL_WIDE_STYLE, SidePanelHeader } from './side-panel';
 
 interface MailPreviewDialogProps {
   open: boolean;
@@ -17,7 +18,10 @@ interface MailPreviewDialogProps {
   details?: ReactNode;
 }
 
-/** Aperçu d'un mail avant envoi : objet, éléments joints, corps rendu dans un cadre sans script. Rien n'est envoyé. */
+/**
+ * Aperçu d'un mail avant envoi, en panneau latéral : objet, éléments joints, corps rendu dans un cadre
+ * sans script. Rien n'est envoyé.
+ */
 export function MailPreviewDialog({
   open,
   onOpenChange,
@@ -30,32 +34,20 @@ export function MailPreviewDialog({
   details,
 }: MailPreviewDialogProps) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className="flex flex-col overflow-hidden"
-        style={{ width: 760, maxWidth: 'calc(100vw - 2rem)', maxHeight: '90vh' }}
-      >
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          {description && <DialogDescription>{description}</DialogDescription>}
-        </DialogHeader>
-        <div className="space-y-3">
-          <div className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm">
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" style={SIDE_PANEL_WIDE_STYLE} className="h-full p-0 gap-0">
+        <SidePanelHeader title={title} description={description} />
+        <div className="flex min-h-0 flex-1 flex-col gap-3 px-6 py-5">
+          <div className="rounded-md border border-border bg-white px-3 py-2 text-sm">
             <span className="text-muted-foreground">{subjectLabel} </span>
             <span className="font-medium text-foreground">{subject}</span>
           </div>
           {details}
-          <div className="rounded-md border border-border bg-gray-100 p-3 overflow-auto">
-            <iframe
-              title={frameLabel}
-              srcDoc={html}
-              sandbox=""
-              className="w-full border-0 block bg-white"
-              style={{ height: 'min(60vh, 560px)' }}
-            />
+          <div className="flex min-h-0 flex-1 flex-col rounded-md border border-border bg-gray-100 p-3">
+            <iframe title={frameLabel} srcDoc={html} sandbox="" className="block w-full flex-1 border-0 bg-white" />
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }

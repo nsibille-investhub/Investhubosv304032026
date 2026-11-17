@@ -70,7 +70,7 @@ import { generateFunds, Fund } from './utils/fundGenerator';
 import { AllFundsPage } from './components/AllFundsPage';
 import { FundDetailPage } from './components/fund-detail/FundDetailPage';
 import { FundStatusTabs } from './components/FundStatusTabs';
-import { CapitalCallsPage } from './components/capital-calls/CapitalCallsPage';
+import { CapitalCallsPage, type TargetedCallRequest } from './components/capital-calls/CapitalCallsPage';
 import { RetrocessionsSettings } from './components/settings/RetrocessionsSettings';
 // Settings imports
 import { AppStore } from './components/settings/AppStore';
@@ -159,6 +159,7 @@ export default function App() {
   const [selectedFundContextId, setSelectedFundContextId] = useState<number | null>(null);
   const [selectedFundDetail, setSelectedFundDetail] = useState<Fund | null>(null);
   const [capitalCallsFundIds, setCapitalCallsFundIds] = useState<number[]>([]);
+  const [targetedCall, setTargetedCall] = useState<TargetedCallRequest | null>(null);
   const [selectedCapitalCallName, setSelectedCapitalCallName] = useState<string | null>(null);
 
   useEffect(() => {
@@ -1267,6 +1268,11 @@ export default function App() {
                 <div className="flex-1">
                   <SubscriptionDetailPage
                     subscription={selectedSubscriptionDetail}
+                    onCreateTargetedCall={request => {
+                      setTargetedCall({ ...request, nonce: Date.now() });
+                      setSelectedSubscriptionDetail(null);
+                      navigateToPage('capitalcalls');
+                    }}
                     onBack={() => {
                       console.log('App.tsx - onBack called');
                       setSelectedSubscriptionDetail(null);
@@ -1395,6 +1401,8 @@ export default function App() {
           {currentPage === 'capitalcalls' && (
             <CapitalCallsPage
               funds={allFundsData}
+              targetedCall={targetedCall}
+              onTargetedCallHandled={() => setTargetedCall(null)}
               initialFundIds={capitalCallsFundIds}
               onSelectedCallChange={setSelectedCapitalCallName}
               onOpenFund={fundId => {

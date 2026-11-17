@@ -3,6 +3,7 @@ import { toast } from 'sonner@2.0.3';
 import {
   BellRing,
   CalendarX,
+  CheckCircle2,
   FileArchive,
   FileSpreadsheet,
   List,
@@ -11,6 +12,7 @@ import {
   Plus,
   Send,
   ShieldX,
+  Target,
   Trash2,
   Users,
   Wallet,
@@ -22,9 +24,12 @@ import type { Fund } from '../../utils/fundGenerator';
 import {
   CAPITAL_CALL_ORIGINS,
   CapitalCall,
+  DEFAULT_DIFFUSION,
   distinctNoticeDate,
   generateCapitalCalls,
+  targetedSubscriptions,
 } from '../../utils/capitalCallGenerator';
+import { emptyShareInput, fundSubscriptions } from '../../utils/capitalCallWizard';
 import { getDetailIdFromHash, onHashChange } from '../../utils/routing';
 import {
   CapitalCallWizardSession,
@@ -45,7 +50,7 @@ import { EmptyState } from '../EmptyState';
 import { FilterBar, FilterConfig } from '../FilterBar';
 import { ClickableText } from '../ClickableText';
 import { HighlightText } from '../HighlightText';
-import { ListingCard, ListingColumnsMenu, ListingNameCell } from '../ui/listing';
+import { ListingCard, ListingColumnsMenu, ListingIndicator, ListingNameCell } from '../ui/listing';
 import { TableRowActions } from '../ui/row-actions';
 import { DemoScenarioBar } from '../ui/demo-scenario-bar';
 import { StatusBadge } from '../StatusBadge';
@@ -106,7 +111,7 @@ const DEFAULT_COLUMNS: ColumnKey[] = [
 ];
 const COLUMNS_STORAGE_KEY = 'investhub-columns-capital-calls-v3';
 
-type Queue = 'all' | 'toNotify' | 'overdue';
+type Queue = 'all' | 'toNotify' | 'overdue' | 'settled';
 
 /** Identifiant d'URL de l'assistant de création. */
 const NEW_CALL_ID = 'new';
@@ -194,8 +199,19 @@ function sortValue(call: CapitalCall, key: string, summary: CallSummary): string
   }
 }
 
+/** Appel ciblé demandé depuis une souscription : le wizard s'ouvre restreint à cette souscription. */
+export interface TargetedCallRequest {
+  fundName: string;
+  share: string;
+  investor: string;
+  nonce: number;
+}
+
 interface CapitalCallsPageProps {
   funds: Fund[];
+  targetedCall?: TargetedCallRequest | null;
+  /** La demande d'appel ciblé est prise en compte une seule fois. */
+  onTargetedCallHandled?: () => void;
   /** Filtre fonds appliqué à l'ouverture, depuis la fiche d'un fonds. */
   initialFundIds?: number[];
   onOpenFund: (fundId: number) => void;
@@ -203,7 +219,14 @@ interface CapitalCallsPageProps {
   onSelectedCallChange?: (name: string | null) => void;
 }
 
-export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelectedCallChange }: CapitalCallsPageProps) {
+export function CapitalCallsPage({
+  funds,
+  targetedCall,
+  onTargetedCallHandled,
+  initialFundIds,
+  onOpenFund,
+  onSelectedCallChange,
+}: CapitalCallsPageProps) {
   const { t, lang } = useTranslation();
   const [scenario, setScenario] = useState<Scenario>('default');
   const [queue, setQueue] = useState<Queue>('all');
@@ -265,6 +288,7 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
     const summary = summaryOf(call);
     if (id === 'toNotify') return summary.toNotify > 0;
     if (id === 'overdue') return call.dueDate < today && summary.settled < summary.lines;
+    if (id === 'settled') return summary.lines > 0 && summary.settled === summary.lines;
     return true;
   };
 
@@ -460,6 +484,7 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
       forecast: draft.forecast,
       shares: draft.shares,
       message: draft.message,
+      internalComment: draft.internalComment ? { value: draft.internalComment, by: CURRENT_USER, at: new Date() } : null,
       attachments: draft.attachments,
       createdAt: new Date(),
       createdBy: CURRENT_USER,
@@ -484,6 +509,54 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
     setWizardSession(null);
     clearWizardSession(CURRENT_USER);
   };
+
+  // Préparation d'un appel ciblé : fonds, part et souscription déjà choisis, montant à saisir.
+  useEffect(() => {
+    if (!targetedCall) return;
+    onTargetedCallHandled?.();
+    const fundName = targetedCall.fundName.toLowerCase();
+    const fund =
+      funds.find(item => item.name.toLowerCase() === fundName) ??
+      funds.find(item => fundName !== '' && item.name.toLowerCase().startsWith(fundName)) ??
+      funds[0];
+    if (!fund) return;
+    const subscriptions = fundSubscriptions(fund);
+    // La souscription porte "Part B", le fonds "B" : le préfixe est retiré avant la comparaison.
+    const shareName = targetedCall.share.replace(/^part\s+/i, '');
+    const share = fund.shareClasses.find(item => item.name === targetedCall.share || item.name === shareName)?.name ?? fund.shareClasses[0]?.name;
+    const ofShare = subscriptions.filter(item => item.share === share);
+    const target = ofShare.find(item => item.investor === targetedCall.investor) ?? ofShare[0];
+    if (!target) return;
+    const replaced = wizardSession !== null;
+    updateWizardSession({
+      step: 0,
+      fundId: fund.id,
+      shares: [target.share],
+      name: t(`${K}.targeted.defaultName`, { investor: targetedCall.investor || target.investor }),
+      dueDate: null,
+      noticeDate: null,
+      diffusion: DEFAULT_DIFFUSION,
+      message: '',
+      internalComment: '',
+      attachments: [null, null],
+      forecastId: null,
+      distributionIds: [],
+      mode: 'perShare',
+      amountToRaise: '',
+      inputs: Object.fromEntries(
+        fund.shareClasses.map(item => [
+          item.name,
+          item.name === target.share ? { ...emptyShareInput(), kind: 'amount' as const, restriction: [target.id] } : emptyShareInput(),
+        ]),
+      ),
+      savedAt: new Date().toISOString(),
+    });
+    window.location.hash = `#/capital-calls/${NEW_CALL_ID}`;
+    toast.info(t(`${K}.targeted.prepared`, { investor: targetedCall.investor || target.investor }), {
+      description: replaced ? t(`${K}.targeted.replaced`) : t(`${K}.targeted.preparedHint`),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [targetedCall?.nonce]);
 
   const exitWizard = () => {
     window.location.hash = '#/capital-calls';
@@ -525,7 +598,24 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
       key: 'name',
       label: t(`${K}.columns.name`),
       sortable: true,
-      render: (call, term) => <ListingNameCell name={call.name} searchTerm={term} id={call.id} />,
+      render: (call, term) => {
+        const targeted = targetedSubscriptions(call);
+        return (
+          <ListingNameCell
+            name={call.name}
+            searchTerm={term}
+            id={call.id}
+            adornment={
+              targeted !== null && (
+                <ListingIndicator
+                  icon={Target}
+                  label={t(targeted === 1 ? `${K}.targeted.indicatorOne` : `${K}.targeted.indicatorMany`, { count: targeted })}
+                />
+              )
+            }
+          />
+        );
+      },
     },
     dueDate: {
       key: 'dueDate',
@@ -850,10 +940,11 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
             onDiscard={() => setConfirmDiscard(true)}
           />
         )}
-        <FilterCardGroup title={t(`${K}.queues.label`)} hint={t(`${K}.queues.clickToFilter`)} columns={3}>
+        <FilterCardGroup title={t(`${K}.queues.label`)} hint={t(`${K}.queues.clickToFilter`)} columns={4}>
             {queueCard('all', List, scopedCalls)}
             {queueCard('toNotify', Send, scopedCalls.filter(call => inQueue(call, 'toNotify')))}
             {queueCard('overdue', CalendarX, scopedCalls.filter(call => inQueue(call, 'overdue')))}
+            {queueCard('settled', CheckCircle2, scopedCalls.filter(call => inQueue(call, 'settled')))}
         </FilterCardGroup>
 
         <ListingCard

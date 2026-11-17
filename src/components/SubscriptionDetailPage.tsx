@@ -196,6 +196,8 @@ const INITIAL_DOCUMENT_STATUSES: Record<string, QuestionStatus> = {
 interface SubscriptionDetailPageProps {
   subscription: any;
   onBack: () => void;
+  /** Ouvre le wizard d'appel de fonds restreint à cette souscription. */
+  onCreateTargetedCall?: (request: { fundName: string; share: string; investor: string }) => void;
 }
 
 
@@ -236,7 +238,7 @@ interface ReopenRecord {
   recipient: string;
 }
 
-export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack }: SubscriptionDetailPageProps) {
+export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack, onCreateTargetedCall }: SubscriptionDetailPageProps) {
   const { t, lang } = useTranslation();
 
   // Les modifications faites depuis la modale restent locales : la donnée
@@ -2869,7 +2871,19 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack 
 
           <TabsContent value="capital-calls" className="mt-0">
             <div className="px-8 py-6">
-              <SubscriptionCapitalCallsTab subscription={subscription} />
+              <SubscriptionCapitalCallsTab
+                subscription={subscription}
+                onCreateTargetedCall={
+                  onCreateTargetedCall
+                    ? () =>
+                        onCreateTargetedCall({
+                          fundName: subscription.fund?.name ?? '',
+                          share: subscription.fund?.shareClass ?? '',
+                          investor: subscription.contrepartie?.investor || subscription.contrepartie?.name || '',
+                        })
+                    : undefined
+                }
+              />
             </div>
           </TabsContent>
 

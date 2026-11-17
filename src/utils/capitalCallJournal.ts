@@ -1,5 +1,5 @@
 import type { CapitalCall } from './capitalCallGenerator';
-import type { CapitalCallLine, NoticeFailureReason, PaymentOrigin } from './capitalCallLines';
+import type { CapitalCallLine, NoticeFailureReason, OverpaymentTreatment, PaymentOrigin } from './capitalCallLines';
 
 export type JournalEventType =
   | 'created'
@@ -10,6 +10,9 @@ export type JournalEventType =
   | 'reminded'
   | 'paymentValidated'
   | 'paymentCancelled'
+  | 'overpaymentTreated'
+  | 'lineCancelled'
+  | 'commented'
   | 'noticeReplaced'
   | 'notificationCancelled';
 
@@ -22,6 +25,9 @@ export const JOURNAL_EVENT_TYPES: JournalEventType[] = [
   'reminded',
   'paymentValidated',
   'paymentCancelled',
+  'overpaymentTreated',
+  'lineCancelled',
+  'commented',
   'noticeReplaced',
   'notificationCancelled',
 ];
@@ -32,7 +38,9 @@ export const V3_GO_LIVE = new Date(2026, 5, 1);
 export type JournalDetail =
   | { kind: 'reason'; reason: NoticeFailureReason }
   | { kind: 'change'; field: 'dueDate'; from: Date; to: Date }
-  | { kind: 'paymentOrigin'; origin: PaymentOrigin };
+  | { kind: 'paymentOrigin'; origin: PaymentOrigin; amount: number }
+  | { kind: 'treatment'; treatment: OverpaymentTreatment }
+  | { kind: 'text'; text: string; scope: 'call' | 'line' };
 
 export interface JournalEntry {
   id: string;
@@ -111,19 +119,63 @@ export function buildCapitalCallJournal(call: CapitalCall, lines: CapitalCallLin
   ).forEach((group, key) =>
     entries.push({ id: `reminded-${key}`, type: 'reminded', at: group[0].lastReminderAt!, author: call.createdBy, lineCount: group.length }),
   );
-  groupBy(
-    lines.filter(line => line.paidAt && line.paymentOrigin),
-    line => `${line.paidAt!.getTime()}-${line.paymentOrigin}`,
-  ).forEach((group, key) =>
+  const payments = lines.flatMap(line => line.payments);
+  groupBy(payments, payment => `${payment.valueDate.getTime()}-${payment.origin}-${payment.by}`).forEach((group, key) =>
     entries.push({
       id: `paid-${key}`,
       type: 'paymentValidated',
-      at: group[0].paidAt!,
-      author: group[0].paymentOrigin === 'manual' ? call.createdBy : null,
+      at: group[0].valueDate,
+      author: group[0].by,
       lineCount: group.length,
-      detail: { kind: 'paymentOrigin', origin: group[0].paymentOrigin! },
+      detail: {
+        kind: 'paymentOrigin',
+        origin: group[0].origin,
+        amount: group.reduce((sum, payment) => sum + payment.amount, 0),
+      },
     }),
   );
+  lines.forEach(line => {
+    if (line.overpaymentTreatment) {
+      entries.push({
+        id: `treated-${line.id}`,
+        type: 'overpaymentTreated',
+        at: line.overpaymentTreatment.at,
+        author: line.overpaymentTreatment.by,
+        lineCount: 1,
+        detail: { kind: 'treatment', treatment: line.overpaymentTreatment.value },
+      });
+    }
+    if (line.cancellation) {
+      entries.push({
+        id: `cancelled-${line.id}`,
+        type: 'lineCancelled',
+        at: line.cancellation.at,
+        author: line.cancellation.by,
+        lineCount: 1,
+        detail: { kind: 'text', text: line.cancellation.value, scope: 'line' },
+      });
+    }
+    if (line.comment) {
+      entries.push({
+        id: `comment-${line.id}`,
+        type: 'commented',
+        at: line.comment.at,
+        author: line.comment.by,
+        lineCount: 1,
+        detail: { kind: 'text', text: line.comment.value, scope: 'line' },
+      });
+    }
+  });
+  if (call.internalComment) {
+    entries.push({
+      id: 'call-comment',
+      type: 'commented',
+      at: call.internalComment.at,
+      author: call.internalComment.by,
+      lineCount: 0,
+      detail: { kind: 'text', text: call.internalComment.value, scope: 'call' },
+    });
+  }
   const replaced = lines.filter(line => line.noticeState === 'replaced');
   if (replaced.length > 0) {
     const lastFailure = replaced

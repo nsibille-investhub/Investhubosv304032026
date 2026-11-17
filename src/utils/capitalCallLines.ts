@@ -1,6 +1,13 @@
 import type { CapitalCall } from './capitalCallGenerator';
 
-export type LineState = 'toNotify' | 'notified' | 'paymentDeclared' | 'paid';
+export type LineState =
+  | 'toNotify'
+  | 'notified'
+  | 'paymentDeclared'
+  | 'partiallyPaid'
+  | 'paid'
+  | 'overpaid'
+  | 'cancelled';
 export type NoticeState = 'generating' | 'available' | 'failed' | 'replaced';
 export type PaymentOrigin = 'bankReconciliation' | 'directDebit' | 'manual';
 export type NoticeFailureReason = 'combinedTemplateMissing' | 'productionError' | 'timeout';
@@ -16,7 +23,37 @@ export interface NoticeEvent {
 /** Délai maximal de production d'un avis avant "En échec". Valeur provisoire : question ouverte d'IC-5589. */
 export const NOTICE_TIMEOUT_MINUTES = 30;
 
-export const LINE_STATES: LineState[] = ['toNotify', 'notified', 'paymentDeclared', 'paid'];
+export const LINE_STATES: LineState[] = [
+  'toNotify',
+  'notified',
+  'paymentDeclared',
+  'partiallyPaid',
+  'paid',
+  'overpaid',
+  'cancelled',
+];
+
+/** Paiement reçu sur une ligne : une ligne peut être réglée en plusieurs fois. */
+export interface LinePayment {
+  id: string;
+  amount: number;
+  valueDate: Date;
+  origin: PaymentOrigin;
+  comment: string;
+  /** Null : rapprochement bancaire ou prélèvement, sans geste de l'opérateur. */
+  by: string | null;
+}
+
+/** Trop-perçu : remboursé à l'investisseur ou gardé en avance sur son prochain appel. */
+export type OverpaymentTreatment = 'refund' | 'carryForward';
+export const OVERPAYMENT_TREATMENTS: OverpaymentTreatment[] = ['refund', 'carryForward'];
+
+/** Geste daté d'un opérateur, tracé dans le journal de l'appel. */
+export interface Stamped<T> {
+  value: T;
+  by: string;
+  at: Date;
+}
 export const NOTICE_STATES: NoticeState[] = ['generating', 'available', 'failed', 'replaced'];
 
 export interface CapitalCallLine {
@@ -42,6 +79,12 @@ export interface CapitalCallLine {
   notifiedAt: Date | null;
   lastReminderAt: Date | null;
   paidAt: Date | null;
+  payments: LinePayment[];
+  /** Commentaire interne de l'opérateur, jamais visible de l'investisseur. */
+  comment: Stamped<string> | null;
+  overpaymentTreatment: Stamped<OverpaymentTreatment> | null;
+  /** Ligne neutralisée, par exemple après l'annulation de la souscription. */
+  cancellation: Stamped<string> | null;
   combinedNotice: boolean;
   compensated: boolean;
   transferred: boolean;
@@ -62,6 +105,15 @@ const INVESTORS = [
   'Mutuelle Atlas',
   'Sarah K.',
 ];
+
+/** Exemples de la maquette, saisis par la société de gestion. */
+const LINE_COMMENTS = [
+  'Virement reçu en deux fois, solde annoncé par l\'investisseur.',
+  'Contact pris avec le conseiller, paiement prévu en fin de mois.',
+  'Nouveau RIB transmis, à contrôler avant le prochain appel.',
+];
+
+const CANCELLATION_REASONS = ['Souscription annulée avant le premier appel.', 'Souscription transférée, appel porté par le cessionnaire.'];
 
 const DAY = 24 * 60 * 60 * 1000;
 const MINUTE = 60 * 1000;
@@ -156,6 +208,38 @@ export function generateCapitalCallLines(call: CapitalCall): CapitalCallLine[] {
     const originDraw = random();
     const paymentOrigin: PaymentOrigin | null =
       state === 'paid' ? (originDraw < 0.6 ? 'bankReconciliation' : originDraw < 0.8 ? 'directDebit' : 'manual') : null;
+    const total = Math.round((calledAmount + fees + premium) * 100) / 100;
+    const payments: LinePayment[] = [];
+    let paidAtValue = paidAt;
+    if (state === 'paid' && paidAt && paymentOrigin) {
+      // Situations réelles de règlement : virement incomplet ou montant reçu supérieur à l'appel.
+      const settlementDraw = random();
+      const amount =
+        settlementDraw < 0.1
+          ? Math.round(total * (0.4 + random() * 0.4) * 100) / 100
+          : settlementDraw < 0.15
+            ? total + Math.round(50 + random() * 450)
+            : total;
+      payments.push({
+        id: `${call.id}-${index}-1`,
+        amount,
+        valueDate: paidAt,
+        origin: paymentOrigin,
+        comment: '',
+        by: paymentOrigin === 'manual' ? call.createdBy : null,
+      });
+      state = paymentState(total, amount, state);
+      if (state === 'partiallyPaid') paidAtValue = null;
+    }
+    const cancellation: Stamped<string> | null =
+      state === 'notified' && random() < 0.1
+        ? { value: CANCELLATION_REASONS[index % CANCELLATION_REASONS.length], by: call.createdBy, at: notifiedAt }
+        : null;
+    if (cancellation) state = 'cancelled';
+    const comment: Stamped<string> | null =
+      state === 'partiallyPaid' || random() < 0.06
+        ? { value: LINE_COMMENTS[(call.id + index) % LINE_COMMENTS.length], by: call.createdBy, at: notifiedAt }
+        : null;
 
     if (call.justCreated) {
       state = 'toNotify';
@@ -175,7 +259,7 @@ export function generateCapitalCallLines(call: CapitalCall): CapitalCallLine[] {
       calledAmount,
       fees,
       premium,
-      total: Math.round((calledAmount + fees + premium) * 100) / 100,
+      total,
       state,
       paymentOrigin,
       noticeState,
@@ -185,13 +269,49 @@ export function generateCapitalCallLines(call: CapitalCall): CapitalCallLine[] {
       notifiedAt: notified ? notifiedAt : null,
       lastReminderAt:
         toRelaunch && random() < 0.6 ? new Date(Math.min(notifiedAt.getTime() + 15 * DAY, now)) : null,
-      paidAt,
+      paidAt: paidAtValue,
+      payments,
+      comment,
+      overpaymentTreatment: null,
+      cancellation,
       combinedNotice,
       compensated: call.compensations.length > 0 && random() < 0.3,
       transferred: random() < 0.05,
       hiddenOnPortal: random() < 0.05,
     };
   });
+}
+
+const toCents = (value: number) => Math.round(value * 100) / 100;
+
+export function receivedAmount(line: Pick<CapitalCallLine, 'payments'>): number {
+  return toCents(line.payments.reduce((sum, payment) => sum + payment.amount, 0));
+}
+
+/** Reste dû sur la ligne ; négatif en cas de trop-perçu. */
+export function balanceOf(line: Pick<CapitalCallLine, 'payments' | 'total'>): number {
+  return toCents(line.total - receivedAmount(line));
+}
+
+/** État de règlement à partir du montant reçu ; sans paiement, l'état d'envoi est conservé. */
+export function paymentState(total: number, received: number, fallback: LineState): LineState {
+  if (received <= 0) return fallback === 'paid' || fallback === 'partiallyPaid' || fallback === 'overpaid' ? 'notified' : fallback;
+  const gap = toCents(total - received);
+  if (gap > 0) return 'partiallyPaid';
+  return gap < 0 ? 'overpaid' : 'paid';
+}
+
+export function recordPayment(line: CapitalCallLine, payment: LinePayment): CapitalCallLine {
+  const payments = [...line.payments, payment];
+  const state = paymentState(line.total, receivedAmount({ payments }), line.state);
+  return {
+    ...line,
+    payments,
+    state,
+    paymentOrigin: payment.origin,
+    paidAt: state === 'paid' || state === 'overpaid' ? payment.valueDate : null,
+    overpaymentTreatment: state === 'overpaid' ? line.overpaymentTreatment : null,
+  };
 }
 
 /** Contrôle du délai maximal : un avis encore en génération au-delà passe en échec. */
