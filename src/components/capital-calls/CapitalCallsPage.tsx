@@ -652,7 +652,6 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
     if (!selectedInScope) return deniedPage(t(`${K}.accessDenied.outOfScopeDescription`));
     return (
       <div className="flex min-h-screen flex-1 flex-col bg-muted">
-        {scenarioBar}
         <CapitalCallDetailPage
           key={selectedCall.id}
           call={selectedCall}
