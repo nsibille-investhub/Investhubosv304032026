@@ -16,6 +16,7 @@ export type Page =
   | 'capitalcalls'
   | 'distributions'
   | 'capitalaccounts'
+  | 'releases'
   | 'events'
   | 'news'
   | 'datahub'
@@ -76,6 +77,7 @@ const PAGE_TO_PATH: Record<Page, string> = {
   'capitalcalls': '/capital-calls',
   'distributions': '/distributions',
   'capitalaccounts': '/capital-accounts',
+  'releases': '/releases',
   'events': '/events',
   'news': '/news',
   'datahub': '/datahub',
@@ -163,6 +165,11 @@ export function getPageFromHash(): Page {
   // Capital account detail (/capital-accounts/:id) stays on the listing page as well.
   if (path === '/capital-accounts' || path.startsWith('/capital-accounts/')) {
     return 'capitalaccounts';
+  }
+
+  // Release detail (/releases/:id) stays on the listing page as well.
+  if (path === '/releases' || path.startsWith('/releases/')) {
+    return 'releases';
   }
 
   // Entity detail (/entities/:uid) stays on the entities page; the page reads

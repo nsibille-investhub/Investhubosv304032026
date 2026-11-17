@@ -50,6 +50,8 @@ interface DataTableProps<T extends { id: number }> {
   density?: 'default' | 'compact';
   /** Ligne de pied de table (totaux), une cellule par clé de colonne. */
   footer?: Partial<Record<string, ReactNode>>;
+  /** Lignes affichées grisées (souscription transférée, élément inactif...). */
+  isRowMuted?: (row: T) => boolean;
 }
 
 export function DataTable<T extends { id: number }>({
@@ -66,7 +68,8 @@ export function DataTable<T extends { id: number }>({
   density = 'default',
   entityName = 'item',
   hideSelection = false,
-  footer
+  footer,
+  isRowMuted
 }: DataTableProps<T>) {
   // Safety check
   if (!columns || columns.length === 0) {
@@ -267,6 +270,7 @@ export function DataTable<T extends { id: number }>({
                         column.align === 'right' && 'text-right tabular-nums',
                         density === 'compact' && 'px-3 py-3',
                         column.key === 'actions' && 'ds-sticky-actions',
+                        isRowMuted?.(row) && 'opacity-50',
                         column.className,
                       )}
                     >

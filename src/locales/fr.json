@@ -121,7 +121,8 @@
       "reports": "Rapports",
       "queries": "Requêtes",
       "variableFormatting": "Formatage des variables",
-      "tools": "Outils"
+      "tools": "Outils",
+      "releases": "Déblocages"
     },
     "section": {
       "usersAccess": "Utilisateurs & Accès",
@@ -176,7 +177,8 @@
     "entityDetail": "Détail de l'entité",
     "capitalCalls": "Appels de fonds",
     "distributions": "Distributions",
-    "capitalAccounts": "Capital accounts"
+    "capitalAccounts": "Capital accounts",
+    "releases": "Déblocages"
   },
   "search": {
     "placeholder": "Rechercher... Posez votre question à votre Hub.",
@@ -7391,6 +7393,92 @@
           "states": {
             "created": "Créée",
             "notified": "Notifiée"
+          },
+          "empty": {
+            "title": "Aucune ligne investisseur",
+            "filteredTitle": "Aucune ligne ne correspond",
+            "filteredDescription": "Modifiez les filtres pour élargir les résultats.",
+            "reset": "Réinitialiser les filtres"
+          }
+        }
+      }
+    },
+    "releases": {
+      "title": "Déblocages",
+      "subtitle": "Les déblocages de tous les fonds de votre périmètre",
+      "searchPlaceholder": "Rechercher un déblocage",
+      "filters": {
+        "funds": "Fonds",
+        "period": "Période",
+        "reset": "Réinitialiser les filtres"
+      },
+      "columns": {
+        "name": "Nom",
+        "fund": "Fonds",
+        "date": "Date",
+        "comments": "Commentaires",
+        "createdAt": "Créé le",
+        "updatedAt": "Modifié le"
+      },
+      "empty": {
+        "title": "Aucun déblocage",
+        "description": "Les déblocages des fonds de votre périmètre s'afficheront ici.",
+        "filteredTitle": "Aucun déblocage ne correspond",
+        "filteredDescription": "Modifiez la recherche ou les filtres pour élargir les résultats."
+      },
+      "accessDenied": {
+        "title": "Accès refusé",
+        "description": "Vous n'avez pas le droit \"Consulter les déblocages\". Rapprochez-vous de votre administrateur interne.",
+        "outOfScopeDescription": "Ce déblocage porte sur un fonds hors de votre périmètre.",
+        "notFoundTitle": "Déblocage introuvable",
+        "notFoundDescription": "Ce déblocage n'existe pas ou a été supprimé."
+      },
+      "scenario": {
+        "label": "Scénario de démonstration",
+        "options": {
+          "default": "Périmètre complet",
+          "limitedScope": "Périmètre limité à deux fonds",
+          "noRight": "Sans le droit Consulter les déblocages"
+        }
+      },
+      "detail": {
+        "back": "Retour aux déblocages",
+        "header": {
+          "date": "Date : {{date}}",
+          "createdOn": "Créé le {{date}}"
+        },
+        "tabs": {
+          "lines": "Lignes investisseurs",
+          "parameters": "Paramètres"
+        },
+        "toast": {
+          "notInMockup": "La fiche de {{name}} n'est pas encore dans la maquette."
+        },
+        "lines": {
+          "yes": "Oui",
+          "no": "Non",
+          "openLetter": "Ouvrir le courrier",
+          "columns": {
+            "investor": "Investisseur",
+            "share": "Part",
+            "subscription": "Souscription",
+            "amount": "Montant",
+            "fees": "Charges",
+            "iban": "IBAN",
+            "bic": "BIC",
+            "notified": "Notifiée",
+            "notifiedOn": "Notifiée le",
+            "letter": "Courrier"
+          },
+          "letter": {
+            "title": "Courrier de déblocage - {{name}}",
+            "fund": "Fonds : {{fund}}",
+            "date": "Date du déblocage : {{date}}",
+            "investor": "Investisseur : {{investor}}",
+            "subscription": "Souscription : {{subscription}}",
+            "amount": "Montant débloqué : {{amount}}",
+            "iban": "IBAN : {{iban}}",
+            "demo": "Document de démonstration généré par la maquette."
           },
           "empty": {
             "title": "Aucune ligne investisseur",

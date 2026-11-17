@@ -35,7 +35,7 @@ export function ModernSidebar({ expanded, onToggle, currentPage = 'entities', on
     investisseurs: currentPage === 'subscriptions' || currentPage === 'investors',
     partenaires: currentPage === 'partners' || currentPage === 'settings-conventions' || currentPage === 'retrocessions',
     participations: false,
-    fundlife: currentPage === 'allfunds' || currentPage === 'capitalcalls' || currentPage === 'capitalaccounts' || currentPage === 'distributions',
+    fundlife: currentPage === 'allfunds' || currentPage === 'capitalcalls' || currentPage === 'capitalaccounts' || currentPage === 'distributions' || currentPage === 'releases',
     dataroom: currentPage === 'documents' || currentPage === 'tracking' || currentPage === 'birdview' || currentPage === 'validation',
     portails: currentPage === 'events' || currentPage === 'news' || currentPage === 'datahub',
     communications: false,
@@ -72,7 +72,7 @@ export function ModernSidebar({ expanded, onToggle, currentPage = 'entities', on
       investisseurs: currentPage === 'subscriptions' || currentPage === 'investors',
       partenaires: currentPage === 'partners' || currentPage === 'settings-conventions' || currentPage === 'retrocessions',
       participations: false,
-      fundlife: currentPage === 'allfunds' || currentPage === 'capitalcalls' || currentPage === 'capitalaccounts' || currentPage === 'distributions',
+      fundlife: currentPage === 'allfunds' || currentPage === 'capitalcalls' || currentPage === 'capitalaccounts' || currentPage === 'distributions' || currentPage === 'releases',
       dataroom: currentPage === 'documents' || currentPage === 'tracking' || currentPage === 'birdview' || currentPage === 'validation',
       portails: currentPage === 'events' || currentPage === 'news' || currentPage === 'datahub',
       communications: false,
@@ -316,6 +316,13 @@ export function ModernSidebar({ expanded, onToggle, currentPage = 'entities', on
                 expanded={expanded}
                 isActive={currentPage === 'distributions'}
                 onClick={() => onPageChange?.('distributions')}
+              />
+              <SubMenuItem
+                icon={icons.Unlock}
+                label={t('sidebar.submenu.releases')}
+                expanded={expanded}
+                isActive={currentPage === 'releases'}
+                onClick={() => onPageChange?.('releases')}
               />
               <SubMenuItem icon={icons.TrendingDown} label={t('sidebar.submenu.cashFlowForecasts')} expanded={expanded} />
               <SubMenuItem icon={icons.FileText} label={t('sidebar.submenu.contracts')} expanded={expanded} />
