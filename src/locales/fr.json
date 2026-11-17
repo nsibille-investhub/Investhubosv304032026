@@ -7378,10 +7378,10 @@
       },
       "listingTools": {
         "title": "Outils de listing",
-        "description": "ListingColumnsMenu choisit les colonnes affichées (la dernière visible ne peut pas être masquée) ; ListingIndicator signale une particularité de ligne par une icône, libellé au survol. ListingCard accepte aussi un pied (pagination) et DataTable une ligne de totaux (footer). La FilterBar gère maintenant les filtres multisélection et période, et passe à la ligne quand la place manque.",
-        "variants": "Menu de colonnes avec réinitialisation ; un ou plusieurs indicateurs accolés au nom.",
-        "states": "Colonne masquée, dernière colonne verrouillée, indicateur au survol.",
-        "exampleLabel": "Nom avec indicateurs et choix des colonnes",
+        "description": "ListingColumnsMenu choisit les colonnes affichées (la dernière visible ne peut pas être masquée) ; ListingIndicator signale une particularité de ligne par une icône, libellé au survol ; ListingTruncatedText garde un texte long sur une ligne, avec points de suspension et texte entier au survol quand il est coupé. ListingCard accepte aussi un pied (pagination) et DataTable une ligne de totaux (footer). La FilterBar gère les filtres multisélection et période, passe à la ligne quand la place manque, et masque la recherche libre avec hideSearch.",
+        "variants": "Menu de colonnes avec réinitialisation ; un ou plusieurs indicateurs accolés au nom ; texte long coupé.",
+        "states": "Colonne masquée, dernière colonne verrouillée, indicateur au survol, texte entier au survol d'un texte coupé.",
+        "exampleLabel": "Nom avec indicateurs, texte long coupé et choix des colonnes",
         "demo": {
           "investor": "Camille R.",
           "combined": "Avis combiné",
@@ -7390,7 +7390,8 @@
             "investor": "Investisseur",
             "amount": "Montant",
             "state": "État"
-          }
+          },
+          "longName": "Holding Arcadia - €1250K - European Mid-Market Fund Part A"
         }
       },
       "wizardSteps": {

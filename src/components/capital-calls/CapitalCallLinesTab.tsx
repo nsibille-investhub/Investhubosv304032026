@@ -9,7 +9,7 @@ import { ClickableText } from '../ClickableText';
 import { ColumnConfig, DataTable } from '../DataTable';
 import { EmptyState } from '../EmptyState';
 import { FilterBar, FilterConfig } from '../FilterBar';
-import { ListingCard, ListingColumnsMenu, ListingNameCell } from '../ui/listing';
+import { ListingCard, ListingColumnsMenu, ListingNameCell, ListingTruncatedText } from '../ui/listing';
 import { StatusBadge, StatusVariant } from '../StatusBadge';
 import { Button } from '../ui/button';
 import { DataPagination } from '../ui/data-pagination';
@@ -281,9 +281,11 @@ export function CapitalCallLinesTab({ call, lines, fundShares }: CapitalCallLine
             event.stopPropagation();
             notInMockup(line.subscription);
           }}
-          className="text-left text-sm font-medium tabular-nums"
+          className="text-left text-sm font-medium"
         >
-          <ClickableText>{line.subscription}</ClickableText>
+          <ClickableText>
+            <ListingTruncatedText text={line.subscription} />
+          </ClickableText>
         </button>
       ),
     },

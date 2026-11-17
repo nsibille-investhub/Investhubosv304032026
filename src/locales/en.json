@@ -7378,10 +7378,10 @@
       },
       "listingTools": {
         "title": "Listing tools",
-        "description": "ListingColumnsMenu picks the visible columns (the last visible one cannot be hidden); ListingIndicator flags a row specificity with an icon, label on hover. ListingCard also takes a footer (pagination) and DataTable a totals row (footer). FilterBar now handles multi-select and date range filters, and wraps when space runs out.",
-        "variants": "Columns menu with reset; one or more indicators next to the name.",
-        "states": "Hidden column, last column locked, indicator on hover.",
-        "exampleLabel": "Name with indicators and column picker",
+        "description": "ListingColumnsMenu picks the displayed columns (the last visible one cannot be hidden); ListingIndicator flags a row particularity with an icon, label on hover; ListingTruncatedText keeps a long text on one line, with an ellipsis and the full text on hover when it is cut. ListingCard also accepts a footer (pagination) and DataTable a totals row (footer). FilterBar handles multiselect and period filters, wraps when space is short, and hides the free search with hideSearch.",
+        "variants": "Columns menu with reset; one or several indicators next to the name; truncated long text.",
+        "states": "Hidden column, locked last column, indicator on hover, full text on hover of a truncated text.",
+        "exampleLabel": "Name with indicators, truncated long text and column choice",
         "demo": {
           "investor": "Camille R.",
           "combined": "Combined notice",
@@ -7390,7 +7390,8 @@
             "investor": "Investor",
             "amount": "Amount",
             "state": "State"
-          }
+          },
+          "longName": "Holding Arcadia - €1250K - European Mid-Market Fund Share A"
         }
       },
       "wizardSteps": {

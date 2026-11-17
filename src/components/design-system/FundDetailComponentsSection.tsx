@@ -56,7 +56,7 @@ import { AttachmentRow } from '../ui/attachment-row';
 import { DemoScenarioBar } from '../ui/demo-scenario-bar';
 import { FilterCard, FilterCardGroup } from '../ui/filter-card';
 import { FormField, SuffixInput } from '../ui/form-field';
-import { ListingColumnsMenu, ListingIndicator, ListingNameCell } from '../ui/listing';
+import { ListingColumnsMenu, ListingIndicator, ListingNameCell, ListingTruncatedText } from '../ui/listing';
 import { ProcessStepsBar, WizardPageFooter, WizardSteps, WizardStepsBar } from '../ui/wizard-steps';
 import { MailPreviewDialog } from '../ui/mail-preview-dialog';
 import { RichMultiSelect } from '../ui/rich-multiselect';
@@ -1014,6 +1014,9 @@ function ListingToolsDemo() {
           </>
         }
       />
+      <span className="text-sm font-medium">
+        <ListingTruncatedText text={t(`${K}.listingTools.demo.longName`)} />
+      </span>
       <ListingColumnsMenu
         columns={columns}
         visible={visible}
@@ -1367,13 +1370,14 @@ export function FundDetailComponentsSection() {
 
       <DocBlock
         id="listingTools"
-        name="ListingColumnsMenu, ListingIndicator"
-        importLine="import { ListingColumnsMenu, ListingIndicator } from '@/components/ui/listing'"
+        name="ListingColumnsMenu, ListingIndicator, ListingTruncatedText"
+        importLine="import { ListingColumnsMenu, ListingIndicator, ListingTruncatedText } from '@/components/ui/listing'"
         usage={`<ListingCard toolbar={<div className="flex items-center gap-2"><FilterBar className="flex-1" ... /><ListingColumnsMenu ... /></div>}
   footer={<DataPagination ... />}>
   <DataTable ... footer={{ amount: money(total) }} />
 </ListingCard>
-<ListingNameCell name={line.investor} adornment={<ListingIndicator icon={Layers} label={t('...')} />} />`}
+<ListingNameCell name={line.investor} adornment={<ListingIndicator icon={Layers} label={t('...')} />} />
+<ListingTruncatedText text={line.subscription} />`}
       >
         <Example label={t(`${K}.listingTools.exampleLabel`)}>
           <ListingToolsDemo />

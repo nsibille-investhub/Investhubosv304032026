@@ -21,6 +21,7 @@ export const LINE_STATES: LineState[] = ['toNotify', 'notified', 'paymentDeclare
 export interface CapitalCallLine {
   id: number;
   investor: string;
+  /** Nom de la souscription. */
   subscription: string;
   share: string;
   units: number;
@@ -74,6 +75,14 @@ function seeded(seed: number) {
     value = (value * 16807) % 2147483647;
     return (value - 1) / 2147483646;
   };
+}
+
+const CURRENCY_SYMBOLS: Record<string, string> = { EUR: '€', USD: '$', GBP: '£' };
+
+/** Nom généré par défaut pour une souscription : investisseur, montant souscrit, fonds et part. */
+function defaultSubscriptionName(investor: string, committed: number, call: CapitalCall, share: string) {
+  const thousands = Math.max(10, Math.round(committed / 10000) * 10);
+  return `${investor} - ${CURRENCY_SYMBOLS[call.currency] ?? call.currency}${thousands}K - ${call.fundName} Part ${share}`;
 }
 
 /**
@@ -161,13 +170,14 @@ export function generateCapitalCallLines(call: CapitalCall): CapitalCallLine[] {
       noticeEvents.splice(0, noticeEvents.length, { at: noticeRequestedAt, kind: 'requested' });
     }
 
+    const investor = INVESTORS[(call.id + index) % INVESTORS.length];
     const lastReminderAt =
       toRelaunch && random() < 0.6 ? new Date(Math.min(notifiedAt.getTime() + 15 * DAY, now)) : null;
 
     return {
       id: call.id * 1000 + index + 1,
-      investor: INVESTORS[(call.id + index) % INVESTORS.length],
-      subscription: `SUB-${String(call.fundId).padStart(2, '0')}${String(index + 1).padStart(3, '0')}`,
+      investor,
+      subscription: defaultSubscriptionName(investor, calledAmount * 4, call, share.share),
       share: share.share,
       units: Math.max(1, Math.round(calledAmount / NOMINAL)),
       amountPerUnit: share.mode === 'perUnit' ? share.value : null,
