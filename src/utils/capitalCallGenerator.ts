@@ -87,8 +87,10 @@ export interface CapitalCall {
   shares: CapitalCallShare[];
   message: string;
   attachments: CapitalCallAttachment[];
+  /** Identifiant de l'appel dans un système tiers. */
+  externalId: string | null;
   createdAt: Date;
-  createdBy: string;
+  updatedAt: Date;
   /** Verrou d'envoi actif. */
   sending: boolean;
   /** Nombre de lignes investisseurs. */
@@ -100,8 +102,6 @@ export interface CapitalCall {
   /** Appel créé dans la session : lignes à notifier, avis demandés à la création. */
   justCreated?: boolean;
 }
-
-const CREATORS = ['Camille', 'Thomas', 'Léa', 'Hugo', 'Inès', 'Julien'];
 
 const MESSAGES = [
   "Madame, Monsieur,\n\nVous trouverez ci-joint votre avis d'appel de fonds. Nous vous remercions de bien vouloir procéder au virement avant la date d'échéance indiquée.\n\nL'équipe de gestion",
@@ -243,7 +243,8 @@ export function generateCapitalCalls(funds: Fund[], today = new Date()): Capital
         message,
         attachments,
         createdAt,
-        createdBy: CREATORS[Math.floor(random() * CREATORS.length)],
+        externalId: origin === 'backOffice' ? null : `CC-${dueDate.getFullYear()}-${String(fund.id * 10 + index + 1).padStart(4, '0')}`,
+        updatedAt: index % 3 === 0 ? new Date(Math.min(createdAt.getTime() + 3 * DAY + 5 * 3600000, today.getTime())) : createdAt,
         sending,
         lines,
         notifiedLines,

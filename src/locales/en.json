@@ -6579,7 +6579,7 @@
         "delete": "Delete",
         "resumePreparation": "Resume the call in preparation"
       },
-      "searchPlaceholder": "Search a call or a fund",
+      "searchPlaceholder": "Search a call by name or ID",
       "queues": {
         "label": "Work queues",
         "all": "All calls",
@@ -6592,27 +6592,18 @@
       "filters": {
         "funds": "Funds",
         "duePeriod": "Due date period",
-        "origin": "Origin",
-        "reset": "Reset filters",
-        "state": "Status",
-        "stage": "Step"
+        "reset": "Reset filters"
       },
       "columns": {
         "fund": "Fund",
         "name": "Name",
         "dueDate": "Due date",
-        "calledAmount": "Called amount",
-        "state": "Status",
         "noticeDate": "Notice date",
-        "origin": "Origin",
-        "compensation": "Offset",
+        "amount": "Amount",
+        "externalId": "External ID",
         "createdAt": "Created on",
-        "createdBy": "Created by",
-        "actions": "Actions",
-        "lines": "Lines",
-        "notices": "Notices",
-        "notification": "Notification",
-        "settlement": "Settlement"
+        "updatedAt": "Updated on",
+        "actions": "Actions"
       },
       "origins": {
         "backOffice": "Back office",
@@ -7056,26 +7047,6 @@
         },
         "resumeLater": "Resume later",
         "autosaved": "Entry saved automatically, visible only to you. No call exists until it is created."
-      },
-      "progress": {
-        "notices": "{{done}} / {{total}} available",
-        "noticesFailed": "{{count}} failed",
-        "notified": "{{done}} / {{total}} notified",
-        "settled": "{{done}} / {{total}} settled",
-        "remainingDue": "{{amount}} still due",
-        "sending": "Sending",
-        "withoutNotification": "No notification",
-        "prePublished": "Pre-published on the portal"
-      },
-      "callStates": {
-        "noticesGenerating": "Notices generating",
-        "settled": "Settled",
-        "partiallySettled": "Partially settled",
-        "notified": "Notified",
-        "partiallyNotified": "Partially notified",
-        "publishedWithoutSending": "Published without email",
-        "readyToNotify": "Ready to notify",
-        "notDistributed": "Not distributed"
       },
       "pendingWizard": {
         "title": "You have a call in preparation: {{name}}",

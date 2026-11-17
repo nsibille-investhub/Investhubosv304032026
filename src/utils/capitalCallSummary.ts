@@ -11,21 +11,6 @@ export type CallState =
   | 'notDistributed'
   | 'readyToNotify';
 
-/**
- * Ordre de priorité : le premier état vrai l'emporte. Un avis en échec ou un envoi en cours ne change pas
- * l'état de l'appel : ils sont signalés en second plan, dans les colonnes Avis et Notification.
- */
-export const CALL_STATES: CallState[] = [
-  'noticesGenerating',
-  'settled',
-  'partiallySettled',
-  'notified',
-  'partiallyNotified',
-  'publishedWithoutSending',
-  'notDistributed',
-  'readyToNotify',
-];
-
 export interface CallSummary {
   lines: number;
   entered: number;
@@ -102,19 +87,4 @@ export function summarizeCall(call: CapitalCall, lines: CapitalCallLine[]): Call
     remainingDue: cents(lines.filter(line => !isSettled(line)).reduce((sum, line) => sum + line.total, 0)),
     state,
   };
-}
-
-/** Étapes du traitement d'un appel, après sa création. */
-export type CallStage = 'notices' | 'diffusion' | 'settlement' | 'closed';
-export const CALL_STAGES: CallStage[] = ['notices', 'diffusion', 'settlement', 'closed'];
-
-/**
- * Étape en cours d'un appel. Les avis bloquent la diffusion tant qu'ils sont en génération ;
- * un avis en échec ne bloque pas. Sans notification, l'appel passe directement au règlement.
- */
-export function callStage(call: CapitalCall, summary: CallSummary): CallStage {
-  if (summary.lines > 0 && summary.settled === summary.lines) return 'closed';
-  if (summary.noticesGenerating > 0 && summary.notified === 0) return 'notices';
-  if (call.diffusion.notify && summary.notified < summary.lines) return 'diffusion';
-  return 'settlement';
 }

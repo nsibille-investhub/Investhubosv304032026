@@ -6579,7 +6579,7 @@
         "delete": "Supprimer",
         "resumePreparation": "Reprendre l'appel en préparation"
       },
-      "searchPlaceholder": "Rechercher un appel ou un fonds",
+      "searchPlaceholder": "Rechercher un appel par nom ou identifiant",
       "queues": {
         "label": "Files de travail",
         "all": "Tous les appels",
@@ -6592,27 +6592,18 @@
       "filters": {
         "funds": "Fonds",
         "duePeriod": "Période d'échéance",
-        "origin": "Origine",
-        "reset": "Réinitialiser les filtres",
-        "state": "État",
-        "stage": "Étape"
+        "reset": "Réinitialiser les filtres"
       },
       "columns": {
         "fund": "Fonds",
         "name": "Nom",
         "dueDate": "Date d'échéance",
-        "calledAmount": "Montant appelé",
-        "state": "État",
         "noticeDate": "Date de l'avis",
-        "origin": "Origine",
-        "compensation": "Compensation",
+        "amount": "Montant",
+        "externalId": "Identifiant externe",
         "createdAt": "Créé le",
-        "createdBy": "Créé par",
-        "actions": "Actions",
-        "lines": "Lignes",
-        "notices": "Avis",
-        "notification": "Notification",
-        "settlement": "Règlement"
+        "updatedAt": "Modifié le",
+        "actions": "Actions"
       },
       "origins": {
         "backOffice": "Back-office",
@@ -7056,26 +7047,6 @@
         },
         "resumeLater": "Reprendre plus tard",
         "autosaved": "Saisie sauvegardée automatiquement, visible par vous seul. Aucun appel n'existe avant la création."
-      },
-      "progress": {
-        "notices": "{{done}} / {{total}} disponibles",
-        "noticesFailed": "{{count}} en échec",
-        "notified": "{{done}} / {{total}} notifiées",
-        "settled": "{{done}} / {{total}} réglées",
-        "remainingDue": "{{amount}} restant dû",
-        "sending": "Envoi en cours",
-        "withoutNotification": "Sans notification",
-        "prePublished": "Pré-publié sur le portail"
-      },
-      "callStates": {
-        "noticesGenerating": "Avis en génération",
-        "settled": "Soldé",
-        "partiallySettled": "Partiellement réglé",
-        "notified": "Notifié",
-        "partiallyNotified": "Partiellement notifié",
-        "publishedWithoutSending": "Publié sans envoi",
-        "readyToNotify": "Prêt à notifier",
-        "notDistributed": "Non diffusé"
       },
       "pendingWizard": {
         "title": "Vous avez un appel en préparation : {{name}}",
