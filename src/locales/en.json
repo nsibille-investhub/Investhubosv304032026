@@ -6605,11 +6605,6 @@
         "updatedAt": "Updated on",
         "actions": "Actions"
       },
-      "origins": {
-        "backOffice": "Back office",
-        "import": "Import",
-        "api": "API"
-      },
       "empty": {
         "title": "No capital calls",
         "description": "Calls from the funds in your scope will appear here.",
@@ -6665,7 +6660,6 @@
           "noticeDate": "Notice date: {{date}}",
           "notification": "Notification: {{value}}",
           "calledAmount": "Called amount: {{amount}}",
-          "origin": "Origin: {{origin}}",
           "compensatedBy": "Offset by",
           "createdOn": "Created on {{date}}"
         },

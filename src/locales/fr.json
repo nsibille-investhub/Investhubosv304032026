@@ -6605,11 +6605,6 @@
         "updatedAt": "Modifié le",
         "actions": "Actions"
       },
-      "origins": {
-        "backOffice": "Back-office",
-        "import": "Import",
-        "api": "API"
-      },
       "empty": {
         "title": "Aucun appel de fonds",
         "description": "Les appels des fonds de votre périmètre s'afficheront ici.",
@@ -6665,7 +6660,6 @@
           "noticeDate": "Date de l'avis : {{date}}",
           "notification": "Notification : {{value}}",
           "calledAmount": "Montant appelé : {{amount}}",
-          "origin": "Origine : {{origin}}",
           "compensatedBy": "Compensé par",
           "createdOn": "Créé le {{date}}"
         },

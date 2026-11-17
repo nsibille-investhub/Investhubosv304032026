@@ -10,7 +10,6 @@ import {
   FileText,
   Landmark,
   SlidersHorizontal,
-  Tag,
   TrendingDown,
   Users,
 } from 'lucide-react';
@@ -100,10 +99,6 @@ export function CapitalCallDetailPage({ call, lines, fundShares, settings, onOpe
             <PageHeaderSubtitleSeparator />
             <PageHeaderSubtitleItem icon={Coins}>
               {t(`${K}.header.calledAmount`, { amount: calledAmount })}
-            </PageHeaderSubtitleItem>
-            <PageHeaderSubtitleSeparator />
-            <PageHeaderSubtitleItem icon={Tag}>
-              {t(`${K}.header.origin`, { origin: t(`funds.capitalCalls.origins.${call.origin}`) })}
             </PageHeaderSubtitleItem>
             {call.compensations.length > 0 && (
               <>

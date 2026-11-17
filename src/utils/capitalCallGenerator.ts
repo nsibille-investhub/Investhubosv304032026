@@ -3,8 +3,6 @@ import { fundCallSettings } from './capitalCallWizard';
 
 export type CapitalCallOrigin = 'backOffice' | 'import' | 'api';
 
-export const CAPITAL_CALL_ORIGINS: CapitalCallOrigin[] = ['backOffice', 'import', 'api'];
-
 export interface LinkedDistribution {
   id: number;
   name: string;
