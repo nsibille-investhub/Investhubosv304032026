@@ -657,6 +657,7 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
           key={selectedCall.id}
           call={selectedCall}
           lines={linesByCall.get(selectedCall.id) ?? []}
+          fundShares={funds.find(fund => fund.id === selectedCall.fundId)?.shareClasses.map(item => item.name) ?? []}
           settings={fundCallSettings({ id: selectedCall.fundId })}
           onOpenFund={onOpenFund}
           onBack={openListing}

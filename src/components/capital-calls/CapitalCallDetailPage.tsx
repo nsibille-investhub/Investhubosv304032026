@@ -40,13 +40,15 @@ function tabFromHash(): TabId {
 interface CapitalCallDetailPageProps {
   call: CapitalCall;
   lines: CapitalCallLine[];
+  /** Parts du fonds, pour le filtre des lignes. */
+  fundShares: string[];
   /** Paramètres de l'instance qui pilotent les colonnes de la ventilation. */
   settings: FundCallSettings;
   onOpenFund: (fundId: number) => void;
   onBack: () => void;
 }
 
-export function CapitalCallDetailPage({ call, lines, settings, onOpenFund, onBack }: CapitalCallDetailPageProps) {
+export function CapitalCallDetailPage({ call, lines, fundShares, settings, onOpenFund, onBack }: CapitalCallDetailPageProps) {
   const { t, lang } = useTranslation();
   const [tab, setTab] = useState<TabId>(tabFromHash);
 
@@ -148,7 +150,7 @@ export function CapitalCallDetailPage({ call, lines, settings, onOpenFund, onBac
         </div>
         <div className="px-8 py-6">
           <TabsContent value="lines">
-            <CapitalCallLinesTab call={call} lines={lines} />
+            <CapitalCallLinesTab call={call} lines={lines} fundShares={fundShares} />
           </TabsContent>
           <TabsContent value="parameters">
             <CapitalCallParametersTab call={call} settings={settings} />

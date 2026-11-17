@@ -6579,7 +6579,7 @@
         "delete": "Delete",
         "resumePreparation": "Resume the call in preparation"
       },
-      "searchPlaceholder": "Search a call by name or ID",
+      "searchPlaceholder": "Search a call",
       "queues": {
         "label": "Work queues",
         "all": "All calls",
@@ -6724,16 +6724,19 @@
             "subscription": "Subscription",
             "share": "Share",
             "units": "Number of units",
-            "amountPerUnit": "Amount per unit",
             "calledAmount": "Called amount",
             "fees": "Fees",
             "premium": "Premium",
             "total": "Total",
             "state": "Line status",
-            "noticeState": "Notice status",
             "notifiedAt": "Notification date",
-            "lastReminderAt": "Last reminder",
-            "paidAt": "Payment date"
+            "amount": "Amount",
+            "status": "Status",
+            "notifiedOn": "Notified on",
+            "remindedOn": "Reminded on",
+            "paidOn": "Paid on",
+            "createdAt": "Created on",
+            "updatedAt": "Updated on"
           },
           "states": {
             "toNotify": "To notify",
@@ -6748,7 +6751,10 @@
           },
           "paidTooltip": "Paid by {{origin}} on {{date}}",
           "empty": {
-            "title": "No investor lines"
+            "title": "No investor lines",
+            "filteredTitle": "No matching line",
+            "filteredDescription": "Change the filters to widen the results.",
+            "reset": "Reset filters"
           }
         }
       },

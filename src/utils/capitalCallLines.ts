@@ -41,6 +41,8 @@ export interface CapitalCallLine {
   notifiedAt: Date | null;
   lastReminderAt: Date | null;
   paidAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
   combinedNotice: boolean;
   compensated: boolean;
   transferred: boolean;
@@ -159,6 +161,9 @@ export function generateCapitalCallLines(call: CapitalCall): CapitalCallLine[] {
       noticeEvents.splice(0, noticeEvents.length, { at: noticeRequestedAt, kind: 'requested' });
     }
 
+    const lastReminderAt =
+      toRelaunch && random() < 0.6 ? new Date(Math.min(notifiedAt.getTime() + 15 * DAY, now)) : null;
+
     return {
       id: call.id * 1000 + index + 1,
       investor: INVESTORS[(call.id + index) % INVESTORS.length],
@@ -177,9 +182,10 @@ export function generateCapitalCallLines(call: CapitalCall): CapitalCallLine[] {
       noticeRequestedAt,
       noticeEvents,
       notifiedAt: notified ? notifiedAt : null,
-      lastReminderAt:
-        toRelaunch && random() < 0.6 ? new Date(Math.min(notifiedAt.getTime() + 15 * DAY, now)) : null,
+      lastReminderAt,
       paidAt,
+      createdAt: call.createdAt,
+      updatedAt: paidAt ?? lastReminderAt ?? (notified ? notifiedAt : call.createdAt),
       combinedNotice,
       compensated: call.compensations.length > 0 && random() < 0.3,
       transferred: random() < 0.05,

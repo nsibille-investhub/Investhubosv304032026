@@ -6579,7 +6579,7 @@
         "delete": "Supprimer",
         "resumePreparation": "Reprendre l'appel en préparation"
       },
-      "searchPlaceholder": "Rechercher un appel par nom ou identifiant",
+      "searchPlaceholder": "Rechercher un appel",
       "queues": {
         "label": "Files de travail",
         "all": "Tous les appels",
@@ -6724,16 +6724,19 @@
             "subscription": "Souscription",
             "share": "Part",
             "units": "Nombre de parts",
-            "amountPerUnit": "Montant par part",
             "calledAmount": "Montant appelé",
             "fees": "Frais",
             "premium": "Prime",
             "total": "Total",
             "state": "État de la ligne",
-            "noticeState": "État de l'avis",
             "notifiedAt": "Date de notification",
-            "lastReminderAt": "Dernière relance",
-            "paidAt": "Date de paiement"
+            "amount": "Montant",
+            "status": "Statut",
+            "notifiedOn": "Notifiée le",
+            "remindedOn": "Relancée le",
+            "paidOn": "Payée le",
+            "createdAt": "Créée le",
+            "updatedAt": "Modifiée le"
           },
           "states": {
             "toNotify": "À notifier",
@@ -6748,7 +6751,10 @@
           },
           "paidTooltip": "Payée par {{origin}} le {{date}}",
           "empty": {
-            "title": "Aucune ligne investisseur"
+            "title": "Aucune ligne investisseur",
+            "filteredTitle": "Aucune ligne ne correspond",
+            "filteredDescription": "Modifiez les filtres pour élargir les résultats.",
+            "reset": "Réinitialiser les filtres"
           }
         }
       },
