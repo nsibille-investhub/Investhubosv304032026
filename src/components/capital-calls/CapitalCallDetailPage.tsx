@@ -3,9 +3,11 @@ import { toast } from 'sonner@2.0.3';
 import {
   ArrowDownCircle,
   ArrowLeft,
+  Bell,
   Calendar,
   CalendarClock,
   Coins,
+  FileText,
   Landmark,
   SlidersHorizontal,
   Tag,
@@ -78,6 +80,20 @@ export function CapitalCallDetailPage({ call, lines, settings, onOpenFund, onBac
             <PageHeaderSubtitleSeparator />
             <PageHeaderSubtitleItem icon={CalendarClock}>
               {t(`${K}.header.dueDate`, { date: dateFormat.format(call.dueDate) })}
+            </PageHeaderSubtitleItem>
+            {call.noticeDate && (
+              <>
+                <PageHeaderSubtitleSeparator />
+                <PageHeaderSubtitleItem icon={FileText}>
+                  {t(`${K}.header.noticeDate`, { date: dateFormat.format(call.noticeDate) })}
+                </PageHeaderSubtitleItem>
+              </>
+            )}
+            <PageHeaderSubtitleSeparator />
+            <PageHeaderSubtitleItem icon={Bell}>
+              {t(`${K}.header.notification`, {
+                value: t(call.diffusion.notify ? `${K}.parameters.yes` : `${K}.parameters.no`),
+              })}
             </PageHeaderSubtitleItem>
             <PageHeaderSubtitleSeparator />
             <PageHeaderSubtitleItem icon={Coins}>

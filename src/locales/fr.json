@@ -6671,6 +6671,8 @@
         "back": "Retour aux appels",
         "header": {
           "dueDate": "Échéance le {{date}}",
+          "noticeDate": "Date de l'avis : {{date}}",
+          "notification": "Notification : {{value}}",
           "calledAmount": "Montant appelé : {{amount}}",
           "origin": "Origine : {{origin}}",
           "compensatedBy": "Compensé par",

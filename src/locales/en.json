@@ -6671,6 +6671,8 @@
         "back": "Back to capital calls",
         "header": {
           "dueDate": "Due on {{date}}",
+          "noticeDate": "Notice date: {{date}}",
+          "notification": "Notification: {{value}}",
           "calledAmount": "Called amount: {{amount}}",
           "origin": "Origin: {{origin}}",
           "compensatedBy": "Offset by",

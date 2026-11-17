@@ -74,7 +74,7 @@ export interface CapitalCall {
   currency: string;
   name: string;
   dueDate: Date;
-  /** Date imprimée sur l'avis. Affichée seulement quand elle diffère de la date d'échéance. */
+  /** Date imprimée sur l'avis. Absente si elle n'a pas été saisie à la création. */
   noticeDate: Date | null;
   calledAmount: number;
   /** Rappel de distributions provisoires enregistré sur l'appel. */
@@ -167,7 +167,7 @@ export function generateCapitalCalls(funds: Fund[], today = new Date()): Capital
       );
       const noticeDraw = random();
       const noticeDate =
-        noticeDraw < 0.3 ? new Date(createdAt.getTime() + 2 * DAY) : noticeDraw < 0.45 ? new Date(dueDate) : null;
+        noticeDraw < 0.15 ? new Date(dueDate) : new Date(createdAt.getTime() + (2 + Math.floor(noticeDraw * 6)) * DAY);
       const originDraw = random();
       const origin: CapitalCallOrigin = originDraw < 0.7 ? 'backOffice' : originDraw < 0.9 ? 'import' : 'api';
       const compensations: LinkedDistribution[] =
