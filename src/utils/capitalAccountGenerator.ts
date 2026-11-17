@@ -1,5 +1,6 @@
 import type { Fund } from './fundGenerator';
 import { capitalCallCurrency, sameDay } from './capitalCallGenerator';
+import { investorDemoId, subscriptionDemoId } from './capitalCallLines';
 
 export interface CapitalAccount {
   id: number;
@@ -31,8 +32,10 @@ export type CapitalAccountLineState = (typeof CAPITAL_ACCOUNT_LINE_STATES)[numbe
 export interface CapitalAccountLine {
   id: number;
   investor: string;
+  investorId: number;
   /** Nom de la souscription. */
   subscription: string;
+  subscriptionId: number;
   share: string;
   capitalGains: number | null;
   unrealizedGains: number | null;
@@ -166,10 +169,14 @@ export function generateCapitalAccountLines(account: CapitalAccount, fundShares:
     const notified = random() < notifiedShare;
     const committed = 50 + Math.floor(random() * 95) * 10;
 
+    const subscription = `${investor} - ${symbol}${committed}K - ${account.fundName} Part ${share}`;
+
     return {
       id: account.id * 1000 + index + 1,
       investor,
-      subscription: `${investor} - ${symbol}${committed}K - ${account.fundName} Part ${share}`,
+      investorId: investorDemoId(investor),
+      subscription,
+      subscriptionId: subscriptionDemoId(subscription),
       share,
       capitalGains: part(account.capitalGains),
       unrealizedGains: part(account.unrealizedGains),

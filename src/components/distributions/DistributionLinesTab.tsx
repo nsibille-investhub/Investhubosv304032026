@@ -9,11 +9,10 @@ import {
   type DistributionLine,
   type DistributionLineState,
 } from '../../utils/distributionGenerator';
-import { ClickableText } from '../ClickableText';
 import { ColumnConfig, DataTable } from '../DataTable';
 import { EmptyState } from '../EmptyState';
 import { FilterBar, FilterConfig } from '../FilterBar';
-import { ListingCard, ListingColumnsMenu, ListingNameCell, ListingTruncatedText } from '../ui/listing';
+import { ListingCard, ListingColumnsMenu, ListingNameCell } from '../ui/listing';
 import { StatusBadge, type StatusVariant } from '../StatusBadge';
 import { Button } from '../ui/button';
 import { DataPagination } from '../ui/data-pagination';
@@ -273,20 +272,16 @@ export function DistributionLinesTab({ distribution, lines, fundShares }: Distri
   const notInMockup = (name: string) => toast.info(t('funds.distributions.detail.toast.notInMockup', { name }));
 
   const renderers: Record<ColumnKey, ColumnConfig<DistributionLine>['render']> = {
-    investor: line => <ListingNameCell name={line.investor} />,
+    investor: line => <ListingNameCell name={line.investor} id={line.investorId} />,
     subscription: line => (
-      <button
-        type="button"
-        onClick={event => {
-          event.stopPropagation();
-          notInMockup(line.subscription);
-        }}
-        className="text-left text-sm font-medium"
-      >
-        <ClickableText>
-          <ListingTruncatedText text={line.subscription} />
-        </ClickableText>
-      </button>
+      <div
+          onClick={event => {
+            event.stopPropagation();
+            notInMockup(line.subscription);
+          }}
+        >
+          <ListingNameCell name={line.subscription} id={line.subscriptionId} />
+        </div>
     ),
     share: line => <span className="whitespace-nowrap text-sm">{t('funds.detail.sharePrefix', { name: line.share })}</span>,
     amount: line => <span className="text-sm font-medium">{moneyFormat.format(line.amount)}</span>,

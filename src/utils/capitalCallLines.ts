@@ -62,8 +62,10 @@ export interface Stamped<T> {
 export interface CapitalCallLine {
   id: number;
   investor: string;
+  investorId: number;
   /** Nom de la souscription. */
   subscription: string;
+  subscriptionId: number;
   share: string;
   units: number;
   /** Renseigné seulement quand l'appel est généré par titre. */
@@ -105,6 +107,16 @@ const INVESTORS = [
   'Mutuelle Atlas',
   'Sarah K.',
 ];
+
+/** Identifiant de démonstration stable, déduit d'un nom d'investisseur ou de souscription. */
+export function demoId(name: string, base: number, span: number): number {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) % 1000003;
+  return base + (hash % span);
+}
+
+export const investorDemoId = (name: string) => demoId(name, 1000, 9000);
+export const subscriptionDemoId = (name: string) => demoId(name, 10000, 90000);
 
 const DAY = 24 * 60 * 60 * 1000;
 const MINUTE = 60 * 1000;
@@ -212,13 +224,16 @@ export function generateCapitalCallLines(call: CapitalCall): CapitalCallLine[] {
     }
 
     const investor = INVESTORS[(call.id + index) % INVESTORS.length];
+    const subscription = defaultSubscriptionName(investor, calledAmount * 4, call, share.share);
     const lastReminderAt =
       toRelaunch && random() < 0.6 ? new Date(Math.min(notifiedAt.getTime() + 15 * DAY, now)) : null;
 
     return {
       id: call.id * 1000 + index + 1,
       investor,
-      subscription: defaultSubscriptionName(investor, calledAmount * 4, call, share.share),
+      investorId: investorDemoId(investor),
+      subscription,
+      subscriptionId: subscriptionDemoId(subscription),
       share: share.share,
       units: Math.max(1, Math.round(calledAmount / NOMINAL)),
       amountPerUnit: share.mode === 'perUnit' ? share.value : null,

@@ -9,11 +9,10 @@ import {
   type CapitalAccountLine,
   type CapitalAccountLineState,
 } from '../../utils/capitalAccountGenerator';
-import { ClickableText } from '../ClickableText';
 import { ColumnConfig, DataTable } from '../DataTable';
 import { EmptyState } from '../EmptyState';
 import { FilterBar, FilterConfig } from '../FilterBar';
-import { ListingCard, ListingColumnsMenu, ListingNameCell, ListingTruncatedText } from '../ui/listing';
+import { ListingCard, ListingColumnsMenu, ListingNameCell } from '../ui/listing';
 import { StatusBadge, type StatusVariant } from '../StatusBadge';
 import { Button } from '../ui/button';
 import { DataPagination } from '../ui/data-pagination';
@@ -244,20 +243,16 @@ export function CapitalAccountLinesTab({ account, lines, fundShares }: CapitalAc
   const notInMockup = (name: string) => toast.info(t('funds.capitalAccounts.detail.toast.notInMockup', { name }));
 
   const renderers: Record<ColumnKey, ColumnConfig<CapitalAccountLine>['render']> = {
-    investor: line => <ListingNameCell name={line.investor} />,
+    investor: line => <ListingNameCell name={line.investor} id={line.investorId} />,
     subscription: line => (
-      <button
-        type="button"
-        onClick={event => {
-          event.stopPropagation();
-          notInMockup(line.subscription);
-        }}
-        className="text-left text-sm font-medium"
-      >
-        <ClickableText>
-          <ListingTruncatedText text={line.subscription} />
-        </ClickableText>
-      </button>
+      <div
+          onClick={event => {
+            event.stopPropagation();
+            notInMockup(line.subscription);
+          }}
+        >
+          <ListingNameCell name={line.subscription} id={line.subscriptionId} />
+        </div>
     ),
     share: line => <span className="whitespace-nowrap text-sm">{t('funds.detail.sharePrefix', { name: line.share })}</span>,
     capitalGains: line => amount(line.capitalGains),

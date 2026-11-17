@@ -1,5 +1,6 @@
 import type { Fund } from './fundGenerator';
 import { capitalCallCurrency, sameDay, type CapitalCall } from './capitalCallGenerator';
+import { investorDemoId, subscriptionDemoId } from './capitalCallLines';
 
 export interface DistributionLink {
   id: number;
@@ -43,8 +44,10 @@ export type DistributionLineState = (typeof DISTRIBUTION_LINE_STATES)[number];
 export interface DistributionLine {
   id: number;
   investor: string;
+  investorId: number;
   /** Nom de la souscription. */
   subscription: string;
+  subscriptionId: number;
   share: string;
   amount: number;
   provisionalAmount: number;
@@ -218,10 +221,14 @@ export function generateDistributionLines(distribution: Distribution, fundShares
     const paidAt = state === 'paid' ? new Date(Math.min(distribution.date.getTime() + DAY, now)) : null;
     const committed = Math.max(10, Math.round((amount * 12) / 10000) * 10);
 
+    const subscription = `${investor} - ${symbol}${committed}K - ${distribution.fundName} Part ${share}`;
+
     return {
       id: distribution.id * 1000 + index + 1,
       investor,
-      subscription: `${investor} - ${symbol}${committed}K - ${distribution.fundName} Part ${share}`,
+      investorId: investorDemoId(investor),
+      subscription,
+      subscriptionId: subscriptionDemoId(subscription),
       share,
       amount,
       provisionalAmount: part(distribution.provisionalAmount),
