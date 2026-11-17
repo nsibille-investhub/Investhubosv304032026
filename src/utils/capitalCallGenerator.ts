@@ -1,4 +1,5 @@
 import type { Fund } from './fundGenerator';
+import { fundCallSettings } from './capitalCallWizard';
 
 export type CapitalCallOrigin = 'backOffice' | 'import' | 'api';
 
@@ -20,8 +21,18 @@ export interface CapitalCallShare {
   premiumCalled: boolean;
   /** Rappel de distributions provisoires. */
   releasedAmount: number;
-  /** Nombre de souscriptions retenues quand l'appel est restreint sur la part. */
+  /** Nombre d'investisseurs retenus quand l'appel est restreint sur la part. */
   restrictedTo: number | null;
+  /** Pourcentage appelé sur la part, absent quand la part est appelée en montant. */
+  percent: number | null;
+  /** Montant appelé sur la part. */
+  amount: number;
+  /** Absent quand le paramètre de l'instance est inactif. */
+  netCashFlow: number | null;
+  /** Valeurs par part détenue, sur une instance qui génère les appels par part détenue. */
+  amountPerUnit: number | null;
+  releasedPerUnit: number | null;
+  netCashFlowPerUnit: number | null;
 }
 
 export interface CapitalCallAttachment {
@@ -66,6 +77,10 @@ export interface CapitalCall {
   /** Date imprimée sur l'avis. Affichée seulement quand elle diffère de la date d'échéance. */
   noticeDate: Date | null;
   calledAmount: number;
+  /** Rappel de distributions provisoires enregistré sur l'appel. */
+  releasedAmount: number;
+  /** Net cash flow enregistré sur l'appel, absent quand le paramètre de l'instance est inactif. */
+  netCashFlow: number | null;
   origin: CapitalCallOrigin;
   compensations: LinkedDistribution[];
   forecast: { id: number; name: string } | null;
@@ -123,6 +138,8 @@ function seeded(seed: number) {
 
 const DAY = 24 * 60 * 60 * 1000;
 
+const cents = (value: number) => Math.round(value * 100) / 100;
+
 /** Quelques appels non notifiés sont diffusés sans email, d'autres pré-publiés sur le portail. */
 function demoDiffusion(draw: number, fundName: string): CapitalCallDiffusion {
   const base = { ...DEFAULT_DIFFUSION, documentFolder: fundDocumentFolders(fundName)[0] };
@@ -140,6 +157,7 @@ export function generateCapitalCalls(funds: Fund[], today = new Date()): Capital
     const random = seeded(fund.id);
     const count = 2 + Math.floor(random() * 5);
     const currency = capitalCallCurrency(fund.id);
+    const settings = fundCallSettings(fund);
     const firstDue = today.getTime() - (count - 1) * 120 * DAY + Math.floor(random() * 60) * DAY;
 
     for (let index = 0; index < count; index++) {
@@ -157,30 +175,49 @@ export function generateCapitalCalls(funds: Fund[], today = new Date()): Capital
       const forecast = random() < 0.5 ? { id: id, name: `Flux prévisionnel ${quarterLabel(dueDate)}` } : null;
       const calledAmount = Math.round((fund.totalCommitments * (0.05 + random() * 0.15)) / 1000) * 1000;
       const modeDraw = random();
-      const mode: ShareEntryMode = modeDraw < 0.7 ? 'percent' : modeDraw < 0.9 ? 'totalAmount' : 'perUnit';
-      const shareNames = fund.shareClasses.map(item => item.name);
+      const mode: ShareEntryMode = settings.perUnit ? 'perUnit' : modeDraw < 0.75 ? 'percent' : 'totalAmount';
+      const fundShares = fund.shareClasses.map(item => item.name);
+      // Un appel sur deux laisse la dernière part du fonds hors de l'appel.
+      const shareNames = fundShares.length > 2 && index % 2 === 1 ? fundShares.slice(0, -1) : fundShares;
+      const percents = shareNames.map((_, shareIndex) => [10, 5, 15, 7.5][shareIndex % 4]);
+      const percentSum = percents.reduce((sum, value) => sum + value, 0);
+      const withNetCashFlow = settings.netFlow || settings.perUnit;
+      let allocated = 0;
       const shares: CapitalCallShare[] = shareNames.map((share, shareIndex) => {
+        const amount =
+          shareIndex === shareNames.length - 1
+            ? calledAmount - allocated
+            : Math.round((calledAmount * percents[shareIndex]) / percentSum / 1000) * 1000;
+        allocated += amount;
         const value =
-          mode === 'percent'
-            ? [10, 5, 15, 7.5][shareIndex % 4]
-            : mode === 'totalAmount'
-              ? Math.round(calledAmount / shareNames.length / 1000) * 1000
-              : Math.round((5 + random() * 20) * 100) / 100;
+          mode === 'percent' ? percents[shareIndex] : mode === 'totalAmount' ? amount : cents(5 + random() * 20);
+        const premiumCalled = random() < 0.25;
+        const releasedAmount = random() < 0.2 ? Math.round((amount * 0.1) / 100) * 100 : 0;
+        const restrictedTo = random() < 0.15 ? 3 + Math.floor(random() * 10) : null;
+        const netCashFlow = withNetCashFlow ? amount - releasedAmount : null;
+        const units = mode === 'perUnit' ? amount / value : null;
         return {
           share,
           mode,
           value,
           entryFeesCalled: shareIndex === 0,
-          premiumCalled: random() < 0.25,
-          releasedAmount: random() < 0.2 ? Math.round(calledAmount * 0.02 / 100) * 100 : 0,
-          restrictedTo: random() < 0.15 ? 3 + Math.floor(random() * 10) : null,
+          premiumCalled,
+          releasedAmount,
+          restrictedTo,
+          percent: mode === 'percent' ? value : null,
+          amount,
+          netCashFlow,
+          amountPerUnit: units ? value : null,
+          releasedPerUnit: units ? cents(releasedAmount / units) : null,
+          netCashFlowPerUnit: units && netCashFlow !== null ? cents(netCashFlow / units) : null,
         };
       });
       const message = MESSAGES[Math.floor(random() * MESSAGES.length)];
       const attachments = ATTACHMENTS.slice(0, Math.floor(random() * 3));
       const isUpcoming = dueDate.getTime() > today.getTime();
       const sending = isUpcoming && random() < 0.08;
-      const lines = 4 + Math.floor(random() * 40);
+      // Quelques appels restent sans ligne investisseur.
+      const lines = fund.id % 5 === 2 && index === 0 ? 0 : 4 + Math.floor(random() * 40);
       let notifiedLines: number;
       if (!isUpcoming) notifiedLines = lines;
       else if (sending) notifiedLines = Math.floor(lines * random() * 0.6);
@@ -197,6 +234,8 @@ export function generateCapitalCalls(funds: Fund[], today = new Date()): Capital
         dueDate,
         noticeDate,
         calledAmount,
+        releasedAmount: shares.reduce((sum, share) => sum + share.releasedAmount, 0),
+        netCashFlow: withNetCashFlow ? shares.reduce((sum, share) => sum + (share.netCashFlow ?? 0), 0) : null,
         origin,
         compensations,
         forecast,

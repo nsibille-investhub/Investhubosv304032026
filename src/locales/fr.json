@@ -4008,8 +4008,6 @@
         }
       },
       "pillars": {
-        "kicker": "Ce qui change avec GED+",
-        "title": "Six piliers pour transformer la GED en outil de pilotage.",
         "0": {
           "title": "Architecture par contexte métier",
           "body": "Espaces dédiés Investisseurs LP, Reportings fonds, Due Diligence, Partenaires, Multi-fonds HNWI — chacun avec sa typologie, ses fonds et ses segments."
@@ -4033,7 +4031,9 @@
         "5": {
           "title": "Relance intelligente",
           "body": "Relancez précisément ceux qui n'ont pas ouvert l'email ou pas consulté le document. Templates personnalisables, export CSV des destinataires."
-        }
+        },
+        "kicker": "Ce qui change avec GED+",
+        "title": "Six piliers pour transformer la GED en outil de pilotage."
       },
       "kpis": {
         "title": "L'impact mesuré côté équipes Investor Relations.",
@@ -4065,8 +4065,6 @@
         }
       },
       "useCases": {
-        "kicker": "Cas d'usage",
-        "title": "GED+ au service du quotidien Investor Relations.",
         "0": {
           "title": "Rapport trimestriel multi-fonds",
           "steps": {
@@ -4084,7 +4082,9 @@
             "2": "Identification de l'investisseur actif et du conseiller moteur via Birdview.",
             "3": "Relance sélective des non-actifs pour mesurer l'intérêt réel."
           }
-        }
+        },
+        "kicker": "Cas d'usage",
+        "title": "GED+ au service du quotidien Investor Relations."
       },
       "cta": {
         "title": "Prêt à transformer votre Data Room en moteur d'engagement ?",
@@ -5917,11 +5917,11 @@
             "alternative": "Autre prestataire disponible"
           },
           "abandonedReminder": {
-            "none": "Aucune",
             "12": "12 heures",
             "24": "24 heures",
             "48": "48 heures",
-            "72": "72 heures"
+            "72": "72 heures",
+            "none": "Aucune"
           },
           "performanceDisplayMode": {
             "default": "Par défaut",
@@ -6668,83 +6668,64 @@
         "confirm": "Supprimer l'appel"
       },
       "detail": {
+        "back": "Retour aux appels",
         "header": {
           "dueDate": "Échéance le {{date}}",
-          "noticeDate": "Avis daté du {{date}}",
           "calledAmount": "Montant appelé : {{amount}}",
           "origin": "Origine : {{origin}}",
           "compensatedBy": "Compensé par",
-          "createdOn": "Créé le {{date}} par {{author}}"
+          "createdOn": "Créé le {{date}}"
         },
         "tabs": {
           "lines": "Lignes investisseurs",
-          "emails": "Envois",
-          "message": "Message et pièces jointes",
-          "journal": "Journal"
-        },
-        "breakdown": {
-          "columns": {
-            "share": "Part",
-            "mode": "Mode de saisie",
-            "value": "Montant saisi",
-            "entryFees": "Frais d'entrée",
-            "premium": "Prime",
-            "released": "Montant débloqué",
-            "restriction": "Restriction"
-          },
-          "modes": {
-            "percent": "Pourcentage du montant souscrit",
-            "totalAmount": "Montant total de la part",
-            "perUnit": "Montant par part"
-          },
-          "perUnitValue": "{{amount}} par part",
-          "called": "Appelés",
-          "notCalled": "Non appelés",
-          "noRestriction": "Aucune",
-          "restrictedOne": "{{count}} souscription",
-          "restrictedMany": "{{count}} souscriptions",
-          "title": "Ventilation par part",
-          "hint": "Cliquez sur une part pour filtrer les lignes",
-          "allShares": "Toutes les parts",
-          "calledTotal": "Montant appelé",
-          "sharesLabel": "Parts",
-          "optionsLabel": "Options",
-          "entryFeesShort": "Frais",
-          "premiumShort": "Prime",
-          "releasedShort": "Débloqué {{amount}}",
-          "noOption": "Aucune option",
-          "modesShort": {
-            "percent": "Pourcentage",
-            "totalAmount": "Montant total",
-            "perUnit": "Par part détenue"
-          }
-        },
-        "message": {
-          "title": "Message d'accompagnement",
-          "empty": "Aucun message d'accompagnement"
-        },
-        "attachments": {
-          "title": "Pièces jointes",
-          "summary": "{{count}} sur 2",
-          "empty": "Aucune pièce jointe",
-          "size": "{{size}} {{unit}}",
-          "kb": "Ko",
-          "mb": "Mo",
-          "download": "Télécharger"
+          "parameters": "Paramètres"
         },
         "toast": {
           "notInMockup": "La fiche de {{name}} n'est pas encore dans la maquette.",
           "download": "Téléchargement de {{name}} : bientôt disponible dans la maquette."
         },
-        "lines": {
-          "searchPlaceholder": "Rechercher un investisseur",
-          "filters": {
-            "state": "État de la ligne",
-            "noticeState": "État de l'avis",
-            "share": "Part",
+        "parameters": {
+          "yes": "Oui",
+          "no": "Non",
+          "general": {
+            "title": "Paramètres généraux",
+            "name": "Nom",
+            "dueDate": "Date d'échéance",
+            "noticeDate": "Date de l'avis",
             "notification": "Notification",
-            "settlement": "Règlement"
+            "notificationYesHint": "Les lignes sont visibles de l'investisseur une fois notifiées.",
+            "notificationNoHint": "Les lignes sont visibles de l'investisseur dès la création.",
+            "forecast": "Flux planifié",
+            "distributions": "Distributions liées",
+            "description": "Description",
+            "attachment1": "Pièce jointe",
+            "attachment2": "Pièce jointe 2",
+            "size": "{{size}} {{unit}}",
+            "kb": "Ko",
+            "mb": "Mo"
           },
+          "breakdown": {
+            "title": "Ventilation par part",
+            "empty": "Aucune part appelée",
+            "total": "Total",
+            "restrictedOne": "Restreint à {{count}} investisseur",
+            "restrictedMany": "Restreint à {{count}} investisseurs",
+            "columns": {
+              "share": "Part",
+              "percent": "Pourcentage",
+              "amount": "Montant",
+              "released": "Dont rappel de distributions provisoires",
+              "netCashFlow": "Net cash flow",
+              "amountPerUnit": "Montant / part",
+              "releasedPerUnit": "Rappel distrib. / part",
+              "netCashFlowPerUnit": "Net cash flow / part",
+              "feesCalled": "Frais appelés",
+              "premiumCalled": "Primes appelées",
+              "restriction": "Restriction"
+            }
+          }
+        },
+        "lines": {
           "columns": {
             "investor": "Investisseur",
             "subscription": "Souscription",
@@ -6767,205 +6748,42 @@
             "paymentDeclared": "Paiement déclaré",
             "paid": "Payée"
           },
-          "noticeStates": {
-            "generating": "En génération",
-            "available": "Disponible",
-            "failed": "En échec",
-            "replaced": "Remplacé"
-          },
-          "failureReasons": {
-            "combinedTemplateMissing": "Modèle d'avis combiné absent",
-            "productionError": "Erreur de production",
-            "timeout": "Délai de production dépassé"
-          },
           "paymentOrigins": {
             "bankReconciliation": "rapprochement bancaire",
             "directDebit": "prélèvement",
             "manual": "validation manuelle"
           },
           "paidTooltip": "Payée par {{origin}} le {{date}}",
-          "indicators": {
-            "combinedNotice": "Avis combiné",
-            "compensated": "Ligne compensée",
-            "transferred": "Souscription transférée",
-            "hiddenOnPortal": "Ligne masquée sur le portail"
-          },
-          "totals": "Total des {{count}} lignes affichées",
           "empty": {
-            "title": "Aucune ligne investisseur",
-            "filteredTitle": "Aucune ligne ne correspond",
-            "filteredDescription": "Modifiez la recherche ou les filtres pour élargir les résultats.",
-            "reset": "Réinitialiser les filtres"
-          },
-          "dateTime": "{{date}} à {{time}}",
-          "noticeTooltip": {
-            "failed": "{{reason}}, le {{at}}",
-            "requested": "Demandé le {{at}}",
-            "replaced": "Fichier déposé par l'opérateur, jamais régénéré",
-            "previousFailure": "échec précédent : {{reason}}",
-            "relaunchedOne": "{{count}} relance",
-            "relaunchedMany": "{{count}} relances"
-          },
-          "relaunch": {
-            "label": "Relancer la génération des avis en échec ({{count}})",
-            "noneFailed": "Aucun avis en échec",
-            "refused": "Relance refusée",
-            "startedOne": "{{count}} avis en échec relancé.",
-            "startedMany": "{{count}} avis en échec relancés."
-          },
-          "notificationCategories": {
-            "notified": "Notifiées",
-            "toNotify": "À notifier",
-            "reminded": "Relancées"
-          },
-          "settlementCategories": {
-            "paid": "Payées",
-            "compensated": "Compensées",
-            "paymentDeclared": "Paiement déclaré",
-            "unpaid": "Non payées"
+            "title": "Aucune ligne investisseur"
           }
+        }
+      },
+      "stages": {
+        "ariaLabel": "Étapes du traitement de l'appel",
+        "notices": {
+          "label": "Production des avis",
+          "title": "Production des avis en cours",
+          "description": "{{done}} / {{total}} avis disponibles. La diffusion s'ouvre dès que les avis sont produits."
         },
-        "emails": {
-          "searchPlaceholder": "Rechercher un destinataire",
-          "filters": {
-            "type": "Type",
-            "state": "État"
-          },
-          "columns": {
-            "recipient": "Destinataire",
-            "copies": "Copies",
-            "type": "Type",
-            "notice": "Avis joint",
-            "sentAt": "Date d'envoi",
-            "state": "État"
-          },
-          "types": {
-            "notification": "Notification",
-            "reminder": "Relance"
-          },
-          "states": {
-            "sent": "Envoyé",
-            "delivered": "Délivré",
-            "opened": "Ouvert",
-            "softBounce": "Échec temporaire",
-            "failed": "Échec",
-            "spam": "Signalé comme spam",
-            "notFound": "Email introuvable"
-          },
-          "noRecipient": "Aucun email retrouvé",
-          "notice": {
-            "individual": "Avis individuel",
-            "combined": "Avis combiné",
-            "linesOne": "{{count}} ligne : {{subscriptions}}",
-            "linesMany": "{{count}} lignes : {{subscriptions}}"
-          },
-          "empty": {
-            "title": "Aucun envoi",
-            "filteredTitle": "Aucun envoi ne correspond",
-            "filteredDescription": "Modifiez la recherche ou les filtres pour élargir les résultats.",
-            "reset": "Réinitialiser les filtres"
-          }
+        "diffusion": {
+          "label": "En cours de diffusion",
+          "title": "En cours de diffusion",
+          "description": "{{count}} lignes sur {{total}} à notifier.",
+          "sending": "Envoi en cours : les actions reprennent à la fin de l'envoi.",
+          "action": "Notifier {{count}} lignes"
         },
-        "journal": {
-          "types": {
-            "created": "Création",
-            "edited": "Modification",
-            "noticeFailed": "Production d'avis en échec",
-            "noticeRelaunched": "Relance de la génération",
-            "notified": "Notification",
-            "reminded": "Relance",
-            "paymentValidated": "Validation de paiement",
-            "paymentCancelled": "Annulation de paiement",
-            "noticeReplaced": "Remplacement d'avis",
-            "notificationCancelled": "Annulation de notification"
-          },
-          "linesOne": "{{count}} ligne",
-          "linesMany": "{{count}} lignes",
-          "change": {
-            "dueDate": "Date d'échéance : {{from}} → {{to}}"
-          },
-          "paymentOrigin": "par {{origin}}",
-          "system": "Système",
-          "roles": {
-            "user": "Utilisateur",
-            "system": "Système"
-          },
-          "goLive": {
-            "title": "Historique partiel",
-            "description": "Cet appel a été créé avant la V3. Son historique commence à la mise en service de la V3, le {{date}}."
-          },
-          "empty": "Aucun événement",
-          "emptyFiltered": "Aucun événement ne correspond aux filtres",
-          "readOnly": "Le journal ne peut être ni modifié ni supprimé."
+        "settlement": {
+          "label": "En cours de règlement",
+          "title": "En cours de règlement",
+          "description": "{{count}} lignes sur {{total}} à régler, {{amount}} restant dû.",
+          "relaunch": "Relancer",
+          "action": "Valider des paiements"
         },
-        "summary": {
-          "openFiltered": "{{label}} : {{count}}, ouvrir la liste filtrée",
-          "calculation": {
-            "title": "Calcul",
-            "entered": "Montant saisi",
-            "allocated": "Montant réparti",
-            "roundingGap": "Écart d'arrondi",
-            "lines": "Lignes"
-          },
-          "notices": {
-            "title": "Avis",
-            "available": "Disponibles",
-            "generating": "En génération",
-            "failed": "En échec",
-            "replaced": "Remplacés"
-          },
-          "notification": {
-            "title": "Notification",
-            "notified": "Notifiées",
-            "toNotify": "À notifier",
-            "reminded": "Relancées",
-            "emailsFailed": "Envois en échec",
-            "diffusion": {
-              "portal": {
-                "onNotification": "Portail à la notification",
-                "immediate": "Portail pré-publié",
-                "alone": "Portail"
-              },
-              "email": "Email",
-              "documents": "Espace documentaire",
-              "none": "Aucune diffusion"
-            }
-          },
-          "settlement": {
-            "title": "Règlement",
-            "paid": "Payées",
-            "compensated": "Compensées",
-            "paymentDeclared": "Paiement déclaré",
-            "unpaid": "Non payées",
-            "remainingDue": "Restant dû sur {{count}} lignes"
-          }
-        },
-        "stages": {
-          "ariaLabel": "Étapes du traitement de l'appel",
-          "notices": {
-            "label": "Production des avis",
-            "title": "Production des avis en cours",
-            "description": "{{done}} / {{total}} avis disponibles. La diffusion s'ouvre dès que les avis sont produits."
-          },
-          "diffusion": {
-            "label": "En cours de diffusion",
-            "title": "En cours de diffusion",
-            "description": "{{count}} lignes sur {{total}} à notifier.",
-            "sending": "Envoi en cours : les actions reprennent à la fin de l'envoi.",
-            "action": "Notifier {{count}} lignes"
-          },
-          "settlement": {
-            "label": "En cours de règlement",
-            "title": "En cours de règlement",
-            "description": "{{count}} lignes sur {{total}} à régler, {{amount}} restant dû.",
-            "relaunch": "Relancer",
-            "action": "Valider des paiements"
-          },
-          "closed": {
-            "label": "Soldé",
-            "title": "Appel soldé",
-            "description": "Les {{total}} lignes sont payées ou compensées."
-          }
+        "closed": {
+          "label": "Soldé",
+          "title": "Appel soldé",
+          "description": "Les {{total}} lignes sont payées ou compensées."
         }
       },
       "wizard": {

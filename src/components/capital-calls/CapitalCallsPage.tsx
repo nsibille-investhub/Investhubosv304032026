@@ -32,8 +32,9 @@ import {
   readWizardSession,
   writeWizardSession,
 } from '../../utils/capitalCallWizardSession';
-import { CapitalCallLine, expireStaleNotices, generateCapitalCallLines } from '../../utils/capitalCallLines';
-import { CALL_STAGES, CALL_STATES, CallSummary, callStage, summarizeCall } from '../../utils/capitalCallSummary';
+import { expireStaleNotices, generateCapitalCallLines } from '../../utils/capitalCallLines';
+import { CALL_STAGES, CALL_STATES, CallState, CallSummary, callStage, summarizeCall } from '../../utils/capitalCallSummary';
+import { fundCallSettings } from '../../utils/capitalCallWizard';
 import {
   CapitalCallAction,
   CapitalCallRights,
@@ -48,8 +49,7 @@ import { HighlightText } from '../HighlightText';
 import { ListingCard, ListingColumnsMenu, ListingNameCell } from '../ui/listing';
 import { TableRowActions } from '../ui/row-actions';
 import { DemoScenarioBar } from '../ui/demo-scenario-bar';
-import { StatusBadge } from '../StatusBadge';
-import { CALL_STATE_VARIANT } from './CapitalCallSummaryWidgets';
+import { StatusBadge, StatusVariant } from '../StatusBadge';
 import { FilterCard, FilterCardGroup } from '../ui/filter-card';
 import { PageHeader } from '../ui/page-header';
 import { PageStateBanner } from '../ui/page-state-banner';
@@ -105,6 +105,17 @@ const DEFAULT_COLUMNS: ColumnKey[] = [
   'state',
 ];
 const COLUMNS_STORAGE_KEY = 'investhub-columns-capital-calls-v3';
+
+const CALL_STATE_VARIANT: Record<CallState, StatusVariant> = {
+  noticesGenerating: 'info',
+  settled: 'success',
+  partiallySettled: 'warning',
+  notified: 'info',
+  partiallyNotified: 'neutral',
+  publishedWithoutSending: 'outline',
+  notDistributed: 'outline',
+  readyToNotify: 'neutral',
+};
 
 type Queue = 'all' | 'toNotify' | 'overdue';
 
@@ -248,13 +259,10 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
 
   const scopedCalls = useMemo(() => allCalls.filter(call => scopeFundIds.has(call.fundId)), [allCalls, scopeFundIds]);
 
-  // Lignes de chaque appel : celles modifiées dans la fiche, sinon celles du jeu de démonstration.
-  const [linesOverrides, setLinesOverrides] = useState<Record<number, CapitalCallLine[]>>({});
-  const linesByCall = useMemo(() => {
-    const map = new Map<number, CapitalCallLine[]>();
-    allCalls.forEach(call => map.set(call.id, linesOverrides[call.id] ?? expireStaleNotices(generateCapitalCallLines(call))));
-    return map;
-  }, [allCalls, linesOverrides]);
+  const linesByCall = useMemo(
+    () => new Map(allCalls.map(call => [call.id, expireStaleNotices(generateCapitalCallLines(call))])),
+    [allCalls],
+  );
   const summaries = useMemo(
     () => new Map(allCalls.map(call => [call.id, summarizeCall(call, linesByCall.get(call.id) ?? [])])),
     [allCalls, linesByCall],
@@ -282,7 +290,7 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
         label: t(`${K}.filters.stage`),
         type: 'multiselect',
         isPrimary: true,
-        options: CALL_STAGES.map(item => ({ value: item, label: t(`${K}.detail.stages.${item}.label`) })),
+        options: CALL_STAGES.map(item => ({ value: item, label: t(`${K}.stages.${item}.label`) })),
       },
       {
         id: 'state',
@@ -455,6 +463,10 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
       dueDate: draft.dueDate,
       noticeDate: draft.noticeDate,
       calledAmount: draft.calledAmount,
+      releasedAmount: draft.shares.reduce((sum, share) => sum + share.releasedAmount, 0),
+      netCashFlow: draft.shares.some(share => share.netCashFlow !== null)
+        ? draft.shares.reduce((sum, share) => sum + (share.netCashFlow ?? 0), 0)
+        : null,
       origin: 'backOffice',
       compensations: draft.compensations,
       forecast: draft.forecast,
@@ -485,7 +497,7 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
     clearWizardSession(CURRENT_USER);
   };
 
-  const exitWizard = () => {
+  const openListing = () => {
     window.location.hash = '#/capital-calls';
   };
 
@@ -770,7 +782,7 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
           onSessionChange={updateWizardSession}
           onSessionClear={discardWizardSession}
           onCreate={createCall}
-          onExit={exitWizard}
+          onExit={openListing}
         />
       </div>
     );
@@ -785,12 +797,10 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
         <CapitalCallDetailPage
           key={selectedCall.id}
           call={selectedCall}
-          initialLines={linesByCall.get(selectedCall.id) ?? []}
-          onLinesChange={lines => setLinesOverrides(prev => ({ ...prev, [selectedCall.id]: lines }))}
-          rights={rights}
+          lines={linesByCall.get(selectedCall.id) ?? []}
+          settings={fundCallSettings({ id: selectedCall.fundId })}
           onOpenFund={onOpenFund}
-          onRunAction={action => runAction(selectedCall.id, action)}
-          actionBlocker={action => blockerReason(selectedCall, action)}
+          onBack={openListing}
         />
       </div>
     );

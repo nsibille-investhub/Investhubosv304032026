@@ -15,7 +15,7 @@ const css = readFileSync(new URL('../src/index.css', import.meta.url), 'utf8');
 let files = process.argv.slice(2);
 if (files[0] === '--changed') {
   const base = process.argv[3] ?? 'origin/main';
-  files = execSync(`git diff --name-only ${base} -- '*.tsx'`, { encoding: 'utf8' })
+  files = execSync(`git diff --name-only --diff-filter=d ${base} -- '*.tsx'`, { encoding: 'utf8' })
     .split('\n')
     .filter(Boolean)
     .concat(execSync(`git ls-files --others --exclude-standard -- '*.tsx'`, { encoding: 'utf8' }).split('\n').filter(Boolean));

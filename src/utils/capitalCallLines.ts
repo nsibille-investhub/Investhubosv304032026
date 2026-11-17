@@ -17,7 +17,6 @@ export interface NoticeEvent {
 export const NOTICE_TIMEOUT_MINUTES = 30;
 
 export const LINE_STATES: LineState[] = ['toNotify', 'notified', 'paymentDeclared', 'paid'];
-export const NOTICE_STATES: NoticeState[] = ['generating', 'available', 'failed', 'replaced'];
 
 export interface CapitalCallLine {
   id: number;
@@ -73,11 +72,6 @@ function seeded(seed: number) {
     value = (value * 16807) % 2147483647;
     return (value - 1) / 2147483646;
   };
-}
-
-/** Appel généré par titre : au moins une part saisie en montant par titre. */
-export function isPerUnitCall(call: CapitalCall) {
-  return call.shares.some(share => share.mode === 'perUnit');
 }
 
 /**
@@ -204,7 +198,7 @@ export function expireStaleNotices(lines: CapitalCallLine[], now = new Date()): 
   );
 }
 
-export function noticeFailed(line: CapitalCallLine, reason: NoticeFailureReason, at = new Date()): CapitalCallLine {
+function noticeFailed(line: CapitalCallLine, reason: NoticeFailureReason, at = new Date()): CapitalCallLine {
   return {
     ...line,
     noticeState: 'failed',
@@ -212,36 +206,4 @@ export function noticeFailed(line: CapitalCallLine, reason: NoticeFailureReason,
     noticeRequestedAt: null,
     noticeEvents: [...line.noticeEvents, { at, kind: 'failed', reason }],
   };
-}
-
-export function noticeAvailable(line: CapitalCallLine, at = new Date()): CapitalCallLine {
-  return {
-    ...line,
-    noticeState: 'available',
-    noticeFailureReason: null,
-    noticeRequestedAt: null,
-    noticeEvents: [...line.noticeEvents, { at, kind: 'available' }],
-  };
-}
-
-/** Relance ciblée : seuls les avis en échec repartent en génération. Un avis remplacé n'est jamais touché. */
-export function relaunchFailedNotices(lines: CapitalCallLine[], by: string, at = new Date()): CapitalCallLine[] {
-  return lines.map(line =>
-    line.noticeState === 'failed'
-      ? {
-          ...line,
-          noticeState: 'generating',
-          noticeRequestedAt: at,
-          noticeEvents: [...line.noticeEvents, { at, kind: 'relaunched', by }],
-        }
-      : line,
-  );
-}
-
-export function lastFailure(line: CapitalCallLine): NoticeEvent | undefined {
-  return [...line.noticeEvents].reverse().find(event => event.kind === 'failed');
-}
-
-export function relaunchCount(line: CapitalCallLine): number {
-  return line.noticeEvents.filter(event => event.kind === 'relaunched').length;
 }

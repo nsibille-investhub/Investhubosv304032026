@@ -1,5 +1,4 @@
 import type { CapitalCall } from './capitalCallGenerator';
-import type { CapitalCallEmail } from './capitalCallEmails';
 import type { CapitalCallLine } from './capitalCallLines';
 
 export type CallState =
@@ -39,7 +38,6 @@ export interface CallSummary {
   notified: number;
   toNotify: number;
   reminded: number;
-  emailsFailed: number;
   paid: number;
   compensated: number;
   paymentDeclared: number;
@@ -50,10 +48,6 @@ export interface CallSummary {
 }
 
 export type SettlementCategory = 'paid' | 'compensated' | 'paymentDeclared' | 'unpaid';
-export const SETTLEMENT_CATEGORIES: SettlementCategory[] = ['paid', 'compensated', 'paymentDeclared', 'unpaid'];
-
-export type NotificationCategory = 'notified' | 'toNotify' | 'reminded';
-export const NOTIFICATION_CATEGORIES: NotificationCategory[] = ['notified', 'toNotify', 'reminded'];
 
 /** Règlement d'une ligne : une ligne est réglée si elle est payée ou compensée. */
 export function settlementOf(line: CapitalCallLine): SettlementCategory {
@@ -68,15 +62,9 @@ export function isSettled(line: CapitalCallLine) {
   return category === 'paid' || category === 'compensated';
 }
 
-/** Une ligne relancée est aussi notifiée : le filtre retient les deux catégories. */
-export function notificationCategoriesOf(line: CapitalCallLine): NotificationCategory[] {
-  if (!line.notifiedAt) return ['toNotify'];
-  return line.lastReminderAt ? ['notified', 'reminded'] : ['notified'];
-}
-
 const cents = (value: number) => Math.round(value * 100) / 100;
 
-export function summarizeCall(call: CapitalCall, lines: CapitalCallLine[], emails: CapitalCallEmail[] = []): CallSummary {
+export function summarizeCall(call: CapitalCall, lines: CapitalCallLine[]): CallSummary {
   const count = (predicate: (line: CapitalCallLine) => boolean) => lines.filter(predicate).length;
   const allocated = cents(lines.reduce((sum, line) => sum + line.calledAmount, 0));
   const notified = count(line => line.notifiedAt !== null);
@@ -106,7 +94,6 @@ export function summarizeCall(call: CapitalCall, lines: CapitalCallLine[], email
     notified,
     toNotify: call.diffusion.notify ? count(line => line.notifiedAt === null) : 0,
     reminded: count(line => line.lastReminderAt !== null),
-    emailsFailed: emails.filter(email => ['failed', 'spam', 'notFound'].includes(email.state)).length,
     paid: count(line => settlementOf(line) === 'paid'),
     compensated: count(line => settlementOf(line) === 'compensated'),
     paymentDeclared: count(line => settlementOf(line) === 'paymentDeclared'),

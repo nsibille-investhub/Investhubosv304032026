@@ -1427,12 +1427,12 @@ export function FundDetailComponentsSection() {
         <Example label={t(`${K}.wizardSteps.processLabel`)}>
           <div className="overflow-hidden rounded-lg border border-border">
             <ProcessStepsBar
-              steps={['notices', 'diffusion', 'settlement', 'closed'].map(item => t(`funds.capitalCalls.detail.stages.${item}.label`))}
+              steps={['notices', 'diffusion', 'settlement', 'closed'].map(item => t(`funds.capitalCalls.stages.${item}.label`))}
               current={1}
-              ariaLabel={t('funds.capitalCalls.detail.stages.ariaLabel')}
-              title={t('funds.capitalCalls.detail.stages.diffusion.title')}
-              description={t('funds.capitalCalls.detail.stages.diffusion.description', { count: 12, total: 40 })}
-              action={<Button size="sm">{t('funds.capitalCalls.detail.stages.diffusion.action', { count: 12 })}</Button>}
+              ariaLabel={t('funds.capitalCalls.stages.ariaLabel')}
+              title={t('funds.capitalCalls.stages.diffusion.title')}
+              description={t('funds.capitalCalls.stages.diffusion.description', { count: 12, total: 40 })}
+              action={<Button size="sm">{t('funds.capitalCalls.stages.diffusion.action', { count: 12 })}</Button>}
             />
           </div>
         </Example>

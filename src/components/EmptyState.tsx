@@ -37,9 +37,12 @@ export function EmptyState({
     (isFiltered
       ? t('common.emptyState.noneFound', { entity: entityName })
       : t('common.emptyState.none', { entity: entityName }));
+  // Un titre libre sans description n'affiche pas la phrase générique, écrite pour un nom d'entité.
   const body =
     description ??
-    (isFiltered
+    (title
+      ? null
+      : isFiltered
       ? t('common.emptyState.filteredDescription', { entity: entityName })
       : t('common.emptyState.emptyDescription', { entity: entityName }));
 
@@ -56,7 +59,7 @@ export function EmptyState({
 
         <h3 className="text-foreground mb-2">{heading}</h3>
 
-        <p className="text-sm text-muted-foreground mb-6">{body}</p>
+        {body && <p className="text-sm text-muted-foreground mb-6">{body}</p>}
 
         {isFiltered && onReset && (
           <button
