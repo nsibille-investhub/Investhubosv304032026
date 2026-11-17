@@ -5,11 +5,10 @@ import { Users } from 'lucide-react';
 import { useTranslation } from '../../utils/languageContext';
 import type { CapitalCall } from '../../utils/capitalCallGenerator';
 import { CALL_LINE_STATES, CapitalCallLine } from '../../utils/capitalCallLines';
-import { ClickableText } from '../ClickableText';
 import { ColumnConfig, DataTable } from '../DataTable';
 import { EmptyState } from '../EmptyState';
 import { FilterBar, FilterConfig } from '../FilterBar';
-import { ListingCard, ListingColumnsMenu, ListingNameCell, ListingTruncatedText } from '../ui/listing';
+import { ListingCard, ListingColumnsMenu, ListingNameCell } from '../ui/listing';
 import { StatusBadge } from '../StatusBadge';
 import { Button } from '../ui/button';
 import { LINE_STATE_VARIANT } from './CapitalCallPaymentSheet';
@@ -262,25 +261,21 @@ export function CapitalCallLinesTab({ call, lines, fundShares }: CapitalCallLine
       key: 'investor',
       label: t(`${K}.columns.investor`),
       sortable: true,
-      render: line => <ListingNameCell name={line.investor} />,
+      render: line => <ListingNameCell name={line.investor} id={line.investorId} />,
     },
     subscription: {
       key: 'subscription',
       label: t(`${K}.columns.subscription`),
       sortable: true,
       render: line => (
-        <button
-          type="button"
+        <div
           onClick={event => {
             event.stopPropagation();
             notInMockup(line.subscription);
           }}
-          className="text-left text-sm font-medium"
         >
-          <ClickableText>
-            <ListingTruncatedText text={line.subscription} />
-          </ClickableText>
-        </button>
+          <ListingNameCell name={line.subscription} id={line.subscriptionId} />
+        </div>
       ),
     },
     share: {

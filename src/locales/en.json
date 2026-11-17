@@ -121,7 +121,8 @@
       "reports": "Reports",
       "queries": "Queries",
       "variableFormatting": "Variable formatting",
-      "tools": "Tools"
+      "tools": "Tools",
+      "releases": "Releases"
     },
     "section": {
       "usersAccess": "Users & Access",
@@ -174,7 +175,10 @@
     "spaces": "Spaces",
     "settings": "Settings",
     "entityDetail": "Entity detail",
-    "capitalCalls": "Capital calls"
+    "capitalCalls": "Capital calls",
+    "distributions": "Distributions",
+    "capitalAccounts": "Capital accounts",
+    "releases": "Releases"
   },
   "search": {
     "placeholder": "Search... Ask anything to your Hub.",
@@ -7213,6 +7217,276 @@
         "prepared": "Call prepared for {{investor}}",
         "preparedHint": "Fund, share and subscription are already selected: enter the date and the amount to call.",
         "replaced": "The pending preparation was replaced by this targeted call."
+      }
+    },
+    "distributions": {
+      "title": "Distributions",
+      "subtitle": "Distributions from every fund in your scope",
+      "searchPlaceholder": "Search a distribution",
+      "filters": {
+        "funds": "Funds",
+        "period": "Distribution period",
+        "reset": "Reset filters"
+      },
+      "columns": {
+        "name": "Name",
+        "fund": "Fund",
+        "date": "Distribution date",
+        "noticeDate": "Notice date",
+        "amount": "Amount",
+        "provisional": "Of which provisional",
+        "fees": "Charges",
+        "refund": "Of which repayment",
+        "capital": "Of which capital",
+        "interest": "Of which interest",
+        "externalId": "External ID",
+        "createdAt": "Created on",
+        "updatedAt": "Updated on"
+      },
+      "empty": {
+        "title": "No distributions",
+        "description": "Distributions from the funds in your scope will appear here.",
+        "filteredTitle": "No matching distributions",
+        "filteredDescription": "Change the search or the filters to widen the results."
+      },
+      "accessDenied": {
+        "title": "Access denied",
+        "description": "You don't have the \"View distributions\" right. Please contact your internal administrator.",
+        "outOfScopeDescription": "This distribution belongs to a fund outside your scope.",
+        "notFoundTitle": "Distribution not found",
+        "notFoundDescription": "This distribution does not exist or has been deleted."
+      },
+      "scenario": {
+        "label": "Demo scenario",
+        "options": {
+          "default": "Full scope",
+          "limitedScope": "Scope limited to two funds",
+          "noRight": "Without the View distributions right"
+        }
+      },
+      "detail": {
+        "back": "Back to distributions",
+        "yes": "Yes",
+        "no": "No",
+        "header": {
+          "date": "Distributed on {{date}}",
+          "noticeDate": "Notice date: {{date}}",
+          "notification": "Notification: {{value}}",
+          "amount": "Distributed amount: {{amount}}",
+          "linkedCalls": "Linked calls",
+          "createdOn": "Created on {{date}}"
+        },
+        "tabs": {
+          "lines": "Investor lines",
+          "parameters": "Parameters"
+        },
+        "toast": {
+          "notInMockup": "The page for {{name}} is not in the mockup yet."
+        },
+        "lines": {
+          "columns": {
+            "investor": "Investor",
+            "subscription": "Subscription",
+            "share": "Share",
+            "amount": "Amount",
+            "provisional": "Of which provisional",
+            "fees": "Charges",
+            "refund": "Of which repayment",
+            "capital": "Of which capital",
+            "interest": "Of which interest",
+            "iban": "IBAN",
+            "bic": "BIC",
+            "status": "Status",
+            "notifiedOn": "Notified on",
+            "createdAt": "Created on",
+            "updatedAt": "Updated on"
+          },
+          "states": {
+            "created": "Created",
+            "notified": "Notified",
+            "initiated": "Initiated",
+            "paid": "Paid"
+          },
+          "empty": {
+            "title": "No investor lines",
+            "filteredTitle": "No matching line",
+            "filteredDescription": "Change the filters to widen the results.",
+            "reset": "Reset filters"
+          }
+        }
+      }
+    },
+    "capitalAccounts": {
+      "title": "Capital accounts",
+      "subtitle": "Capital accounts from every fund in your scope",
+      "searchPlaceholder": "Search a capital account",
+      "allShares": "All",
+      "filters": {
+        "funds": "Funds",
+        "period": "Period",
+        "reset": "Reset filters"
+      },
+      "columns": {
+        "name": "Name",
+        "fund": "Fund",
+        "date": "Date",
+        "noticeDate": "Notice date",
+        "shares": "Shares",
+        "capitalGains": "Capital gains",
+        "unrealizedGains": "Unrealized gains",
+        "netResult": "Net result",
+        "createdAt": "Created on",
+        "updatedAt": "Updated on"
+      },
+      "empty": {
+        "title": "No capital accounts",
+        "description": "Capital accounts from the funds in your scope will appear here.",
+        "filteredTitle": "No matching capital accounts",
+        "filteredDescription": "Change the search or the filters to widen the results."
+      },
+      "accessDenied": {
+        "title": "Access denied",
+        "description": "You don't have the \"View capital accounts\" right. Please contact your internal administrator.",
+        "outOfScopeDescription": "This capital account belongs to a fund outside your scope.",
+        "notFoundTitle": "Capital account not found",
+        "notFoundDescription": "This capital account does not exist or has been deleted."
+      },
+      "scenario": {
+        "label": "Demo scenario",
+        "options": {
+          "default": "Full scope",
+          "limitedScope": "Scope limited to two funds",
+          "noRight": "Without the View capital accounts right"
+        }
+      },
+      "detail": {
+        "back": "Back to capital accounts",
+        "yes": "Yes",
+        "no": "No",
+        "header": {
+          "date": "Date: {{date}}",
+          "noticeDate": "Notice date: {{date}}",
+          "notification": "Notification: {{value}}",
+          "shares": "Shares: {{shares}}",
+          "createdOn": "Created on {{date}}"
+        },
+        "tabs": {
+          "lines": "Investor lines",
+          "parameters": "Parameters"
+        },
+        "toast": {
+          "notInMockup": "The page for {{name}} is not in the mockup yet."
+        },
+        "lines": {
+          "columns": {
+            "investor": "Investor",
+            "subscription": "Subscription",
+            "share": "Share",
+            "capitalGains": "Capital gains",
+            "unrealizedGains": "Unrealized gains",
+            "netResult": "Net result",
+            "status": "Status",
+            "notifiedOn": "Notified on",
+            "createdAt": "Created on",
+            "updatedAt": "Updated on"
+          },
+          "states": {
+            "created": "Created",
+            "notified": "Notified"
+          },
+          "empty": {
+            "title": "No investor lines",
+            "filteredTitle": "No matching line",
+            "filteredDescription": "Change the filters to widen the results.",
+            "reset": "Reset filters"
+          }
+        }
+      }
+    },
+    "releases": {
+      "title": "Releases",
+      "subtitle": "Releases from every fund in your scope",
+      "searchPlaceholder": "Search a release",
+      "filters": {
+        "funds": "Funds",
+        "period": "Period",
+        "reset": "Reset filters"
+      },
+      "columns": {
+        "name": "Name",
+        "fund": "Fund",
+        "date": "Date",
+        "comments": "Comments",
+        "createdAt": "Created on",
+        "updatedAt": "Updated on"
+      },
+      "empty": {
+        "title": "No releases",
+        "description": "Releases from the funds in your scope will appear here.",
+        "filteredTitle": "No matching releases",
+        "filteredDescription": "Change the search or the filters to widen the results."
+      },
+      "accessDenied": {
+        "title": "Access denied",
+        "description": "You don't have the \"View releases\" right. Please contact your internal administrator.",
+        "outOfScopeDescription": "This release belongs to a fund outside your scope.",
+        "notFoundTitle": "Release not found",
+        "notFoundDescription": "This release does not exist or has been deleted."
+      },
+      "scenario": {
+        "label": "Demo scenario",
+        "options": {
+          "default": "Full scope",
+          "limitedScope": "Scope limited to two funds",
+          "noRight": "Without the View releases right"
+        }
+      },
+      "detail": {
+        "back": "Back to releases",
+        "header": {
+          "date": "Date: {{date}}",
+          "createdOn": "Created on {{date}}"
+        },
+        "tabs": {
+          "lines": "Investor lines",
+          "parameters": "Parameters"
+        },
+        "toast": {
+          "notInMockup": "The page for {{name}} is not in the mockup yet."
+        },
+        "lines": {
+          "yes": "Yes",
+          "no": "No",
+          "openLetter": "Open the letter",
+          "columns": {
+            "investor": "Investor",
+            "share": "Share",
+            "subscription": "Subscription",
+            "amount": "Amount",
+            "fees": "Charges",
+            "iban": "IBAN",
+            "bic": "BIC",
+            "notified": "Notified",
+            "notifiedOn": "Notified on",
+            "letter": "Letter"
+          },
+          "letter": {
+            "title": "Release letter - {{name}}",
+            "fund": "Fund: {{fund}}",
+            "date": "Release date: {{date}}",
+            "investor": "Investor: {{investor}}",
+            "subscription": "Subscription: {{subscription}}",
+            "amount": "Released amount: {{amount}}",
+            "iban": "IBAN: {{iban}}",
+            "demo": "Demo document generated by the mockup."
+          },
+          "empty": {
+            "title": "No investor lines",
+            "filteredTitle": "No matching line",
+            "filteredDescription": "Change the filters to widen the results.",
+            "reset": "Reset filters"
+          }
+        }
       }
     }
   },
