@@ -4009,8 +4009,6 @@
         }
       },
       "pillars": {
-        "kicker": "What changes with GED+",
-        "title": "Six pillars to turn the DMS into a piloting tool.",
         "0": {
           "title": "Business-context architecture",
           "body": "Dedicated spaces for LP investors, fund reportings, due diligence, partners, multi-fund HNWI — each with its own typology, funds and segments."
@@ -4034,7 +4032,9 @@
         "5": {
           "title": "Smart follow-up",
           "body": "Re-engage precisely those who did not open the email or view the document. Customizable templates, CSV export of recipients."
-        }
+        },
+        "kicker": "What changes with GED+",
+        "title": "Six pillars to turn the DMS into a piloting tool."
       },
       "kpis": {
         "title": "Measured impact for Investor Relations teams.",
@@ -4066,8 +4066,6 @@
         }
       },
       "useCases": {
-        "kicker": "Use cases",
-        "title": "GED+ in everyday Investor Relations.",
         "0": {
           "title": "Multi-fund quarterly report",
           "steps": {
@@ -4085,7 +4083,9 @@
             "2": "Identify the active investor and the driving advisor through Birdview.",
             "3": "Selective follow-up of inactive parties to gauge real interest."
           }
-        }
+        },
+        "kicker": "Use cases",
+        "title": "GED+ in everyday Investor Relations."
       },
       "cta": {
         "title": "Ready to turn your Data Room into an engagement engine?",
@@ -5918,11 +5918,11 @@
             "alternative": "Other available provider"
           },
           "abandonedReminder": {
-            "none": "None",
             "12": "12 hours",
             "24": "24 hours",
             "48": "48 hours",
-            "72": "72 hours"
+            "72": "72 hours",
+            "none": "None"
           },
           "performanceDisplayMode": {
             "default": "Default",
@@ -6580,13 +6580,12 @@
         "delete": "Delete",
         "resumePreparation": "Resume the call in preparation"
       },
-      "searchPlaceholder": "Search a call or a fund",
+      "searchPlaceholder": "Search a call",
       "queues": {
         "label": "Work queues",
         "all": "All calls",
         "toNotify": "To notify",
         "overdue": "Overdue, not settled",
-        "settled": "Settled",
         "fundsMetric": "Funds",
         "perFund": "{{count}} per fund",
         "clickToFilter": "Click a queue to filter"
@@ -6594,32 +6593,18 @@
       "filters": {
         "funds": "Funds",
         "duePeriod": "Due date period",
-        "origin": "Origin",
-        "reset": "Reset filters",
-        "state": "Status",
-        "stage": "Step"
+        "reset": "Reset filters"
       },
       "columns": {
         "fund": "Fund",
         "name": "Name",
         "dueDate": "Due date",
-        "calledAmount": "Called amount",
-        "state": "Status",
         "noticeDate": "Notice date",
-        "origin": "Origin",
-        "compensation": "Offset",
+        "amount": "Amount",
+        "externalId": "External ID",
         "createdAt": "Created on",
-        "createdBy": "Created by",
-        "actions": "Actions",
-        "lines": "Lines",
-        "notices": "Notices",
-        "notification": "Notification",
-        "settlement": "Settlement"
-      },
-      "origins": {
-        "backOffice": "Back office",
-        "import": "Import",
-        "api": "API"
+        "updatedAt": "Updated on",
+        "actions": "Actions"
       },
       "empty": {
         "title": "No capital calls",
@@ -6670,99 +6655,83 @@
         "confirm": "Delete the call"
       },
       "detail": {
+        "back": "Back to capital calls",
         "header": {
           "dueDate": "Due on {{date}}",
-          "noticeDate": "Notice dated {{date}}",
+          "noticeDate": "Notice date: {{date}}",
+          "notification": "Notification: {{value}}",
           "calledAmount": "Called amount: {{amount}}",
-          "origin": "Origin: {{origin}}",
           "compensatedBy": "Offset by",
-          "createdOn": "Created on {{date}} by {{author}}",
-          "internalComment": "Internal comment"
+          "createdOn": "Created on {{date}}"
         },
         "tabs": {
           "lines": "Investor lines",
-          "emails": "Emails",
-          "message": "Message and attachments",
-          "journal": "Journal"
-        },
-        "breakdown": {
-          "columns": {
-            "share": "Share",
-            "mode": "Entry mode",
-            "value": "Entered amount",
-            "entryFees": "Entry fees",
-            "premium": "Premium",
-            "released": "Released amount",
-            "restriction": "Restriction"
-          },
-          "modes": {
-            "percent": "Percentage of subscribed amount",
-            "totalAmount": "Total amount for the share",
-            "perUnit": "Amount per unit"
-          },
-          "perUnitValue": "{{amount}} per unit",
-          "called": "Called",
-          "notCalled": "Not called",
-          "noRestriction": "None",
-          "restrictedOne": "{{count}} subscription",
-          "restrictedMany": "{{count}} subscriptions",
-          "title": "Breakdown by share",
-          "hint": "Click a share to filter the lines",
-          "allShares": "All shares",
-          "calledTotal": "Amount called",
-          "sharesLabel": "Shares",
-          "optionsLabel": "Options",
-          "entryFeesShort": "Fees",
-          "premiumShort": "Premium",
-          "releasedShort": "Released {{amount}}",
-          "noOption": "No option",
-          "modesShort": {
-            "percent": "Percentage",
-            "totalAmount": "Total amount",
-            "perUnit": "Per unit held"
-          }
-        },
-        "message": {
-          "title": "Accompanying message",
-          "empty": "No accompanying message"
-        },
-        "attachments": {
-          "title": "Attachments",
-          "summary": "{{count}} of 2",
-          "empty": "No attachments",
-          "size": "{{size}} {{unit}}",
-          "kb": "KB",
-          "mb": "MB",
-          "download": "Download"
+          "parameters": "Parameters"
         },
         "toast": {
-          "notInMockup": "The {{name}} page is not in the mockup yet.",
-          "download": "Downloading {{name}}: coming soon in the mockup."
+          "notInMockup": "The page for {{name}} is not in the mockup yet.",
+          "download": "Download of {{name}}: coming soon in the mockup."
+        },
+        "parameters": {
+          "yes": "Yes",
+          "no": "No",
+          "general": {
+            "title": "General parameters",
+            "name": "Name",
+            "dueDate": "Due date",
+            "noticeDate": "Notice date",
+            "notification": "Notification",
+            "notificationYesHint": "Lines become visible to the investor once notified.",
+            "notificationNoHint": "Lines are visible to the investor as soon as they are created.",
+            "forecast": "Planned flow",
+            "distributions": "Linked distributions",
+            "description": "Description",
+            "attachment1": "Attachment",
+            "attachment2": "Attachment 2",
+            "size": "{{size}} {{unit}}",
+            "kb": "KB",
+            "mb": "MB"
+          },
+          "breakdown": {
+            "title": "Breakdown by share",
+            "empty": "No share called",
+            "total": "Total",
+            "restrictedOne": "Restricted to {{count}} investor",
+            "restrictedMany": "Restricted to {{count}} investors",
+            "columns": {
+              "share": "Share",
+              "percent": "Percentage",
+              "amount": "Amount",
+              "released": "Of which recall of provisional distributions",
+              "netCashFlow": "Net cash flow",
+              "amountPerUnit": "Amount / unit",
+              "releasedPerUnit": "Distrib. recall / unit",
+              "netCashFlowPerUnit": "Net cash flow / unit",
+              "feesCalled": "Fees called",
+              "premiumCalled": "Premiums called",
+              "restriction": "Restriction"
+            }
+          }
         },
         "lines": {
-          "searchPlaceholder": "Search an investor",
-          "filters": {
-            "state": "Line status",
-            "noticeState": "Notice status",
-            "share": "Share",
-            "notification": "Notification",
-            "settlement": "Settlement"
-          },
           "columns": {
             "investor": "Investor",
             "subscription": "Subscription",
             "share": "Share",
             "units": "Number of units",
-            "amountPerUnit": "Amount per unit",
             "calledAmount": "Called amount",
             "fees": "Fees",
             "premium": "Premium",
             "total": "Total",
             "state": "Line status",
-            "noticeState": "Notice status",
             "notifiedAt": "Notification date",
-            "lastReminderAt": "Last reminder",
-            "paidAt": "Payment date",
+            "amount": "Amount",
+            "status": "Status",
+            "notifiedOn": "Notified on",
+            "remindedOn": "Reminded on",
+            "paidOn": "Paid on",
+            "createdAt": "Created on",
+            "updatedAt": "Updated on",
             "received": "Received",
             "balance": "Remaining due"
           },
@@ -6775,86 +6744,29 @@
             "overpaid": "Overpaid",
             "cancelled": "Cancelled"
           },
-          "noticeStates": {
-            "generating": "Generating",
-            "available": "Available",
-            "failed": "Failed",
-            "replaced": "Replaced"
-          },
-          "failureReasons": {
-            "combinedTemplateMissing": "Combined notice template missing",
-            "productionError": "Production error",
-            "timeout": "Production time limit exceeded"
-          },
           "paymentOrigins": {
             "bankReconciliation": "bank reconciliation",
             "directDebit": "direct debit",
             "manual": "manual validation"
           },
           "paidTooltip": "Paid by {{origin}} on {{date}}",
-          "indicators": {
-            "combinedNotice": "Combined notice",
-            "compensated": "Offset line",
-            "transferred": "Transferred subscription",
-            "hiddenOnPortal": "Line hidden on the portal",
-            "comment": "Comment: {{text}}"
-          },
-          "totals": "Total of the {{count}} lines shown",
           "empty": {
             "title": "No investor lines",
-            "filteredTitle": "No matching lines",
-            "filteredDescription": "Change the search or the filters to widen the results.",
+            "filteredTitle": "No matching line",
+            "filteredDescription": "Change the filters to widen the results.",
             "reset": "Reset filters"
-          },
-          "dateTime": "{{date}} at {{time}}",
-          "noticeTooltip": {
-            "failed": "{{reason}}, on {{at}}",
-            "requested": "Requested on {{at}}",
-            "replaced": "File uploaded by the operator, never regenerated",
-            "previousFailure": "previous failure: {{reason}}",
-            "relaunchedOne": "{{count}} retry",
-            "relaunchedMany": "{{count}} retries"
-          },
-          "relaunch": {
-            "label": "Retry failed notices ({{count}})",
-            "noneFailed": "No failed notice",
-            "refused": "Retry refused",
-            "startedOne": "{{count}} failed notice retried.",
-            "startedMany": "{{count}} failed notices retried."
-          },
-          "notificationCategories": {
-            "notified": "Notified",
-            "toNotify": "To notify",
-            "reminded": "Reminded"
-          },
-          "settlementCategories": {
-            "paid": "Paid",
-            "compensated": "Offset",
-            "paymentDeclared": "Payment declared",
-            "unpaid": "Unpaid",
-            "overpaid": "Overpaid",
-            "partiallyPaid": "Partially paid",
-            "cancelled": "Cancelled"
           },
           "overpaidBalance": "Overpaid {{amount}}",
           "partialTooltipOne": "{{received}} received out of {{total}}, in 1 payment",
           "partialTooltipMany": "{{received}} received out of {{total}}, in {{count}} payments",
           "overpaidTooltip": "Overpaid by {{amount}} · Treatment: {{treatment}}",
-          "cancelledTooltip": "Cancelled by {{author}}: {{reason}}",
           "treatments": {
             "refund": "Refund the investor",
             "carryForward": "Keep as advance on next call",
             "undecided": "To be decided"
           },
           "actions": {
-            "recordPayment": "Record a payment",
-            "comment": "Add a comment",
-            "editComment": "Edit comment",
-            "treatOverpayment": "Handle the difference",
-            "cancelLine": "Cancel line",
-            "settledReason": "Line settled: the amount due has been fully received.",
-            "cancelledReason": "Line cancelled.",
-            "cancelWithPaymentsReason": "Payments are recorded on this line: handle them before cancelling it."
+            "treatOverpayment": "Handle the difference"
           },
           "payment": {
             "title": "Record a payment",
@@ -6905,186 +6817,34 @@
               "recorded": "Payment of {{amount}} recorded for {{investor}}",
               "treated": "Overpayment of {{investor}}: {{treatment}}"
             }
-          },
-          "commentDialog": {
-            "title": "Comment on line",
-            "description": "{{investor}}",
-            "label": "Internal comment",
-            "hint": "Only visible to your team. Leave empty to remove the comment.",
-            "confirm": "Save",
-            "cancel": "Cancel",
-            "saved": "Comment saved",
-            "removed": "Comment removed"
-          },
-          "cancelDialog": {
-            "title": "Cancel the line?",
-            "description": "{{investor}}'s line ({{amount}}) will no longer be due. It stays visible in the call with the Cancelled status.",
-            "reason": "Cancellation reason",
-            "placeholder": "E.g. subscription cancelled before the first call",
-            "reasonRequired": "Enter a reason.",
-            "confirm": "Cancel line",
-            "cancel": "Keep line",
-            "done": "{{investor}}'s line cancelled"
           }
+        }
+      },
+      "stages": {
+        "ariaLabel": "Call processing steps",
+        "notices": {
+          "label": "Notice production",
+          "title": "Notices being produced",
+          "description": "{{done}} / {{total}} notices available. Distribution opens once notices are produced."
         },
-        "emails": {
-          "searchPlaceholder": "Search a recipient",
-          "filters": {
-            "type": "Type",
-            "state": "Status"
-          },
-          "columns": {
-            "recipient": "Recipient",
-            "copies": "Copies",
-            "type": "Type",
-            "notice": "Attached notice",
-            "sentAt": "Sent on",
-            "state": "Status"
-          },
-          "types": {
-            "notification": "Notification",
-            "reminder": "Reminder"
-          },
-          "states": {
-            "sent": "Sent",
-            "delivered": "Delivered",
-            "opened": "Opened",
-            "softBounce": "Temporary failure",
-            "failed": "Failed",
-            "spam": "Reported as spam",
-            "notFound": "Email not found"
-          },
-          "noRecipient": "No email found",
-          "notice": {
-            "individual": "Individual notice",
-            "combined": "Combined notice",
-            "linesOne": "{{count}} line: {{subscriptions}}",
-            "linesMany": "{{count}} lines: {{subscriptions}}"
-          },
-          "empty": {
-            "title": "No emails",
-            "filteredTitle": "No matching emails",
-            "filteredDescription": "Change the search or the filters to widen the results.",
-            "reset": "Reset filters"
-          }
+        "diffusion": {
+          "label": "Being distributed",
+          "title": "Being distributed",
+          "description": "{{count}} of {{total}} lines to notify.",
+          "sending": "Sending in progress: actions resume when sending ends.",
+          "action": "Notify {{count}} lines"
         },
-        "journal": {
-          "types": {
-            "created": "Creation",
-            "edited": "Edit",
-            "noticeFailed": "Notice production failed",
-            "noticeRelaunched": "Notice generation retried",
-            "notified": "Notification",
-            "reminded": "Reminder",
-            "paymentValidated": "Payment validated",
-            "paymentCancelled": "Payment cancelled",
-            "noticeReplaced": "Notice replaced",
-            "notificationCancelled": "Notification cancelled",
-            "overpaymentTreated": "Overpayment treatment",
-            "lineCancelled": "Line cancellation",
-            "commented": "Comment"
-          },
-          "linesOne": "{{count}} line",
-          "linesMany": "{{count}} lines",
-          "change": {
-            "dueDate": "Due date: {{from}} → {{to}}"
-          },
-          "paymentOrigin": "by {{origin}}",
-          "system": "System",
-          "roles": {
-            "user": "User",
-            "system": "System"
-          },
-          "goLive": {
-            "title": "Partial history",
-            "description": "This call was created before V3. Its history starts when V3 went live, on {{date}}."
-          },
-          "empty": "No events",
-          "emptyFiltered": "No events match the filters",
-          "readOnly": "The journal cannot be edited or deleted.",
-          "wholeCall": "Call",
-          "quote": "\"{{text}}\""
+        "settlement": {
+          "label": "Being settled",
+          "title": "Being settled",
+          "description": "{{count}} of {{total}} lines to settle, {{amount}} outstanding.",
+          "relaunch": "Remind",
+          "action": "Validate payments"
         },
-        "summary": {
-          "openFiltered": "{{label}}: {{count}}, open the filtered list",
-          "calculation": {
-            "title": "Calculation",
-            "entered": "Entered amount",
-            "allocated": "Allocated amount",
-            "roundingGap": "Rounding gap",
-            "lines": "Lines"
-          },
-          "notices": {
-            "title": "Notices",
-            "available": "Available",
-            "generating": "Generating",
-            "failed": "Failed",
-            "replaced": "Replaced"
-          },
-          "notification": {
-            "title": "Notification",
-            "notified": "Notified",
-            "toNotify": "To notify",
-            "reminded": "Reminded",
-            "emailsFailed": "Failed emails",
-            "diffusion": {
-              "portal": {
-                "onNotification": "Portal at notification",
-                "immediate": "Portal pre-published",
-                "alone": "Portal"
-              },
-              "email": "Email",
-              "documents": "Document space",
-              "none": "No distribution"
-            }
-          },
-          "settlement": {
-            "title": "Settlement",
-            "paid": "Paid",
-            "compensated": "Offset",
-            "paymentDeclared": "Payment declared",
-            "unpaid": "Unpaid",
-            "remainingDue": "Still due on {{count}} lines",
-            "partiallyPaid": "Partially paid",
-            "overpaid": "Overpaid",
-            "overpaidUntreated": "Overpaid {{amount}}, {{count}} to handle",
-            "overpaidTreated": "Overpaid {{amount}}, handled"
-          }
-        },
-        "stages": {
-          "ariaLabel": "Call processing steps",
-          "notices": {
-            "label": "Notice production",
-            "title": "Notices being produced",
-            "description": "{{done}} / {{total}} notices available. Distribution opens once notices are produced."
-          },
-          "diffusion": {
-            "label": "Being distributed",
-            "title": "Being distributed",
-            "description": "{{count}} of {{total}} lines to notify.",
-            "sending": "Sending in progress: actions resume when sending ends.",
-            "action": "Notify {{count}} lines"
-          },
-          "settlement": {
-            "label": "Being settled",
-            "title": "Being settled",
-            "description": "{{count}} of {{total}} lines to settle, {{amount}} outstanding.",
-            "relaunch": "Remind",
-            "action": "Validate payments"
-          },
-          "closed": {
-            "label": "Settled",
-            "title": "Call settled",
-            "description": "All {{total}} lines are paid or compensated."
-          }
-        },
-        "internalComment": {
-          "title": "Internal comment",
-          "hint": "Only visible to your team: not on the notice, not in the email.",
-          "summary": "Edited by {{author}} on {{date}}",
-          "empty": "No internal comment",
-          "saved": "Internal comment saved",
-          "removed": "Internal comment removed"
+        "closed": {
+          "label": "Settled",
+          "title": "Call settled",
+          "description": "All {{total}} lines are paid or compensated."
         }
       },
       "wizard": {
@@ -7407,26 +7167,6 @@
         "resumeLater": "Resume later",
         "autosaved": "Entry saved automatically, visible only to you. No call exists until it is created."
       },
-      "progress": {
-        "notices": "{{done}} / {{total}} available",
-        "noticesFailed": "{{count}} failed",
-        "notified": "{{done}} / {{total}} notified",
-        "settled": "{{done}} / {{total}} settled",
-        "remainingDue": "{{amount}} still due",
-        "sending": "Sending",
-        "withoutNotification": "No notification",
-        "prePublished": "Pre-published on the portal"
-      },
-      "callStates": {
-        "noticesGenerating": "Notices generating",
-        "settled": "Settled",
-        "partiallySettled": "Partially settled",
-        "notified": "Notified",
-        "partiallyNotified": "Partially notified",
-        "publishedWithoutSending": "Published without email",
-        "readyToNotify": "Ready to notify",
-        "notDistributed": "Not distributed"
-      },
       "pendingWizard": {
         "title": "You have a call in preparation: {{name}}",
         "description": "{{fund}}, step {{step}}, saved on {{date}}. This preparation is visible only to you and has no effect on calls or subscriptions.",
@@ -7469,8 +7209,6 @@
         }
       },
       "targeted": {
-        "indicatorOne": "Targeted call: 1 subscription",
-        "indicatorMany": "Targeted call: {{count}} subscriptions",
         "defaultName": "Targeted call {{investor}}",
         "prepared": "Call prepared for {{investor}}",
         "preparedHint": "Fund, share and subscription are already selected: enter the date and the amount to call.",
@@ -7765,10 +7503,10 @@
       },
       "listingTools": {
         "title": "Listing tools",
-        "description": "ListingColumnsMenu picks the visible columns (the last visible one cannot be hidden); ListingIndicator flags a row specificity with an icon, label on hover. ListingCard also takes a footer (pagination) and DataTable a totals row (footer). FilterBar now handles multi-select and date range filters, and wraps when space runs out.",
-        "variants": "Columns menu with reset; one or more indicators next to the name.",
-        "states": "Hidden column, last column locked, indicator on hover.",
-        "exampleLabel": "Name with indicators and column picker",
+        "description": "ListingColumnsMenu picks the displayed columns (the last visible one cannot be hidden); ListingIndicator flags a row particularity with an icon, label on hover; ListingTruncatedText keeps a long text on one line, with an ellipsis and the full text on hover when it is cut. ListingCard also accepts a footer (pagination) and DataTable a totals row (footer). FilterBar handles multiselect and period filters, wraps when space is short, and hides the free search with hideSearch.",
+        "variants": "Columns menu with reset; one or several indicators next to the name; truncated long text.",
+        "states": "Hidden column, locked last column, indicator on hover, full text on hover of a truncated text.",
+        "exampleLabel": "Name with indicators, truncated long text and column choice",
         "demo": {
           "investor": "Camille R.",
           "combined": "Combined notice",
@@ -7777,7 +7515,8 @@
             "investor": "Investor",
             "amount": "Amount",
             "state": "State"
-          }
+          },
+          "longName": "Holding Arcadia - €1250K - European Mid-Market Fund Share A"
         }
       },
       "wizardSteps": {

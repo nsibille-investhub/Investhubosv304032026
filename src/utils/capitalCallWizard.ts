@@ -66,7 +66,7 @@ function seeded(seed: number) {
   };
 }
 
-export function fundCallSettings(fund: Fund): FundCallSettings {
+export function fundCallSettings(fund: Pick<Fund, 'id'>): FundCallSettings {
   return {
     hasNoticeTemplate: fund.id % 4 !== 0,
     combinedNotices: fund.id % 5 === 0 || fund.id % 7 === 0,

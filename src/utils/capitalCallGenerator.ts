@@ -1,9 +1,8 @@
 import type { Fund } from './fundGenerator';
+import { fundCallSettings } from './capitalCallWizard';
 import type { Stamped } from './capitalCallLines';
 
 export type CapitalCallOrigin = 'backOffice' | 'import' | 'api';
-
-export const CAPITAL_CALL_ORIGINS: CapitalCallOrigin[] = ['backOffice', 'import', 'api'];
 
 export interface LinkedDistribution {
   id: number;
@@ -21,8 +20,18 @@ export interface CapitalCallShare {
   premiumCalled: boolean;
   /** Rappel de distributions provisoires. */
   releasedAmount: number;
-  /** Nombre de souscriptions retenues quand l'appel est restreint sur la part. */
+  /** Nombre d'investisseurs retenus quand l'appel est restreint sur la part. */
   restrictedTo: number | null;
+  /** Pourcentage appelé sur la part, absent quand la part est appelée en montant. */
+  percent: number | null;
+  /** Montant appelé sur la part. */
+  amount: number;
+  /** Absent quand le paramètre de l'instance est inactif. */
+  netCashFlow: number | null;
+  /** Valeurs par part détenue, sur une instance qui génère les appels par part détenue. */
+  amountPerUnit: number | null;
+  releasedPerUnit: number | null;
+  netCashFlowPerUnit: number | null;
 }
 
 export interface CapitalCallAttachment {
@@ -64,19 +73,25 @@ export interface CapitalCall {
   currency: string;
   name: string;
   dueDate: Date;
-  /** Date imprimée sur l'avis. Affichée seulement quand elle diffère de la date d'échéance. */
+  /** Date imprimée sur l'avis. Absente si elle n'a pas été saisie à la création. */
   noticeDate: Date | null;
   calledAmount: number;
+  /** Rappel de distributions provisoires enregistré sur l'appel. */
+  releasedAmount: number;
+  /** Net cash flow enregistré sur l'appel, absent quand le paramètre de l'instance est inactif. */
+  netCashFlow: number | null;
   origin: CapitalCallOrigin;
   compensations: LinkedDistribution[];
   forecast: { id: number; name: string } | null;
   shares: CapitalCallShare[];
   message: string;
-  /** Commentaire interne de l'équipe de gestion : ni sur l'avis, ni dans l'email. */
-  internalComment: Stamped<string> | null;
   attachments: CapitalCallAttachment[];
+  /** Commentaire interne de l'équipe de gestion, saisi à la création : ni sur l'avis, ni dans l'email. */
+  internalComment?: Stamped<string> | null;
+  /** Identifiant de l'appel dans un système tiers. */
+  externalId: string | null;
   createdAt: Date;
-  createdBy: string;
+  updatedAt: Date;
   /** Verrou d'envoi actif. */
   sending: boolean;
   /** Nombre de lignes investisseurs. */
@@ -89,17 +104,10 @@ export interface CapitalCall {
   justCreated?: boolean;
 }
 
-const CREATORS = ['Camille', 'Thomas', 'Léa', 'Hugo', 'Inès', 'Julien'];
-
 const MESSAGES = [
   "Madame, Monsieur,\n\nVous trouverez ci-joint votre avis d'appel de fonds. Nous vous remercions de bien vouloir procéder au virement avant la date d'échéance indiquée.\n\nL'équipe de gestion",
   "Bonjour,\n\nCet appel finance les deux investissements présentés lors du dernier comité. Le détail figure dans la lettre jointe.\n\nBien cordialement,",
   '',
-];
-
-const INTERNAL_COMMENTS = [
-  'Échéance alignée sur le décaissement prévu pour la participation Atlas.',
-  'Deux investisseurs institutionnels ont demandé un délai : relance à faire après le comité.',
 ];
 
 const ATTACHMENTS: CapitalCallAttachment[] = [
@@ -131,6 +139,8 @@ function seeded(seed: number) {
 
 const DAY = 24 * 60 * 60 * 1000;
 
+const cents = (value: number) => Math.round(value * 100) / 100;
+
 /** Quelques appels non notifiés sont diffusés sans email, d'autres pré-publiés sur le portail. */
 function demoDiffusion(draw: number, fundName: string): CapitalCallDiffusion {
   const base = { ...DEFAULT_DIFFUSION, documentFolder: fundDocumentFolders(fundName)[0] };
@@ -148,6 +158,7 @@ export function generateCapitalCalls(funds: Fund[], today = new Date()): Capital
     const random = seeded(fund.id);
     const count = 2 + Math.floor(random() * 5);
     const currency = capitalCallCurrency(fund.id);
+    const settings = fundCallSettings(fund);
     const firstDue = today.getTime() - (count - 1) * 120 * DAY + Math.floor(random() * 60) * DAY;
 
     for (let index = 0; index < count; index++) {
@@ -157,7 +168,7 @@ export function generateCapitalCalls(funds: Fund[], today = new Date()): Capital
       );
       const noticeDraw = random();
       const noticeDate =
-        noticeDraw < 0.3 ? new Date(createdAt.getTime() + 2 * DAY) : noticeDraw < 0.45 ? new Date(dueDate) : null;
+        noticeDraw < 0.15 ? new Date(dueDate) : new Date(createdAt.getTime() + (2 + Math.floor(noticeDraw * 6)) * DAY);
       const originDraw = random();
       const origin: CapitalCallOrigin = originDraw < 0.7 ? 'backOffice' : originDraw < 0.9 ? 'import' : 'api';
       const compensations: LinkedDistribution[] =
@@ -165,41 +176,49 @@ export function generateCapitalCalls(funds: Fund[], today = new Date()): Capital
       const forecast = random() < 0.5 ? { id: id, name: `Flux prévisionnel ${quarterLabel(dueDate)}` } : null;
       const calledAmount = Math.round((fund.totalCommitments * (0.05 + random() * 0.15)) / 1000) * 1000;
       const modeDraw = random();
-      const mode: ShareEntryMode = modeDraw < 0.7 ? 'percent' : modeDraw < 0.9 ? 'totalAmount' : 'perUnit';
-      const shareNames = fund.shareClasses.map(item => item.name);
-      // Appel ciblé : une seule souscription appelée, par exemple un investisseur entré au dernier closing.
-      const targeted = random() < 0.06;
-      const callAmount = targeted ? Math.max(1000, Math.round(calledAmount / 25 / 1000) * 1000) : calledAmount;
-      const allShares: CapitalCallShare[] = shareNames.map((share, shareIndex) => {
+      const mode: ShareEntryMode = settings.perUnit ? 'perUnit' : modeDraw < 0.75 ? 'percent' : 'totalAmount';
+      const fundShares = fund.shareClasses.map(item => item.name);
+      // Un appel sur deux laisse la dernière part du fonds hors de l'appel.
+      const shareNames = fundShares.length > 2 && index % 2 === 1 ? fundShares.slice(0, -1) : fundShares;
+      const percents = shareNames.map((_, shareIndex) => [10, 5, 15, 7.5][shareIndex % 4]);
+      const percentSum = percents.reduce((sum, value) => sum + value, 0);
+      const withNetCashFlow = settings.netFlow || settings.perUnit;
+      let allocated = 0;
+      const shares: CapitalCallShare[] = shareNames.map((share, shareIndex) => {
+        const amount =
+          shareIndex === shareNames.length - 1
+            ? calledAmount - allocated
+            : Math.round((calledAmount * percents[shareIndex]) / percentSum / 1000) * 1000;
+        allocated += amount;
         const value =
-          mode === 'percent'
-            ? [10, 5, 15, 7.5][shareIndex % 4]
-            : mode === 'totalAmount'
-              ? Math.round(calledAmount / shareNames.length / 1000) * 1000
-              : Math.round((5 + random() * 20) * 100) / 100;
+          mode === 'percent' ? percents[shareIndex] : mode === 'totalAmount' ? amount : cents(5 + random() * 20);
+        const premiumCalled = random() < 0.25;
+        const releasedAmount = random() < 0.2 ? Math.round((amount * 0.1) / 100) * 100 : 0;
+        const restrictedTo = random() < 0.15 ? 3 + Math.floor(random() * 10) : null;
+        const netCashFlow = withNetCashFlow ? amount - releasedAmount : null;
+        const units = mode === 'perUnit' ? amount / value : null;
         return {
           share,
           mode,
           value,
           entryFeesCalled: shareIndex === 0,
-          premiumCalled: random() < 0.25,
-          releasedAmount: random() < 0.2 ? Math.round(calledAmount * 0.02 / 100) * 100 : 0,
-          restrictedTo: random() < 0.15 ? 3 + Math.floor(random() * 10) : null,
+          premiumCalled,
+          releasedAmount,
+          restrictedTo,
+          percent: mode === 'percent' ? value : null,
+          amount,
+          netCashFlow,
+          amountPerUnit: units ? value : null,
+          releasedPerUnit: units ? cents(releasedAmount / units) : null,
+          netCashFlowPerUnit: units && netCashFlow !== null ? cents(netCashFlow / units) : null,
         };
       });
-      const shares = targeted
-        ? [{ ...allShares[0], mode: 'totalAmount' as const, value: callAmount, releasedAmount: 0, restrictedTo: 1 }]
-        : allShares;
       const message = MESSAGES[Math.floor(random() * MESSAGES.length)];
-      const createdBy = CREATORS[Math.floor(random() * CREATORS.length)];
-      const internalComment: Stamped<string> | null =
-        random() < 0.35
-          ? { value: INTERNAL_COMMENTS[index % INTERNAL_COMMENTS.length], by: createdBy, at: new Date(createdAt.getTime() + DAY / 2) }
-          : null;
       const attachments = ATTACHMENTS.slice(0, Math.floor(random() * 3));
       const isUpcoming = dueDate.getTime() > today.getTime();
       const sending = isUpcoming && random() < 0.08;
-      const lines = targeted ? 1 : 4 + Math.floor(random() * 40);
+      // Quelques appels restent sans ligne investisseur.
+      const lines = fund.id % 5 === 2 && index === 0 ? 0 : 4 + Math.floor(random() * 40);
       let notifiedLines: number;
       if (!isUpcoming) notifiedLines = lines;
       else if (sending) notifiedLines = Math.floor(lines * random() * 0.6);
@@ -215,16 +234,18 @@ export function generateCapitalCalls(funds: Fund[], today = new Date()): Capital
         name: `Appel n°${index + 1}`,
         dueDate,
         noticeDate,
-        calledAmount: callAmount,
+        calledAmount,
+        releasedAmount: shares.reduce((sum, share) => sum + share.releasedAmount, 0),
+        netCashFlow: withNetCashFlow ? shares.reduce((sum, share) => sum + (share.netCashFlow ?? 0), 0) : null,
         origin,
         compensations,
         forecast,
         shares,
         message,
-        internalComment,
         attachments,
         createdAt,
-        createdBy,
+        externalId: origin === 'backOffice' ? null : `CC-${dueDate.getFullYear()}-${String(fund.id * 10 + index + 1).padStart(4, '0')}`,
+        updatedAt: index % 3 === 0 ? new Date(Math.min(createdAt.getTime() + 3 * DAY + 5 * 3600000, today.getTime())) : createdAt,
         sending,
         lines,
         notifiedLines,
@@ -235,12 +256,6 @@ export function generateCapitalCalls(funds: Fund[], today = new Date()): Capital
   });
 
   return calls;
-}
-
-/** Appel restreint à quelques souscriptions sur toutes ses parts : nombre de souscriptions appelées. */
-export function targetedSubscriptions(call: Pick<CapitalCall, 'shares'>): number | null {
-  if (call.shares.length === 0 || call.shares.some(share => share.restrictedTo === null)) return null;
-  return call.shares.reduce((sum, share) => sum + (share.restrictedTo ?? 0), 0);
 }
 
 export function sameDay(a: Date, b: Date) {

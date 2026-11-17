@@ -309,3 +309,27 @@ export function ListingIndicator({ icon: Icon, label }: { icon: LucideIcon; labe
     </Tooltip>
   );
 }
+
+/** Texte long d'une cellule : une seule ligne, points de suspension, texte entier au survol quand il est coupé. */
+export function ListingTruncatedText({ text, className }: { text: string; className?: string }) {
+  const [truncated, setTruncated] = useState(false);
+  const measure = (element: HTMLElement) => setTruncated(element.scrollWidth > element.clientWidth);
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span
+          className={cn('block max-w-[280px] truncate', className)}
+          onPointerEnter={event => measure(event.currentTarget)}
+          onFocus={event => measure(event.currentTarget)}
+        >
+          {text}
+        </span>
+      </TooltipTrigger>
+      {truncated && (
+        <TooltipContent>
+          <span className="text-xs">{text}</span>
+        </TooltipContent>
+      )}
+    </Tooltip>
+  );
+}

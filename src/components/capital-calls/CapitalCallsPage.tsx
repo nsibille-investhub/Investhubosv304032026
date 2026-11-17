@@ -3,16 +3,13 @@ import { toast } from 'sonner@2.0.3';
 import {
   BellRing,
   CalendarX,
-  CheckCircle2,
   FileArchive,
   FileSpreadsheet,
   List,
-  Loader2,
   Pencil,
   Plus,
   Send,
   ShieldX,
-  Target,
   Trash2,
   Users,
   Wallet,
@@ -22,14 +19,11 @@ import {
 import { useTranslation } from '../../utils/languageContext';
 import type { Fund } from '../../utils/fundGenerator';
 import {
-  CAPITAL_CALL_ORIGINS,
   CapitalCall,
   DEFAULT_DIFFUSION,
   distinctNoticeDate,
   generateCapitalCalls,
-  targetedSubscriptions,
 } from '../../utils/capitalCallGenerator';
-import { emptyShareInput, fundSubscriptions } from '../../utils/capitalCallWizard';
 import { getDetailIdFromHash, onHashChange } from '../../utils/routing';
 import {
   CapitalCallWizardSession,
@@ -37,8 +31,9 @@ import {
   readWizardSession,
   writeWizardSession,
 } from '../../utils/capitalCallWizardSession';
-import { CapitalCallLine, expireStaleNotices, generateCapitalCallLines } from '../../utils/capitalCallLines';
-import { CALL_STAGES, CALL_STATES, CallSummary, callStage, summarizeCall } from '../../utils/capitalCallSummary';
+import { expireStaleNotices, generateCapitalCallLines } from '../../utils/capitalCallLines';
+import { summarizeCall } from '../../utils/capitalCallSummary';
+import { emptyShareInput, fundCallSettings, fundSubscriptions } from '../../utils/capitalCallWizard';
 import {
   CapitalCallAction,
   CapitalCallRights,
@@ -50,11 +45,9 @@ import { EmptyState } from '../EmptyState';
 import { FilterBar, FilterConfig } from '../FilterBar';
 import { ClickableText } from '../ClickableText';
 import { HighlightText } from '../HighlightText';
-import { ListingCard, ListingColumnsMenu, ListingIndicator, ListingNameCell } from '../ui/listing';
+import { ListingCard, ListingColumnsMenu, ListingNameCell } from '../ui/listing';
 import { TableRowActions } from '../ui/row-actions';
 import { DemoScenarioBar } from '../ui/demo-scenario-bar';
-import { StatusBadge } from '../StatusBadge';
-import { CALL_STATE_VARIANT } from './CapitalCallSummaryWidgets';
 import { FilterCard, FilterCardGroup } from '../ui/filter-card';
 import { PageHeader } from '../ui/page-header';
 import { PageStateBanner } from '../ui/page-state-banner';
@@ -66,52 +59,14 @@ import { CapitalCallDraft, CapitalCallWizard, WIZARD_STEPS } from './wizard/Capi
 
 const K = 'funds.capitalCalls';
 
-type ColumnKey =
-  | 'fund'
-  | 'name'
-  | 'dueDate'
-  | 'calledAmount'
-  | 'lines'
-  | 'notices'
-  | 'notification'
-  | 'settlement'
-  | 'state'
-  | 'noticeDate'
-  | 'origin'
-  | 'compensation'
-  | 'createdAt'
-  | 'createdBy';
+type ColumnKey = 'name' | 'fund' | 'dueDate' | 'noticeDate' | 'amount' | 'externalId' | 'createdAt' | 'updatedAt';
 
-const COLUMN_KEYS: ColumnKey[] = [
-  'fund',
-  'name',
-  'dueDate',
-  'calledAmount',
-  'lines',
-  'notices',
-  'notification',
-  'settlement',
-  'state',
-  'noticeDate',
-  'origin',
-  'compensation',
-  'createdAt',
-  'createdBy',
-];
-const DEFAULT_COLUMNS: ColumnKey[] = [
-  'fund',
-  'name',
-  'dueDate',
-  'calledAmount',
-  'lines',
-  'notices',
-  'notification',
-  'settlement',
-  'state',
-];
-const COLUMNS_STORAGE_KEY = 'investhub-columns-capital-calls-v3';
+const COLUMN_KEYS: ColumnKey[] = ['name', 'fund', 'dueDate', 'noticeDate', 'amount', 'externalId', 'createdAt', 'updatedAt'];
+const DEFAULT_COLUMNS: ColumnKey[] = ['name', 'fund', 'dueDate', 'amount'];
+const COLUMNS_STORAGE_KEY = 'investhub-columns-capital-calls-v4';
+const LISTING_STORAGE_KEY = 'investhub-listing-capital-calls';
 
-type Queue = 'all' | 'toNotify' | 'overdue' | 'settled';
+type Queue = 'all' | 'toNotify' | 'overdue';
 
 /** Identifiant d'URL de l'assistant de création. */
 const NEW_CALL_ID = 'new';
@@ -148,6 +103,25 @@ const RELAUNCH_DURATION = 4000;
 type SortConfig = { key: string; direction: 'asc' | 'desc' };
 type ActiveFilters = Record<string, string | string[]>;
 
+const DEFAULT_SORT: SortConfig = { key: 'dueDate', direction: 'desc' };
+
+interface ListingState {
+  search: string;
+  activeFilters: ActiveFilters;
+  sortConfig: SortConfig;
+  page: number;
+  pageSize: number;
+}
+
+/** Recherche, filtres, tri et page de la session, retrouvés au retour d'une fiche. */
+function readListingState(): Partial<ListingState> {
+  try {
+    return JSON.parse(window.sessionStorage.getItem(LISTING_STORAGE_KEY) ?? '{}') as Partial<ListingState>;
+  } catch {
+    return {};
+  }
+}
+
 function readStoredColumns(): ColumnKey[] {
   try {
     const raw = window.localStorage.getItem(COLUMNS_STORAGE_KEY);
@@ -174,32 +148,30 @@ function defaultCompare(a: CapitalCall, b: CapitalCall) {
   return b.dueDate.getTime() - a.dueDate.getTime() || b.createdAt.getTime() - a.createdAt.getTime();
 }
 
-function sortValue(call: CapitalCall, key: string, summary: CallSummary): string | number {
+function sortValue(call: CapitalCall, key: string): string | number {
   switch (key) {
-    case 'lines':
-      return summary.lines;
-    case 'state':
-      return CALL_STATES.indexOf(summary.state);
     case 'fund':
       return call.fundName.toLowerCase();
     case 'name':
       return call.name.toLowerCase();
     case 'dueDate':
       return call.dueDate.getTime();
-    case 'calledAmount':
-      return call.calledAmount;
     case 'noticeDate':
       return distinctNoticeDate(call)?.getTime() ?? 0;
+    case 'amount':
+      return call.calledAmount;
+    case 'externalId':
+      return (call.externalId ?? '').toLowerCase();
     case 'createdAt':
       return call.createdAt.getTime();
-    case 'createdBy':
-      return call.createdBy.toLowerCase();
+    case 'updatedAt':
+      return call.updatedAt.getTime();
     default:
       return 0;
   }
 }
 
-/** Appel ciblé demandé depuis une souscription : le wizard s'ouvre restreint à cette souscription. */
+/** Appel ciblé demandé depuis une souscription : l'assistant s'ouvre restreint à cette souscription. */
 export interface TargetedCallRequest {
   fundName: string;
   share: string;
@@ -230,11 +202,15 @@ export function CapitalCallsPage({
   const { t, lang } = useTranslation();
   const [scenario, setScenario] = useState<Scenario>('default');
   const [queue, setQueue] = useState<Queue>('all');
-  const [search, setSearch] = useState('');
-  const [activeFilters, setActiveFilters] = useState<ActiveFilters>(() => fundFilter(initialFundIds));
-  const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const [stored] = useState(readListingState);
+  const openedFromFund = Boolean(initialFundIds && initialFundIds.length > 0);
+  const [search, setSearch] = useState(openedFromFund ? '' : stored.search ?? '');
+  const [activeFilters, setActiveFilters] = useState<ActiveFilters>(() =>
+    openedFromFund ? fundFilter(initialFundIds) : stored.activeFilters ?? {},
+  );
+  const [sortConfig, setSortConfig] = useState<SortConfig>(stored.sortConfig ?? DEFAULT_SORT);
+  const [page, setPage] = useState(openedFromFund ? 1 : stored.page ?? 1);
+  const [pageSize, setPageSize] = useState(stored.pageSize ?? 20);
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
   const [visibleColumns, setVisibleColumns] = useState<ColumnKey[]>(readStoredColumns);
   const [allCalls, setAllCalls] = useState<CapitalCall[]>(() => generateCapitalCalls(funds));
@@ -251,10 +227,22 @@ export function CapitalCallsPage({
   useEffect(() => onHashChange(() => setSelectedId(getDetailIdFromHash())), []);
 
   const initialFundKey = (initialFundIds ?? []).join(',');
+  const appliedFundKey = useRef(initialFundKey);
   useEffect(() => {
+    if (appliedFundKey.current === initialFundKey) return;
+    appliedFundKey.current = initialFundKey;
     setActiveFilters(fundFilter(initialFundKey ? initialFundKey.split(',').map(Number) : []));
     setPage(1);
   }, [initialFundKey]);
+
+  useEffect(() => {
+    try {
+      const state: ListingState = { search, activeFilters, sortConfig, page, pageSize };
+      window.sessionStorage.setItem(LISTING_STORAGE_KEY, JSON.stringify(state));
+    } catch {
+      // Sans stockage de session, le listing repart de son état par défaut.
+    }
+  }, [search, activeFilters, sortConfig, page, pageSize]);
 
   useEffect(() => {
     try {
@@ -271,13 +259,10 @@ export function CapitalCallsPage({
 
   const scopedCalls = useMemo(() => allCalls.filter(call => scopeFundIds.has(call.fundId)), [allCalls, scopeFundIds]);
 
-  // Lignes de chaque appel : celles modifiées dans la fiche, sinon celles du jeu de démonstration.
-  const [linesOverrides, setLinesOverrides] = useState<Record<number, CapitalCallLine[]>>({});
-  const linesByCall = useMemo(() => {
-    const map = new Map<number, CapitalCallLine[]>();
-    allCalls.forEach(call => map.set(call.id, linesOverrides[call.id] ?? expireStaleNotices(generateCapitalCallLines(call))));
-    return map;
-  }, [allCalls, linesOverrides]);
+  const linesByCall = useMemo(
+    () => new Map(allCalls.map(call => [call.id, expireStaleNotices(generateCapitalCallLines(call))])),
+    [allCalls],
+  );
   const summaries = useMemo(
     () => new Map(allCalls.map(call => [call.id, summarizeCall(call, linesByCall.get(call.id) ?? [])])),
     [allCalls, linesByCall],
@@ -288,7 +273,6 @@ export function CapitalCallsPage({
     const summary = summaryOf(call);
     if (id === 'toNotify') return summary.toNotify > 0;
     if (id === 'overdue') return call.dueDate < today && summary.settled < summary.lines;
-    if (id === 'settled') return summary.lines > 0 && summary.settled === summary.lines;
     return true;
   };
 
@@ -301,27 +285,6 @@ export function CapitalCallsPage({
     return [
       { id: 'fund', label: t(`${K}.filters.funds`), type: 'multiselect', isPrimary: true, options: fundOptions },
       { id: 'duePeriod', label: t(`${K}.filters.duePeriod`), type: 'dateRange', isPrimary: true },
-      {
-        id: 'stage',
-        label: t(`${K}.filters.stage`),
-        type: 'multiselect',
-        isPrimary: true,
-        options: CALL_STAGES.map(item => ({ value: item, label: t(`${K}.detail.stages.${item}.label`) })),
-      },
-      {
-        id: 'state',
-        label: t(`${K}.filters.state`),
-        type: 'multiselect',
-        isPrimary: true,
-        options: CALL_STATES.map(item => ({ value: item, label: t(`${K}.callStates.${item}`) })),
-      },
-      {
-        id: 'origin',
-        label: t(`${K}.filters.origin`),
-        type: 'select',
-        isPrimary: true,
-        options: CAPITAL_CALL_ORIGINS.map(item => ({ value: item, label: t(`${K}.origins.${item}`) })),
-      },
     ];
   }, [scopedCalls, lang, t]);
 
@@ -331,18 +294,12 @@ export function CapitalCallsPage({
     const [fromIso, toIso] = Array.isArray(activeFilters.duePeriod) ? activeFilters.duePeriod : [];
     const from = parseIsoDay(fromIso);
     const to = parseIsoDay(toIso, true);
-    const origin = typeof activeFilters.origin === 'string' ? activeFilters.origin : undefined;
-    const states = Array.isArray(activeFilters.state) ? activeFilters.state : [];
-    const stages = Array.isArray(activeFilters.stage) ? activeFilters.stage : [];
     return scopedCalls.filter(call => {
       if (!inQueue(call, queue)) return false;
-      if (states.length > 0 && !states.includes(summaryOf(call).state)) return false;
-      if (stages.length > 0 && !stages.includes(callStage(call, summaryOf(call)))) return false;
-      if (term && !call.name.toLowerCase().includes(term) && !call.fundName.toLowerCase().includes(term)) return false;
+      if (term && !call.name.toLowerCase().includes(term) && String(call.id) !== term) return false;
       if (fundIds.length > 0 && !fundIds.includes(String(call.fundId))) return false;
       if (from && call.dueDate < from) return false;
       if (to && call.dueDate > to) return false;
-      if (origin && call.origin !== origin) return false;
       return true;
     });
   }, [scopedCalls, queue, search, activeFilters, summaries]);
@@ -357,16 +314,15 @@ export function CapitalCallsPage({
   }, [breadcrumbName, onSelectedCallChange]);
 
   const sortedCalls = useMemo(() => {
-    if (!sortConfig) return [...filteredCalls].sort(defaultCompare);
     const factor = sortConfig.direction === 'asc' ? 1 : -1;
     return [...filteredCalls].sort((a, b) => {
-      const left = sortValue(a, sortConfig.key, summaries.get(a.id)!);
-      const right = sortValue(b, sortConfig.key, summaries.get(b.id)!);
+      const left = sortValue(a, sortConfig.key);
+      const right = sortValue(b, sortConfig.key);
       if (left < right) return -factor;
       if (left > right) return factor;
       return defaultCompare(a, b);
     });
-  }, [filteredCalls, sortConfig, summaries]);
+  }, [filteredCalls, sortConfig]);
 
   const totalPages = Math.max(1, Math.ceil(sortedCalls.length / pageSize));
   const pageRows = sortedCalls.slice((page - 1) * pageSize, page * pageSize);
@@ -479,15 +435,20 @@ export function CapitalCallsPage({
       dueDate: draft.dueDate,
       noticeDate: draft.noticeDate,
       calledAmount: draft.calledAmount,
+      releasedAmount: draft.shares.reduce((sum, share) => sum + share.releasedAmount, 0),
+      netCashFlow: draft.shares.some(share => share.netCashFlow !== null)
+        ? draft.shares.reduce((sum, share) => sum + (share.netCashFlow ?? 0), 0)
+        : null,
       origin: 'backOffice',
       compensations: draft.compensations,
       forecast: draft.forecast,
       shares: draft.shares,
       message: draft.message,
-      internalComment: draft.internalComment ? { value: draft.internalComment, by: CURRENT_USER, at: new Date() } : null,
       attachments: draft.attachments,
+      internalComment: draft.internalComment ? { value: draft.internalComment, by: CURRENT_USER, at: new Date() } : null,
+      externalId: null,
       createdAt: new Date(),
-      createdBy: CURRENT_USER,
+      updatedAt: new Date(),
       sending: false,
       lines: draft.lines,
       notifiedLines: 0,
@@ -558,7 +519,7 @@ export function CapitalCallsPage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetedCall?.nonce]);
 
-  const exitWizard = () => {
+  const openListing = () => {
     window.location.hash = '#/capital-calls';
   };
 
@@ -598,123 +559,13 @@ export function CapitalCallsPage({
       key: 'name',
       label: t(`${K}.columns.name`),
       sortable: true,
-      render: (call, term) => {
-        const targeted = targetedSubscriptions(call);
-        return (
-          <ListingNameCell
-            name={call.name}
-            searchTerm={term}
-            id={call.id}
-            adornment={
-              targeted !== null && (
-                <ListingIndicator
-                  icon={Target}
-                  label={t(targeted === 1 ? `${K}.targeted.indicatorOne` : `${K}.targeted.indicatorMany`, { count: targeted })}
-                />
-              )
-            }
-          />
-        );
-      },
+      render: (call, term) => <ListingNameCell name={call.name} searchTerm={term} id={call.id} />,
     },
     dueDate: {
       key: 'dueDate',
       label: t(`${K}.columns.dueDate`),
       sortable: true,
       render: call => <span className="text-sm tabular-nums">{dateFormat.format(call.dueDate)}</span>,
-    },
-    calledAmount: {
-      key: 'calledAmount',
-      label: t(`${K}.columns.calledAmount`),
-      sortable: true,
-      align: 'right',
-      render: call => <span className="text-sm">{money(call)}</span>,
-    },
-    lines: {
-      key: 'lines',
-      label: t(`${K}.columns.lines`),
-      sortable: true,
-      align: 'right',
-      render: call => <span className="text-sm">{summaryOf(call).lines}</span>,
-    },
-    notices: {
-      key: 'notices',
-      label: t(`${K}.columns.notices`),
-      render: call => {
-        const summary = summaryOf(call);
-        return (
-          <span className="flex flex-col whitespace-nowrap text-sm tabular-nums">
-            <span>{t(`${K}.progress.notices`, { done: summary.noticesAvailable + summary.noticesReplaced, total: summary.lines })}</span>
-            {summary.noticesFailed > 0 && (
-              <span className="text-xs text-muted-foreground">
-                {t(`${K}.progress.noticesFailed`, { count: summary.noticesFailed })}
-              </span>
-            )}
-          </span>
-        );
-      },
-    },
-    notification: {
-      key: 'notification',
-      label: t(`${K}.columns.notification`),
-      render: call => {
-        const summary = summaryOf(call);
-        return (
-          <span className="flex flex-col whitespace-nowrap text-sm tabular-nums">
-            <span>
-              {call.diffusion.notify
-                ? t(`${K}.progress.notified`, { done: summary.notified, total: summary.lines })
-                : t(`${K}.progress.withoutNotification`)}
-            </span>
-            {call.sending ? (
-              <span className="text-xs text-muted-foreground">{t(`${K}.progress.sending`)}</span>
-            ) : (
-              call.diffusion.notify &&
-              call.diffusion.portal &&
-              call.diffusion.portalTiming === 'immediate' &&
-              summary.notified < summary.lines && (
-                <span className="text-xs text-muted-foreground">{t(`${K}.progress.prePublished`)}</span>
-              )
-            )}
-          </span>
-        );
-      },
-    },
-    settlement: {
-      key: 'settlement',
-      label: t(`${K}.columns.settlement`),
-      render: call => {
-        const summary = summaryOf(call);
-        return (
-          <span className="flex flex-col whitespace-nowrap text-sm tabular-nums">
-            <span>{t(`${K}.progress.settled`, { done: summary.settled, total: summary.lines })}</span>
-            {summary.remainingDue > 0 && (
-              <span className="text-xs text-muted-foreground">
-                {t(`${K}.progress.remainingDue`, {
-                  amount: new Intl.NumberFormat(lang, { style: 'currency', currency: call.currency, maximumFractionDigits: 0 }).format(
-                    summary.remainingDue,
-                  ),
-                })}
-              </span>
-            )}
-          </span>
-        );
-      },
-    },
-    state: {
-      key: 'state',
-      label: t(`${K}.columns.state`),
-      sortable: true,
-      render: call => {
-        const state = summaryOf(call).state;
-        return (
-          <StatusBadge
-            label={t(`${K}.callStates.${state}`)}
-            variant={CALL_STATE_VARIANT[state]}
-            icon={state === 'noticesGenerating' ? Loader2 : undefined}
-          />
-        );
-      },
     },
     noticeDate: {
       key: 'noticeDate',
@@ -725,32 +576,30 @@ export function CapitalCallsPage({
         return noticeDate ? <span className="text-sm tabular-nums">{dateFormat.format(noticeDate)}</span> : empty;
       },
     },
-    origin: {
-      key: 'origin',
-      label: t(`${K}.columns.origin`),
-      render: call => <span className="text-sm">{t(`${K}.origins.${call.origin}`)}</span>,
+    amount: {
+      key: 'amount',
+      label: t(`${K}.columns.amount`),
+      sortable: true,
+      align: 'right',
+      render: call => <span className="text-sm">{money(call)}</span>,
     },
-    compensation: {
-      key: 'compensation',
-      label: t(`${K}.columns.compensation`),
-      render: call =>
-        call.compensations.length > 0 ? (
-          <span className="text-sm">{call.compensations.map(item => item.name).join(', ')}</span>
-        ) : (
-          empty
-        ),
+    externalId: {
+      key: 'externalId',
+      label: t(`${K}.columns.externalId`),
+      sortable: true,
+      render: call => (call.externalId ? <span className="text-sm tabular-nums">{call.externalId}</span> : empty),
     },
     createdAt: {
       key: 'createdAt',
       label: t(`${K}.columns.createdAt`),
       sortable: true,
-      render: call => <span className="text-sm tabular-nums">{dateFormat.format(call.createdAt)}</span>,
+      render: call => <span className="text-sm tabular-nums">{dateTimeFormat.format(call.createdAt)}</span>,
     },
-    createdBy: {
-      key: 'createdBy',
-      label: t(`${K}.columns.createdBy`),
+    updatedAt: {
+      key: 'updatedAt',
+      label: t(`${K}.columns.updatedAt`),
       sortable: true,
-      render: call => <span className="text-sm">{call.createdBy}</span>,
+      render: call => <span className="text-sm tabular-nums">{dateTimeFormat.format(call.updatedAt)}</span>,
     },
   };
 
@@ -860,7 +709,7 @@ export function CapitalCallsPage({
           onSessionChange={updateWizardSession}
           onSessionClear={discardWizardSession}
           onCreate={createCall}
-          onExit={exitWizard}
+          onExit={openListing}
         />
       </div>
     );
@@ -871,16 +720,14 @@ export function CapitalCallsPage({
     if (!selectedInScope) return deniedPage(t(`${K}.accessDenied.outOfScopeDescription`));
     return (
       <div className="flex min-h-screen flex-1 flex-col bg-muted">
-        {scenarioBar}
         <CapitalCallDetailPage
           key={selectedCall.id}
           call={selectedCall}
-          initialLines={linesByCall.get(selectedCall.id) ?? []}
-          onLinesChange={lines => setLinesOverrides(prev => ({ ...prev, [selectedCall.id]: lines }))}
-          rights={rights}
+          lines={linesByCall.get(selectedCall.id) ?? []}
+          fundShares={funds.find(fund => fund.id === selectedCall.fundId)?.shareClasses.map(item => item.name) ?? []}
+          settings={fundCallSettings({ id: selectedCall.fundId })}
           onOpenFund={onOpenFund}
-          onRunAction={action => runAction(selectedCall.id, action)}
-          actionBlocker={action => blockerReason(selectedCall, action)}
+          onBack={openListing}
         />
       </div>
     );
@@ -940,11 +787,10 @@ export function CapitalCallsPage({
             onDiscard={() => setConfirmDiscard(true)}
           />
         )}
-        <FilterCardGroup title={t(`${K}.queues.label`)} hint={t(`${K}.queues.clickToFilter`)} columns={4}>
+        <FilterCardGroup title={t(`${K}.queues.label`)} hint={t(`${K}.queues.clickToFilter`)} columns={3}>
             {queueCard('all', List, scopedCalls)}
             {queueCard('toNotify', Send, scopedCalls.filter(call => inQueue(call, 'toNotify')))}
             {queueCard('overdue', CalendarX, scopedCalls.filter(call => inQueue(call, 'overdue')))}
-            {queueCard('settled', CheckCircle2, scopedCalls.filter(call => inQueue(call, 'settled')))}
         </FilterCardGroup>
 
         <ListingCard
@@ -1009,7 +855,7 @@ export function CapitalCallsPage({
                 sortConfig={sortConfig}
                 onSort={key =>
                   setSortConfig(prev =>
-                    prev?.key === key && prev.direction === 'asc' ? { key, direction: 'desc' } : { key, direction: 'asc' },
+                    prev.key === key && prev.direction === 'asc' ? { key, direction: 'desc' } : { key, direction: 'asc' },
                   )
                 }
                 searchTerm={search}

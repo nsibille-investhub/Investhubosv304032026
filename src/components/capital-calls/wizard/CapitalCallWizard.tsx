@@ -22,6 +22,7 @@ import {
   parseNumber,
   pendingForecasts,
   proposedPercent,
+  restrictedSubscriptions,
   shareAmount,
   simulateCall,
 } from '../../../utils/capitalCallWizard';
@@ -258,14 +259,28 @@ export function CapitalCallWizard({
       .map(share => {
         const input = inputs[share] ?? emptyShareInput();
         const value = parseNumber(input.value) ?? 0;
+        const perUnit = Boolean(settings?.perUnit) || input.kind === 'perUnit';
+        const shareSubscriptions = subscriptions.filter(item => item.share === share);
+        const units = restrictedSubscriptions(input, shareSubscriptions).reduce((sum, item) => sum + item.units, 0);
+        // Sur une instance par part détenue, le rappel et le net cash flow sont saisis par part détenue.
+        const toCents = (amount: number) => Math.round(amount * 100) / 100;
+        const perUnitEntry = Boolean(settings?.perUnit);
+        const recall = parseNumber(input.recall) ?? 0;
+        const netFlow = settings?.netFlow || perUnitEntry ? parseNumber(input.netFlow) ?? 0 : null;
         return {
           share,
-          mode: settings?.perUnit || input.kind === 'perUnit' ? 'perUnit' : input.kind === 'percent' ? 'percent' : 'totalAmount',
+          mode: perUnit ? 'perUnit' : input.kind === 'percent' ? 'percent' : 'totalAmount',
           value,
           entryFeesCalled: input.callEntryFees,
           premiumCalled: input.callPremium,
-          releasedAmount: parseNumber(input.recall) ?? 0,
+          releasedAmount: perUnitEntry ? toCents(recall * units) : recall,
           restrictedTo: input.restriction?.length ?? null,
+          percent: !perUnit && input.kind === 'percent' ? value : null,
+          amount: settings ? toCents(shareAmount(input, shareSubscriptions, settings)) : 0,
+          netCashFlow: netFlow !== null && perUnitEntry ? toCents(netFlow * units) : netFlow,
+          amountPerUnit: perUnit ? value : null,
+          releasedPerUnit: perUnitEntry ? recall : null,
+          netCashFlowPerUnit: perUnitEntry ? netFlow : null,
         } satisfies CapitalCallShare;
       })
       .filter(share => share.value > 0);
