@@ -58,10 +58,10 @@ import { CapitalCallDraft, CapitalCallWizard, WIZARD_STEPS } from './wizard/Capi
 
 const K = 'funds.capitalCalls';
 
-type ColumnKey = 'fund' | 'name' | 'dueDate' | 'noticeDate' | 'amount' | 'externalId' | 'createdAt' | 'updatedAt';
+type ColumnKey = 'name' | 'fund' | 'dueDate' | 'noticeDate' | 'amount' | 'externalId' | 'createdAt' | 'updatedAt';
 
-const COLUMN_KEYS: ColumnKey[] = ['fund', 'name', 'dueDate', 'noticeDate', 'amount', 'externalId', 'createdAt', 'updatedAt'];
-const DEFAULT_COLUMNS: ColumnKey[] = ['fund', 'name', 'dueDate', 'amount'];
+const COLUMN_KEYS: ColumnKey[] = ['name', 'fund', 'dueDate', 'noticeDate', 'amount', 'externalId', 'createdAt', 'updatedAt'];
+const DEFAULT_COLUMNS: ColumnKey[] = ['name', 'fund', 'dueDate', 'amount'];
 const COLUMNS_STORAGE_KEY = 'investhub-columns-capital-calls-v4';
 const LISTING_STORAGE_KEY = 'investhub-listing-capital-calls';
 
