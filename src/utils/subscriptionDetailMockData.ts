@@ -8,6 +8,7 @@ import {
   Repeat,
   UserCheck,
 } from 'lucide-react';
+import type { LineState, PaymentOrigin } from './capitalCallLines';
 import type { OnboardingQuestionConstraints, OnboardingQuestionType } from './onboardingQuestionTypes';
 
 export interface MockQuestion {
@@ -176,7 +177,7 @@ export interface MockEmail {
 }
 
 /** États d'une ligne d'appel, alignés sur le module Appels de fonds. */
-export type CapitalCallLineState = 'toNotify' | 'notified' | 'paymentDeclared' | 'paid';
+export type CapitalCallLineState = LineState;
 
 export interface MockCapitalCall {
   id: number;
@@ -193,7 +194,9 @@ export interface MockCapitalCall {
   dueInDays: number;
   paidInDays: number | null;
   lastReminderInDays: number | null;
-  paymentOrigin: 'bankReconciliation' | 'directDebit' | 'manual' | null;
+  paymentOrigin: PaymentOrigin | null;
+  /** Part du montant dû effectivement reçue, quand elle diffère du montant appelé. */
+  receivedRatio?: number;
 }
 
 export const mockSections: MockSection[] = [
@@ -426,7 +429,7 @@ export const mockEmails: MockEmail[] = [
 
 export const mockCapitalCalls: MockCapitalCall[] = [
   { id: 1, name: 'Closing 1 - Appel n°1', reference: 'AF-2026-001', calledPercent: 10, includesEntryCosts: true, state: 'paid', notifiedInDays: -120, dueInDays: -105, paidInDays: -107, lastReminderInDays: null, paymentOrigin: 'bankReconciliation' },
-  { id: 2, name: 'Appel n°2', reference: 'AF-2026-002', calledPercent: 15, includesEntryCosts: false, state: 'paid', notifiedInDays: -45, dueInDays: -30, paidInDays: -30, lastReminderInDays: null, paymentOrigin: 'directDebit' },
+  { id: 2, name: 'Appel n°2', reference: 'AF-2026-002', calledPercent: 15, includesEntryCosts: false, state: 'partiallyPaid', notifiedInDays: -45, dueInDays: -30, paidInDays: -30, lastReminderInDays: null, paymentOrigin: 'bankReconciliation', receivedRatio: 0.6 },
   { id: 3, name: 'Appel n°3', reference: 'AF-2026-003', calledPercent: 10, includesEntryCosts: false, state: 'notified', notifiedInDays: -6, dueInDays: 12, paidInDays: null, lastReminderInDays: -2, paymentOrigin: null },
 ];
 

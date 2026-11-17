@@ -1,5 +1,6 @@
 import type { Fund } from './fundGenerator';
 import { fundCallSettings } from './capitalCallWizard';
+import type { Stamped } from './capitalCallLines';
 
 export type CapitalCallOrigin = 'backOffice' | 'import' | 'api';
 
@@ -85,6 +86,8 @@ export interface CapitalCall {
   shares: CapitalCallShare[];
   message: string;
   attachments: CapitalCallAttachment[];
+  /** Commentaire interne de l'équipe de gestion, saisi à la création : ni sur l'avis, ni dans l'email. */
+  internalComment?: Stamped<string> | null;
   /** Identifiant de l'appel dans un système tiers. */
   externalId: string | null;
   createdAt: Date;

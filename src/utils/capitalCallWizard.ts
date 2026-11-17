@@ -25,6 +25,8 @@ export interface WizardSubscription {
   availableAt: Date;
   /** Date de validation de la souscription par la société de gestion. */
   validatedAt: Date;
+  /** Option de conservation souscrite par l'investisseur. */
+  retentionOption: boolean;
 }
 
 export interface PendingForecast {
@@ -126,6 +128,7 @@ export function fundSubscriptions(fund: Fund, today = new Date()): WizardSubscri
         recalled,
         availableAt,
         validatedAt: new Date(availableAt.getTime() - (15 + Math.floor(random() * 400)) * DAY),
+        retentionOption: (index + shareIndex) % 3 === 0,
       });
     }
   });

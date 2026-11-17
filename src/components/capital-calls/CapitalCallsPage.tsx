@@ -20,6 +20,7 @@ import { useTranslation } from '../../utils/languageContext';
 import type { Fund } from '../../utils/fundGenerator';
 import {
   CapitalCall,
+  DEFAULT_DIFFUSION,
   distinctNoticeDate,
   generateCapitalCalls,
 } from '../../utils/capitalCallGenerator';
@@ -32,7 +33,7 @@ import {
 } from '../../utils/capitalCallWizardSession';
 import { expireStaleNotices, generateCapitalCallLines } from '../../utils/capitalCallLines';
 import { summarizeCall } from '../../utils/capitalCallSummary';
-import { fundCallSettings } from '../../utils/capitalCallWizard';
+import { emptyShareInput, fundCallSettings, fundSubscriptions } from '../../utils/capitalCallWizard';
 import {
   CapitalCallAction,
   CapitalCallRights,
@@ -170,8 +171,19 @@ function sortValue(call: CapitalCall, key: string): string | number {
   }
 }
 
+/** Appel ciblé demandé depuis une souscription : l'assistant s'ouvre restreint à cette souscription. */
+export interface TargetedCallRequest {
+  fundName: string;
+  share: string;
+  investor: string;
+  nonce: number;
+}
+
 interface CapitalCallsPageProps {
   funds: Fund[];
+  targetedCall?: TargetedCallRequest | null;
+  /** La demande d'appel ciblé est prise en compte une seule fois. */
+  onTargetedCallHandled?: () => void;
   /** Filtre fonds appliqué à l'ouverture, depuis la fiche d'un fonds. */
   initialFundIds?: number[];
   onOpenFund: (fundId: number) => void;
@@ -179,7 +191,14 @@ interface CapitalCallsPageProps {
   onSelectedCallChange?: (name: string | null) => void;
 }
 
-export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelectedCallChange }: CapitalCallsPageProps) {
+export function CapitalCallsPage({
+  funds,
+  targetedCall,
+  onTargetedCallHandled,
+  initialFundIds,
+  onOpenFund,
+  onSelectedCallChange,
+}: CapitalCallsPageProps) {
   const { t, lang } = useTranslation();
   const [scenario, setScenario] = useState<Scenario>('default');
   const [queue, setQueue] = useState<Queue>('all');
@@ -426,6 +445,7 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
       shares: draft.shares,
       message: draft.message,
       attachments: draft.attachments,
+      internalComment: draft.internalComment ? { value: draft.internalComment, by: CURRENT_USER, at: new Date() } : null,
       externalId: null,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -450,6 +470,54 @@ export function CapitalCallsPage({ funds, initialFundIds, onOpenFund, onSelected
     setWizardSession(null);
     clearWizardSession(CURRENT_USER);
   };
+
+  // Préparation d'un appel ciblé : fonds, part et souscription déjà choisis, montant à saisir.
+  useEffect(() => {
+    if (!targetedCall) return;
+    onTargetedCallHandled?.();
+    const fundName = targetedCall.fundName.toLowerCase();
+    const fund =
+      funds.find(item => item.name.toLowerCase() === fundName) ??
+      funds.find(item => fundName !== '' && item.name.toLowerCase().startsWith(fundName)) ??
+      funds[0];
+    if (!fund) return;
+    const subscriptions = fundSubscriptions(fund);
+    // La souscription porte "Part B", le fonds "B" : le préfixe est retiré avant la comparaison.
+    const shareName = targetedCall.share.replace(/^part\s+/i, '');
+    const share = fund.shareClasses.find(item => item.name === targetedCall.share || item.name === shareName)?.name ?? fund.shareClasses[0]?.name;
+    const ofShare = subscriptions.filter(item => item.share === share);
+    const target = ofShare.find(item => item.investor === targetedCall.investor) ?? ofShare[0];
+    if (!target) return;
+    const replaced = wizardSession !== null;
+    updateWizardSession({
+      step: 0,
+      fundId: fund.id,
+      shares: [target.share],
+      name: t(`${K}.targeted.defaultName`, { investor: targetedCall.investor || target.investor }),
+      dueDate: null,
+      noticeDate: null,
+      diffusion: DEFAULT_DIFFUSION,
+      message: '',
+      internalComment: '',
+      attachments: [null, null],
+      forecastId: null,
+      distributionIds: [],
+      mode: 'perShare',
+      amountToRaise: '',
+      inputs: Object.fromEntries(
+        fund.shareClasses.map(item => [
+          item.name,
+          item.name === target.share ? { ...emptyShareInput(), kind: 'amount' as const, restriction: [target.id] } : emptyShareInput(),
+        ]),
+      ),
+      savedAt: new Date().toISOString(),
+    });
+    window.location.hash = `#/capital-calls/${NEW_CALL_ID}`;
+    toast.info(t(`${K}.targeted.prepared`, { investor: targetedCall.investor || target.investor }), {
+      description: replaced ? t(`${K}.targeted.replaced`) : t(`${K}.targeted.preparedHint`),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [targetedCall?.nonce]);
 
   const openListing = () => {
     window.location.hash = '#/capital-calls';

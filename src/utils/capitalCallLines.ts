@@ -1,6 +1,13 @@
 import type { CapitalCall } from './capitalCallGenerator';
 
-export type LineState = 'toNotify' | 'notified' | 'paymentDeclared' | 'paid';
+export type LineState =
+  | 'toNotify'
+  | 'notified'
+  | 'paymentDeclared'
+  | 'partiallyPaid'
+  | 'paid'
+  | 'overpaid'
+  | 'cancelled';
 export type NoticeState = 'generating' | 'available' | 'failed' | 'replaced';
 export type PaymentOrigin = 'bankReconciliation' | 'directDebit' | 'manual';
 export type NoticeFailureReason = 'combinedTemplateMissing' | 'productionError' | 'timeout';
@@ -16,7 +23,41 @@ export interface NoticeEvent {
 /** Délai maximal de production d'un avis avant "En échec". Valeur provisoire : question ouverte d'IC-5589. */
 export const NOTICE_TIMEOUT_MINUTES = 30;
 
-export const LINE_STATES: LineState[] = ['toNotify', 'notified', 'paymentDeclared', 'paid'];
+/** États de règlement suivis sur la fiche d'une souscription. */
+export const LINE_STATES: LineState[] = [
+  'toNotify',
+  'notified',
+  'paymentDeclared',
+  'partiallyPaid',
+  'paid',
+  'overpaid',
+  'cancelled',
+];
+
+/** Statuts enregistrés sur une ligne d'appel, dans l'ordre du cycle. */
+export const CALL_LINE_STATES: LineState[] = ['toNotify', 'notified', 'paymentDeclared', 'paid'];
+
+/** Paiement reçu sur une ligne : une ligne peut être réglée en plusieurs fois. */
+export interface LinePayment {
+  id: string;
+  amount: number;
+  valueDate: Date;
+  origin: PaymentOrigin;
+  comment: string;
+  /** Null : rapprochement bancaire ou prélèvement, sans geste de l'opérateur. */
+  by: string | null;
+}
+
+/** Trop-perçu : remboursé à l'investisseur ou gardé en avance sur son prochain appel. */
+export type OverpaymentTreatment = 'refund' | 'carryForward';
+export const OVERPAYMENT_TREATMENTS: OverpaymentTreatment[] = ['refund', 'carryForward'];
+
+/** Geste daté d'un opérateur. */
+export interface Stamped<T> {
+  value: T;
+  by: string;
+  at: Date;
+}
 
 export interface CapitalCallLine {
   id: number;
@@ -222,4 +263,12 @@ function noticeFailed(line: CapitalCallLine, reason: NoticeFailureReason, at = n
     noticeRequestedAt: null,
     noticeEvents: [...line.noticeEvents, { at, kind: 'failed', reason }],
   };
+}
+
+/** État de règlement à partir du montant reçu ; sans paiement, l'état d'envoi est conservé. */
+export function paymentState(total: number, received: number, fallback: LineState): LineState {
+  if (received <= 0) return fallback === 'paid' || fallback === 'partiallyPaid' || fallback === 'overpaid' ? 'notified' : fallback;
+  const gap = Math.round((total - received) * 100) / 100;
+  if (gap > 0) return 'partiallyPaid';
+  return gap < 0 ? 'overpaid' : 'paid';
 }

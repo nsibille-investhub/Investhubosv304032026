@@ -4,24 +4,18 @@ import { Users } from 'lucide-react';
 
 import { useTranslation } from '../../utils/languageContext';
 import type { CapitalCall } from '../../utils/capitalCallGenerator';
-import { CapitalCallLine, LINE_STATES, LineState } from '../../utils/capitalCallLines';
+import { CALL_LINE_STATES, CapitalCallLine } from '../../utils/capitalCallLines';
 import { ClickableText } from '../ClickableText';
 import { ColumnConfig, DataTable } from '../DataTable';
 import { EmptyState } from '../EmptyState';
 import { FilterBar, FilterConfig } from '../FilterBar';
 import { ListingCard, ListingColumnsMenu, ListingNameCell, ListingTruncatedText } from '../ui/listing';
-import { StatusBadge, StatusVariant } from '../StatusBadge';
+import { StatusBadge } from '../StatusBadge';
 import { Button } from '../ui/button';
+import { LINE_STATE_VARIANT } from './CapitalCallPaymentSheet';
 import { DataPagination } from '../ui/data-pagination';
 
 const K = 'funds.capitalCalls.detail.lines';
-
-const LINE_STATE_VARIANT: Record<LineState, StatusVariant> = {
-  toNotify: 'neutral',
-  notified: 'info',
-  paymentDeclared: 'warning',
-  paid: 'success',
-};
 
 type ColumnKey =
   | 'investor'
@@ -108,7 +102,7 @@ function sortValue(line: CapitalCallLine, key: string): string | number {
     case 'total':
       return line.total;
     case 'status':
-      return LINE_STATES.indexOf(line.state);
+      return CALL_LINE_STATES.indexOf(line.state);
     case 'notifiedOn':
       return line.notifiedAt?.getTime() ?? 0;
     case 'remindedOn':
@@ -184,7 +178,7 @@ export function CapitalCallLinesTab({ call, lines, fundShares }: CapitalCallLine
         label: t(`${K}.columns.status`),
         type: 'multiselect',
         isPrimary: true,
-        options: LINE_STATES.map(value => ({ value, label: t(`${K}.states.${value}`) })),
+        options: CALL_LINE_STATES.map(value => ({ value, label: t(`${K}.states.${value}`) })),
       },
     ];
   }, [lines, fundShares, lang, t]);

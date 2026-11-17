@@ -896,7 +896,8 @@
           "paid": "Paid",
           "amountMetric": "Amount",
           "perCall": "{{amount}} per call"
-        }
+        },
+        "targetedCall": "Call this investor"
       },
       "documentsTab": {
         "viewSwitch": "Document type",
@@ -6730,13 +6731,18 @@
             "remindedOn": "Reminded on",
             "paidOn": "Paid on",
             "createdAt": "Created on",
-            "updatedAt": "Updated on"
+            "updatedAt": "Updated on",
+            "received": "Received",
+            "balance": "Remaining due"
           },
           "states": {
             "toNotify": "To notify",
             "notified": "Notified",
             "paymentDeclared": "Payment declared",
-            "paid": "Paid"
+            "paid": "Paid",
+            "partiallyPaid": "Partially paid",
+            "overpaid": "Overpaid",
+            "cancelled": "Cancelled"
           },
           "paymentOrigins": {
             "bankReconciliation": "bank reconciliation",
@@ -6749,6 +6755,68 @@
             "filteredTitle": "No matching line",
             "filteredDescription": "Change the filters to widen the results.",
             "reset": "Reset filters"
+          },
+          "overpaidBalance": "Overpaid {{amount}}",
+          "partialTooltipOne": "{{received}} received out of {{total}}, in 1 payment",
+          "partialTooltipMany": "{{received}} received out of {{total}}, in {{count}} payments",
+          "overpaidTooltip": "Overpaid by {{amount}} · Treatment: {{treatment}}",
+          "treatments": {
+            "refund": "Refund the investor",
+            "carryForward": "Keep as advance on next call",
+            "undecided": "To be decided"
+          },
+          "actions": {
+            "treatOverpayment": "Handle the difference"
+          },
+          "payment": {
+            "title": "Record a payment",
+            "description": "{{investor}} · {{subscription}} · {{call}}",
+            "summary": {
+              "title": "Line status",
+              "due": "Amount due",
+              "received": "Received",
+              "remaining": "Remaining due",
+              "overpaid": "Overpaid"
+            },
+            "history": {
+              "title": "Recorded payments",
+              "empty": "No payment recorded on this line.",
+              "row": "Received on {{date}} · {{origin}}",
+              "by": "Entered by {{name}}",
+              "automatic": "Recorded automatically"
+            },
+            "form": {
+              "title": "New payment",
+              "description": "Enter the amount actually received. An incomplete transfer leaves the line partially paid.",
+              "amount": "Amount received",
+              "valueDate": "Value date",
+              "origin": "Origin",
+              "comment": "Comment",
+              "commentPlaceholder": "E.g. transfer received in two instalments, balance expected at month end",
+              "result": "After saving:",
+              "resultRemaining": "{{amount}} still to be received",
+              "resultOverpaid": "{{amount}} received in excess"
+            },
+            "treatment": {
+              "title": "Overpayment treatment",
+              "description": "The amount received exceeds the amount called. Choose what happens to the difference.",
+              "undecided": "To be decided",
+              "hints": {
+                "refund": "The {{amount}} difference will be refunded to the investor. The refund is tracked in the call history.",
+                "carryForward": "The {{amount}} difference will be deducted from the next call of this subscription.",
+                "undecided": "The {{amount}} difference stays flagged in the call summary until a treatment is chosen."
+              }
+            },
+            "errors": {
+              "amount": "Enter an amount greater than 0.",
+              "date": "Enter the value date."
+            },
+            "cancel": "Cancel",
+            "save": "Save",
+            "toast": {
+              "recorded": "Payment of {{amount}} recorded for {{investor}}",
+              "treated": "Overpayment of {{investor}}: {{treatment}}"
+            }
           }
         }
       },
@@ -6904,7 +6972,10 @@
             "noMessage": "No message"
           },
           "forecastHint": "Linking a forecast flow marks it as consumed: it is no longer offered for another call, and its amount can be used as the amount to raise in the next step. Deleting the call puts it back on hold.",
-          "distributionsHint": "A compensated distribution is deducted from the amount due: the investor only settles the net amount and sees no payment action on the portal."
+          "distributionsHint": "A compensated distribution is deducted from the amount due: the investor only settles the net amount and sees no payment action on the portal.",
+          "internalComment": "Internal comment",
+          "internalCommentHint": "Only visible to your team: it appears neither on the notice nor in the email.",
+          "internalCommentPlaceholder": "E.g. due date aligned with the planned disbursement"
         },
         "amounts": {
           "modes": {
@@ -6960,7 +7031,55 @@
             "search": "Search an investor or a subscription",
             "empty": "No subscription",
             "remove": "Remove {{investor}}",
-            "availableAt": "Available on {{date}}"
+            "availableAt": "Available on {{date}}",
+            "edit": "Edit selection ({{count}} of {{total}})",
+            "picker": {
+              "title": "Called subscriptions: {{share}}",
+              "subtitle": "Filter the list, then tick the subscriptions to call. Without a selection, the whole share is called.",
+              "search": "Search a subscription or an investor",
+              "filters": {
+                "retention": "Retention option",
+                "retentionOptions": {
+                  "with": "With retention option",
+                  "without": "Without retention option"
+                },
+                "history": "History",
+                "historyOptions": {
+                  "firstCall": "First call",
+                  "alreadyCalled": "Already called"
+                },
+                "selection": "Selection",
+                "selectionOptions": {
+                  "selected": "Ticked",
+                  "notSelected": "Not ticked"
+                }
+              },
+              "onAll": "On the {{count}} subscriptions:",
+              "onVisible": "On the {{count}} displayed subscriptions:",
+              "actions": {
+                "selectVisible": "Tick all",
+                "invert": "Invert selection",
+                "clearVisible": "Untick all"
+              },
+              "columns": {
+                "subscription": "Subscription",
+                "investor": "Investor",
+                "committed": "Commitment",
+                "units": "Units",
+                "called": "Already called",
+                "validatedAt": "Validated on"
+              },
+              "selectRow": "Select {{id}}",
+              "retention": "Retention option",
+              "firstCall": "First call",
+              "availableAt": "Available on {{date}}",
+              "empty": "No subscription matches the filters.",
+              "noneSelected": "No selection: all {{total}} subscriptions of the share are called",
+              "summary": "{{count}} of {{total}} ticked · Commitment {{committed}}",
+              "cancel": "Cancel",
+              "confirm": "Restrict to {{count}} subscriptions",
+              "confirmAll": "Call the whole share"
+            }
           },
           "toRaise": {
             "label": "Amount to raise",
@@ -7088,6 +7207,12 @@
           "role": "Role",
           "fileName": "recipients-{{name}}.csv"
         }
+      },
+      "targeted": {
+        "defaultName": "Targeted call {{investor}}",
+        "prepared": "Call prepared for {{investor}}",
+        "preparedHint": "Fund, share and subscription are already selected: enter the date and the amount to call.",
+        "replaced": "The pending preparation was replaced by this targeted call."
       }
     }
   },
@@ -7449,7 +7574,7 @@
       },
       "mailPreview": {
         "title": "Email preview",
-        "description": "Preview window for an email before sending: resolved subject, optional attached items, HTML body rendered in a script-free frame. Nothing is sent. Opened from a \"Preview\" button in the header of the Communication subsection or on a recipient row.",
+        "description": "Side panel previewing an email before sending: resolved subject, optional attached items, HTML body rendered in a script-free frame, full height. Nothing is sent. Opened from a \"Preview\" button in the header of the Communication subsection or on a recipient row.",
         "variants": "With or without attached items under the subject (attachments, accompanying message).",
         "states": "Open, closed. Opening button unavailable with a reason when no email is sent.",
         "exampleLabel": "Preview of a capital call notification",
