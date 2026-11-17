@@ -35,7 +35,7 @@ export function ModernSidebar({ expanded, onToggle, currentPage = 'entities', on
     investisseurs: currentPage === 'subscriptions' || currentPage === 'investors',
     partenaires: currentPage === 'partners' || currentPage === 'settings-conventions' || currentPage === 'retrocessions',
     participations: false,
-    fundlife: currentPage === 'allfunds' || currentPage === 'capitalcalls' || currentPage === 'distributions',
+    fundlife: currentPage === 'allfunds' || currentPage === 'capitalcalls' || currentPage === 'capitalaccounts' || currentPage === 'distributions',
     dataroom: currentPage === 'documents' || currentPage === 'tracking' || currentPage === 'birdview' || currentPage === 'validation',
     portails: currentPage === 'events' || currentPage === 'news' || currentPage === 'datahub',
     communications: false,
@@ -72,7 +72,7 @@ export function ModernSidebar({ expanded, onToggle, currentPage = 'entities', on
       investisseurs: currentPage === 'subscriptions' || currentPage === 'investors',
       partenaires: currentPage === 'partners' || currentPage === 'settings-conventions' || currentPage === 'retrocessions',
       participations: false,
-      fundlife: currentPage === 'allfunds' || currentPage === 'capitalcalls' || currentPage === 'distributions',
+      fundlife: currentPage === 'allfunds' || currentPage === 'capitalcalls' || currentPage === 'capitalaccounts' || currentPage === 'distributions',
       dataroom: currentPage === 'documents' || currentPage === 'tracking' || currentPage === 'birdview' || currentPage === 'validation',
       portails: currentPage === 'events' || currentPage === 'news' || currentPage === 'datahub',
       communications: false,
@@ -303,7 +303,13 @@ export function ModernSidebar({ expanded, onToggle, currentPage = 'entities', on
                 isActive={currentPage === 'capitalcalls'}
                 onClick={() => onPageChange?.('capitalcalls')}
               />
-              <SubMenuItem icon={icons.Wallet} label={t('sidebar.submenu.capitalAccounts')} expanded={expanded} />
+              <SubMenuItem
+                icon={icons.Wallet}
+                label={t('sidebar.submenu.capitalAccounts')}
+                expanded={expanded}
+                isActive={currentPage === 'capitalaccounts'}
+                onClick={() => onPageChange?.('capitalaccounts')}
+              />
               <SubMenuItem
                 icon={icons.ArrowDownCircle}
                 label={t('sidebar.submenu.distributions')}

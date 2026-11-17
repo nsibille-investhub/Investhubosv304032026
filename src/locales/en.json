@@ -175,7 +175,8 @@
     "settings": "Settings",
     "entityDetail": "Entity detail",
     "capitalCalls": "Capital calls",
-    "distributions": "Distributions"
+    "distributions": "Distributions",
+    "capitalAccounts": "Capital accounts"
   },
   "search": {
     "placeholder": "Search... Ask anything to your Hub.",
@@ -7303,6 +7304,94 @@
             "notified": "Notified",
             "initiated": "Initiated",
             "paid": "Paid"
+          },
+          "empty": {
+            "title": "No investor lines",
+            "filteredTitle": "No matching line",
+            "filteredDescription": "Change the filters to widen the results.",
+            "reset": "Reset filters"
+          }
+        }
+      }
+    },
+    "capitalAccounts": {
+      "title": "Capital accounts",
+      "subtitle": "Capital accounts from every fund in your scope",
+      "searchPlaceholder": "Search a capital account",
+      "allShares": "All",
+      "filters": {
+        "funds": "Funds",
+        "period": "Period",
+        "reset": "Reset filters"
+      },
+      "columns": {
+        "name": "Name",
+        "fund": "Fund",
+        "date": "Date",
+        "noticeDate": "Notice date",
+        "shares": "Shares",
+        "capitalGains": "Capital gains",
+        "unrealizedGains": "Unrealized gains",
+        "netResult": "Net result",
+        "createdAt": "Created on",
+        "updatedAt": "Updated on"
+      },
+      "empty": {
+        "title": "No capital accounts",
+        "description": "Capital accounts from the funds in your scope will appear here.",
+        "filteredTitle": "No matching capital accounts",
+        "filteredDescription": "Change the search or the filters to widen the results."
+      },
+      "accessDenied": {
+        "title": "Access denied",
+        "description": "You don't have the \"View capital accounts\" right. Please contact your internal administrator.",
+        "outOfScopeDescription": "This capital account belongs to a fund outside your scope.",
+        "notFoundTitle": "Capital account not found",
+        "notFoundDescription": "This capital account does not exist or has been deleted."
+      },
+      "scenario": {
+        "label": "Demo scenario",
+        "options": {
+          "default": "Full scope",
+          "limitedScope": "Scope limited to two funds",
+          "noRight": "Without the View capital accounts right"
+        }
+      },
+      "detail": {
+        "back": "Back to capital accounts",
+        "yes": "Yes",
+        "no": "No",
+        "header": {
+          "date": "Date: {{date}}",
+          "noticeDate": "Notice date: {{date}}",
+          "notification": "Notification: {{value}}",
+          "shares": "Shares: {{shares}}",
+          "createdOn": "Created on {{date}}"
+        },
+        "tabs": {
+          "lines": "Investor lines",
+          "parameters": "Parameters"
+        },
+        "toast": {
+          "notInMockup": "The page for {{name}} is not in the mockup yet."
+        },
+        "lines": {
+          "columns": {
+            "investor": "Investor",
+            "subscription": "Subscription",
+            "subscriptionRef": "Subscription ID",
+            "share": "Share",
+            "capitalGains": "Capital gains",
+            "unrealizedGains": "Unrealized gains",
+            "netResult": "Net result",
+            "status": "Status",
+            "notifiedOn": "Notified on",
+            "createdAt": "Created on",
+            "updatedAt": "Updated on"
+          },
+          "states": {
+            "created": "Created",
+            "notified": "Notified"
           },
           "empty": {
             "title": "No investor lines",

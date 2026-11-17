@@ -175,7 +175,8 @@
     "settings": "Paramètres",
     "entityDetail": "Détail de l'entité",
     "capitalCalls": "Appels de fonds",
-    "distributions": "Distributions"
+    "distributions": "Distributions",
+    "capitalAccounts": "Capital accounts"
   },
   "search": {
     "placeholder": "Rechercher... Posez votre question à votre Hub.",
@@ -7303,6 +7304,94 @@
             "notified": "Notifiée",
             "initiated": "Initiée",
             "paid": "Payée"
+          },
+          "empty": {
+            "title": "Aucune ligne investisseur",
+            "filteredTitle": "Aucune ligne ne correspond",
+            "filteredDescription": "Modifiez les filtres pour élargir les résultats.",
+            "reset": "Réinitialiser les filtres"
+          }
+        }
+      }
+    },
+    "capitalAccounts": {
+      "title": "Capital accounts",
+      "subtitle": "Les capital accounts de tous les fonds de votre périmètre",
+      "searchPlaceholder": "Rechercher un capital account",
+      "allShares": "Toutes",
+      "filters": {
+        "funds": "Fonds",
+        "period": "Période",
+        "reset": "Réinitialiser les filtres"
+      },
+      "columns": {
+        "name": "Nom",
+        "fund": "Fonds",
+        "date": "Date",
+        "noticeDate": "Date de l'avis",
+        "shares": "Parts",
+        "capitalGains": "Plus-values",
+        "unrealizedGains": "Plus-values latentes",
+        "netResult": "Résultat net",
+        "createdAt": "Créé le",
+        "updatedAt": "Modifié le"
+      },
+      "empty": {
+        "title": "Aucun capital account",
+        "description": "Les capital accounts des fonds de votre périmètre s'afficheront ici.",
+        "filteredTitle": "Aucun capital account ne correspond",
+        "filteredDescription": "Modifiez la recherche ou les filtres pour élargir les résultats."
+      },
+      "accessDenied": {
+        "title": "Accès refusé",
+        "description": "Vous n'avez pas le droit \"Consulter les capital accounts\". Rapprochez-vous de votre administrateur interne.",
+        "outOfScopeDescription": "Ce capital account porte sur un fonds hors de votre périmètre.",
+        "notFoundTitle": "Capital account introuvable",
+        "notFoundDescription": "Ce capital account n'existe pas ou a été supprimé."
+      },
+      "scenario": {
+        "label": "Scénario de démonstration",
+        "options": {
+          "default": "Périmètre complet",
+          "limitedScope": "Périmètre limité à deux fonds",
+          "noRight": "Sans le droit Consulter les capital accounts"
+        }
+      },
+      "detail": {
+        "back": "Retour aux capital accounts",
+        "yes": "Oui",
+        "no": "Non",
+        "header": {
+          "date": "Date : {{date}}",
+          "noticeDate": "Date de l'avis : {{date}}",
+          "notification": "Notification : {{value}}",
+          "shares": "Parts : {{shares}}",
+          "createdOn": "Créé le {{date}}"
+        },
+        "tabs": {
+          "lines": "Lignes investisseurs",
+          "parameters": "Paramètres"
+        },
+        "toast": {
+          "notInMockup": "La fiche de {{name}} n'est pas encore dans la maquette."
+        },
+        "lines": {
+          "columns": {
+            "investor": "Investisseur",
+            "subscription": "Souscription",
+            "subscriptionRef": "Identifiant de la souscription",
+            "share": "Part",
+            "capitalGains": "Plus-values",
+            "unrealizedGains": "Plus-values latentes",
+            "netResult": "Résultat net",
+            "status": "Statut",
+            "notifiedOn": "Notifiée le",
+            "createdAt": "Créée le",
+            "updatedAt": "Modifiée le"
+          },
+          "states": {
+            "created": "Créée",
+            "notified": "Notifiée"
           },
           "empty": {
             "title": "Aucune ligne investisseur",
