@@ -174,7 +174,8 @@
     "spaces": "Espaces",
     "settings": "Paramètres",
     "entityDetail": "Détail de l'entité",
-    "capitalCalls": "Appels de fonds"
+    "capitalCalls": "Appels de fonds",
+    "distributions": "Distributions"
   },
   "search": {
     "placeholder": "Rechercher... Posez votre question à votre Hub.",
@@ -7213,6 +7214,103 @@
         "prepared": "Appel préparé pour {{investor}}",
         "preparedHint": "Fonds, part et souscription sont déjà choisis : saisissez la date et le montant à appeler.",
         "replaced": "La préparation en attente a été remplacée par cet appel ciblé."
+      }
+    },
+    "distributions": {
+      "title": "Distributions",
+      "subtitle": "Les distributions de tous les fonds de votre périmètre",
+      "searchPlaceholder": "Rechercher une distribution",
+      "filters": {
+        "funds": "Fonds",
+        "period": "Période de distribution",
+        "reset": "Réinitialiser les filtres"
+      },
+      "columns": {
+        "name": "Nom",
+        "fund": "Fonds",
+        "date": "Date de distribution",
+        "noticeDate": "Date de l'avis",
+        "amount": "Montant",
+        "provisional": "Dont provisoire",
+        "fees": "Charges",
+        "refund": "Dont remboursement",
+        "capital": "Dont capital",
+        "interest": "Dont intérêts",
+        "externalId": "Identifiant externe",
+        "createdAt": "Créée le",
+        "updatedAt": "Modifiée le"
+      },
+      "empty": {
+        "title": "Aucune distribution",
+        "description": "Les distributions des fonds de votre périmètre s'afficheront ici.",
+        "filteredTitle": "Aucune distribution ne correspond",
+        "filteredDescription": "Modifiez la recherche ou les filtres pour élargir les résultats."
+      },
+      "accessDenied": {
+        "title": "Accès refusé",
+        "description": "Vous n'avez pas le droit \"Consulter les distributions\". Rapprochez-vous de votre administrateur interne.",
+        "outOfScopeDescription": "Cette distribution porte sur un fonds hors de votre périmètre.",
+        "notFoundTitle": "Distribution introuvable",
+        "notFoundDescription": "Cette distribution n'existe pas ou a été supprimée."
+      },
+      "scenario": {
+        "label": "Scénario de démonstration",
+        "options": {
+          "default": "Périmètre complet",
+          "limitedScope": "Périmètre limité à deux fonds",
+          "noRight": "Sans le droit Consulter les distributions"
+        }
+      },
+      "detail": {
+        "back": "Retour aux distributions",
+        "yes": "Oui",
+        "no": "Non",
+        "header": {
+          "date": "Distribution le {{date}}",
+          "noticeDate": "Date de l'avis : {{date}}",
+          "notification": "Notification : {{value}}",
+          "amount": "Montant distribué : {{amount}}",
+          "linkedCalls": "Appels liés",
+          "createdOn": "Créée le {{date}}"
+        },
+        "tabs": {
+          "lines": "Lignes investisseurs",
+          "parameters": "Paramètres"
+        },
+        "toast": {
+          "notInMockup": "La fiche de {{name}} n'est pas encore dans la maquette."
+        },
+        "lines": {
+          "columns": {
+            "investor": "Investisseur",
+            "subscription": "Souscription",
+            "share": "Part",
+            "amount": "Montant",
+            "provisional": "Dont provisoire",
+            "fees": "Charges",
+            "refund": "Dont remboursement",
+            "capital": "Dont capital",
+            "interest": "Dont intérêts",
+            "iban": "IBAN",
+            "bic": "BIC",
+            "status": "Statut",
+            "notifiedOn": "Notifiée le",
+            "createdAt": "Créée le",
+            "updatedAt": "Modifiée le"
+          },
+          "states": {
+            "created": "Créée",
+            "notified": "Notifiée",
+            "initiated": "Initiée",
+            "paid": "Payée"
+          },
+          "empty": {
+            "title": "Aucune ligne investisseur",
+            "filteredTitle": "Aucune ligne ne correspond",
+            "filteredDescription": "Modifiez les filtres pour élargir les résultats.",
+            "reset": "Réinitialiser les filtres"
+          }
+        }
       }
     }
   },

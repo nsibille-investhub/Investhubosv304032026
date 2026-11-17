@@ -71,6 +71,7 @@ import { AllFundsPage } from './components/AllFundsPage';
 import { FundDetailPage } from './components/fund-detail/FundDetailPage';
 import { FundStatusTabs } from './components/FundStatusTabs';
 import { CapitalCallsPage, type TargetedCallRequest } from './components/capital-calls/CapitalCallsPage';
+import { DistributionsPage } from './components/distributions/DistributionsPage';
 import { RetrocessionsSettings } from './components/settings/RetrocessionsSettings';
 // Settings imports
 import { AppStore } from './components/settings/AppStore';
@@ -161,6 +162,7 @@ export default function App() {
   const [capitalCallsFundIds, setCapitalCallsFundIds] = useState<number[]>([]);
   const [targetedCall, setTargetedCall] = useState<TargetedCallRequest | null>(null);
   const [selectedCapitalCallName, setSelectedCapitalCallName] = useState<string | null>(null);
+  const [selectedDistributionName, setSelectedDistributionName] = useState<string | null>(null);
 
   useEffect(() => {
     if (currentPage !== 'allfunds') setSelectedFundDetail(null);
@@ -823,6 +825,26 @@ export default function App() {
                     <span className="text-gray-900 dark:text-gray-100 font-medium">{t('breadcrumb.capitalCalls')}</span>
                   )}
                 </>
+              ) : currentPage === 'distributions' ? (
+                <>
+                  <span className="text-gray-400 dark:text-gray-500">{t('breadcrumb.fundLife')}</span>
+                  <span className="text-gray-300 dark:text-gray-700">/</span>
+                  {selectedDistributionName ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => navigateToPage('distributions')}
+                        className="text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+                      >
+                        {t('breadcrumb.distributions')}
+                      </button>
+                      <span className="text-gray-300 dark:text-gray-700">/</span>
+                      <span className="text-gray-900 dark:text-gray-100 font-medium">{selectedDistributionName}</span>
+                    </>
+                  ) : (
+                    <span className="text-gray-900 dark:text-gray-100 font-medium">{t('breadcrumb.distributions')}</span>
+                  )}
+                </>
               ) : currentPage === 'subscriptions' ? (
                 <>
                   <span className="text-gray-400 dark:text-gray-500">{t('breadcrumb.investors')}</span>
@@ -1405,6 +1427,19 @@ export default function App() {
               onTargetedCallHandled={() => setTargetedCall(null)}
               initialFundIds={capitalCallsFundIds}
               onSelectedCallChange={setSelectedCapitalCallName}
+              onOpenFund={fundId => {
+                const fund = allFundsData.find(item => item.id === fundId);
+                if (!fund) return;
+                setSelectedFundDetail(fund);
+                navigateToPage('allfunds');
+              }}
+            />
+          )}
+
+          {currentPage === 'distributions' && (
+            <DistributionsPage
+              funds={allFundsData}
+              onSelectedDistributionChange={setSelectedDistributionName}
               onOpenFund={fundId => {
                 const fund = allFundsData.find(item => item.id === fundId);
                 if (!fund) return;
