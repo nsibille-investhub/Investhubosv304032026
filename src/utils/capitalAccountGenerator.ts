@@ -33,8 +33,6 @@ export interface CapitalAccountLine {
   investor: string;
   /** Nom de la souscription. */
   subscription: string;
-  /** Identifiant affiché de la souscription. */
-  subscriptionRef: string;
   share: string;
   capitalGains: number | null;
   unrealizedGains: number | null;
@@ -172,7 +170,6 @@ export function generateCapitalAccountLines(account: CapitalAccount, fundShares:
       id: account.id * 1000 + index + 1,
       investor,
       subscription: `${investor} - ${symbol}${committed}K - ${account.fundName} Part ${share}`,
-      subscriptionRef: `SUB-${String(account.fundId * 1000 + ((account.id * 13 + index * 17) % 900) + 100).padStart(6, '0')}`,
       share,
       capitalGains: part(account.capitalGains),
       unrealizedGains: part(account.unrealizedGains),

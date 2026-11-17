@@ -7379,7 +7379,6 @@
           "columns": {
             "investor": "Investor",
             "subscription": "Subscription",
-            "subscriptionRef": "Subscription ID",
             "share": "Share",
             "capitalGains": "Capital gains",
             "unrealizedGains": "Unrealized gains",

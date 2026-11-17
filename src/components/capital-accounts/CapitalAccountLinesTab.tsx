@@ -23,7 +23,6 @@ const K = 'funds.capitalAccounts.detail.lines';
 const COLUMN_KEYS = [
   'investor',
   'subscription',
-  'subscriptionRef',
   'share',
   'capitalGains',
   'unrealizedGains',
@@ -88,8 +87,6 @@ function sortValue(line: CapitalAccountLine, key: string): string | number {
       return line.subscription.toLowerCase();
     case 'share':
       return line.share.toLowerCase();
-    case 'subscriptionRef':
-      return line.subscriptionRef;
     case 'capitalGains':
       return line.capitalGains ?? 0;
     case 'unrealizedGains':
@@ -262,7 +259,6 @@ export function CapitalAccountLinesTab({ account, lines, fundShares }: CapitalAc
         </ClickableText>
       </button>
     ),
-    subscriptionRef: line => <span className="whitespace-nowrap text-sm tabular-nums">{line.subscriptionRef}</span>,
     share: line => <span className="whitespace-nowrap text-sm">{t('funds.detail.sharePrefix', { name: line.share })}</span>,
     capitalGains: line => amount(line.capitalGains),
     unrealizedGains: line => amount(line.unrealizedGains),

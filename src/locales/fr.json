@@ -7379,7 +7379,6 @@
           "columns": {
             "investor": "Investisseur",
             "subscription": "Souscription",
-            "subscriptionRef": "Identifiant de la souscription",
             "share": "Part",
             "capitalGains": "Plus-values",
             "unrealizedGains": "Plus-values latentes",
