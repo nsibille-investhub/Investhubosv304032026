@@ -36,7 +36,6 @@ import { FilterBar, type FilterConfig } from './FilterBar';
 import { StatusBadge, type StatusVariant } from './StatusBadge';
 import { Button } from './ui/button';
 import { ConfirmDialog } from './ui/confirm-dialog';
-import { DisabledReason } from './ui/disabled-reason';
 import { ListingCard, ListingNameCell } from './ui/listing';
 import { ActionsMenu, TableRowActions, type TableRowAction } from './ui/row-actions';
 import { SegmentedControl } from './ui/segmented-control';
@@ -431,7 +430,6 @@ function KycDocumentsView({ subscription, isCorporate, documents, onChange }: Ky
 
   const name = (doc: MockKycDocument) => t(doc.nameKey);
   const statusOf = kycDisplayStatus;
-  const toRequest = documents.filter((doc) => ['missing', 'rejected', 'expired'].includes(statusOf(doc)));
 
 
   const setStatus = (doc: MockKycDocument, status: KycDocumentStatus, rejectionReason?: string) =>
@@ -599,7 +597,6 @@ function KycDocumentsView({ subscription, isCorporate, documents, onChange }: Ky
     },
   ];
 
-  const requestDisabledReason = toRequest.length === 0 ? t(`${K}.kyc.nothingToRequest`) : undefined;
   return (
     <>
       <ListingCard
@@ -607,16 +604,6 @@ function KycDocumentsView({ subscription, isCorporate, documents, onChange }: Ky
           <Toolbar
             actions={
               <>
-                <DisabledReason reason={requestDisabledReason}>
-                  <Button
-                    variant="outline"
-                    disabled={Boolean(requestDisabledReason)}
-                    onClick={() => toast.success(tc(`${K}.toast.requestedMany`, toRequest.length))}
-                  >
-                    <Send className="w-4 h-4" />
-                    {tc(`${K}.kyc.requestMissing`, toRequest.length)}
-                  </Button>
-                </DisabledReason>
                 <Button onClick={() => toast.info(t(`${K}.toast.addDocument`))}>
                   <Plus className="w-4 h-4" />
                   {t(`${K}.addDocument`)}

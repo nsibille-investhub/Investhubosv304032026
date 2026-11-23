@@ -955,9 +955,7 @@
           "validated": "« {{name}} » validé",
           "rejected": "« {{name}} » refusé, l'investisseur sera notifié",
           "upload": "Dépôt de « {{name}} » : bientôt disponible",
-          "requested": "Demande envoyée à l'investisseur pour « {{name}} »",
-          "requestedManyOne": "Demande envoyée pour {{count}} pièce",
-          "requestedManyMany": "Demande envoyée pour {{count}} pièces"
+          "requested": "Demande envoyée à l'investisseur pour « {{name}} »"
         },
         "subscription": {
           "fileVersion": "{{category}} · v{{version}} · {{language}}",
@@ -1019,9 +1017,6 @@
           "maxAgeHintOne": "Pièce valable {{count}} jour après son émission",
           "maxAgeHintMany": "Pièce valable {{count}} jours après son émission",
           "rejectedBecause": "Motif : {{reason}}",
-          "requestMissingOne": "Demander {{count}} pièce",
-          "requestMissingMany": "Demander {{count}} pièces",
-          "nothingToRequest": "Aucune pièce manquante, refusée ou expirée",
           "rejectTitle": "Refuser la pièce",
           "rejectDescription": "Indiquez le motif du refus de « {{name}} ». Il sera communiqué à l'investisseur avec la demande d'une nouvelle pièce.",
           "rejectReasonLabel": "Motif du refus",

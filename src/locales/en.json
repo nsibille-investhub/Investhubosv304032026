@@ -955,9 +955,7 @@
           "validated": "“{{name}}” approved",
           "rejected": "“{{name}}” rejected, the investor will be notified",
           "upload": "Uploading “{{name}}”: coming soon",
-          "requested": "Request sent to the investor for “{{name}}”",
-          "requestedManyOne": "Request sent for {{count}} document",
-          "requestedManyMany": "Request sent for {{count}} documents"
+          "requested": "Request sent to the investor for “{{name}}”"
         },
         "subscription": {
           "fileVersion": "{{category}} · v{{version}} · {{language}}",
@@ -1019,9 +1017,6 @@
           "maxAgeHintOne": "Valid for {{count}} day after issue",
           "maxAgeHintMany": "Valid for {{count}} days after issue",
           "rejectedBecause": "Reason: {{reason}}",
-          "requestMissingOne": "Request {{count}} document",
-          "requestMissingMany": "Request {{count}} documents",
-          "nothingToRequest": "No missing, rejected or expired document",
           "rejectTitle": "Reject document",
           "rejectDescription": "Give the reason for rejecting “{{name}}”. It will be shared with the investor along with a request for a new document.",
           "rejectReasonLabel": "Rejection reason",
