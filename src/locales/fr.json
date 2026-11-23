@@ -988,15 +988,6 @@
             "kid": "Document d'informations clés (DIC PRIIPs)",
             "fundRegulation": "Règlement du fonds",
             "signatureCertificate": "Certificat de preuve de signature"
-          },
-          "queues": {
-            "all": "Tous les documents",
-            "awaitingSignature": "À signer",
-            "awaitingCounterSignature": "À contre-signer",
-            "completed": "Signés",
-            "draft": "Brouillons",
-            "signaturesMetric": "Signatures",
-            "perDocument": "{{count}} signataire(s) par document"
           }
         },
         "kyc": {
@@ -1067,15 +1058,6 @@
             "uboIds": "Pièces d'identité des bénéficiaires effectifs",
             "fatcaCrsEntity": "Auto-certification FATCA / CRS entité",
             "bankDetailsEntity": "RIB au nom de la société"
-          },
-          "queues": {
-            "all": "Toutes les pièces",
-            "toReview": "À valider",
-            "toRequest": "À demander",
-            "expiring": "Expirent sous {{count}} j",
-            "validated": "Validées",
-            "holdersMetric": "Titulaires",
-            "perHolder": "{{count}} pièce(s) par titulaire"
           }
         }
       },

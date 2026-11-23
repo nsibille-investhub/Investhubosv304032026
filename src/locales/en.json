@@ -988,15 +988,6 @@
             "kid": "Key information document (PRIIPs KID)",
             "fundRegulation": "Fund regulations",
             "signatureCertificate": "Signature evidence certificate"
-          },
-          "queues": {
-            "all": "All documents",
-            "awaitingSignature": "To sign",
-            "awaitingCounterSignature": "To countersign",
-            "completed": "Signed",
-            "draft": "Drafts",
-            "signaturesMetric": "Signatures",
-            "perDocument": "{{count}} signer(s) per document"
           }
         },
         "kyc": {
@@ -1067,15 +1058,6 @@
             "uboIds": "Beneficial owners' ID documents",
             "fatcaCrsEntity": "Entity FATCA / CRS self-certification",
             "bankDetailsEntity": "Bank details in the company's name"
-          },
-          "queues": {
-            "all": "All documents",
-            "toReview": "To review",
-            "toRequest": "To request",
-            "expiring": "Expire within {{count}} d",
-            "validated": "Approved",
-            "holdersMetric": "Holders",
-            "perHolder": "{{count}} document(s) per holder"
           }
         }
       },
