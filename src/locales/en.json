@@ -909,6 +909,19 @@
           "subscription": "Subscription documents · {{count}}",
           "kyc": "KYC documents · {{count}}"
         },
+        "downloadMenu": {
+          "label": "Download",
+          "all": "Download all",
+          "kyc": "Download KYC documents",
+          "subscription": "Download subscription documents",
+          "custodianPack": "Download custodian pack",
+          "toast": {
+            "all": "All documents downloaded (ZIP)",
+            "kyc": "KYC documents downloaded (ZIP)",
+            "subscription": "Subscription documents downloaded (ZIP)",
+            "custodianPack": "Custodian pack downloaded (ZIP)"
+          }
+        },
         "addDocument": "Add document",
         "searchPlaceholder": "Search a document…",
         "entity": "document",
@@ -938,7 +951,6 @@
           "downloaded": "“{{name}}” downloaded",
           "reminded": "Reminder sent for “{{name}}”",
           "deleted": "“{{name}}” deleted",
-          "packExported": "Subscription file exported (ZIP)",
           "addDocument": "Adding a document: coming soon",
           "validated": "“{{name}}” approved",
           "rejected": "“{{name}}” rejected, the investor will be notified",
@@ -951,7 +963,6 @@
           "fileVersion": "{{category}} · v{{version}} · {{language}}",
           "signersProgress": "{{signed}} / {{total}}",
           "notSignable": "Provided for information",
-          "exportPack": "Export file",
           "deleteLocked": "Document already signed or provided to the investor: it can no longer be deleted",
           "deleteTitle": "Delete document",
           "deleteDescription": "“{{name}}” will be removed from the subscription file. This cannot be undone.",

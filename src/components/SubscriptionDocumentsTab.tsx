@@ -1,16 +1,20 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import {
+  Archive,
   Check,
   Download,
   Eye,
   FileSignature,
   FileText,
+  Landmark,
+  MoreHorizontal,
   Plus,
   Send,
   ShieldCheck,
   Trash2,
   Upload,
   X,
+  type LucideIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from '../utils/languageContext';
@@ -34,7 +38,7 @@ import { Button } from './ui/button';
 import { ConfirmDialog } from './ui/confirm-dialog';
 import { DisabledReason } from './ui/disabled-reason';
 import { ListingCard, ListingNameCell } from './ui/listing';
-import { TableRowActions, type TableRowAction } from './ui/row-actions';
+import { ActionsMenu, TableRowActions, type TableRowAction } from './ui/row-actions';
 import { SegmentedControl } from './ui/segmented-control';
 import { Textarea } from './ui/textarea';
 
@@ -77,6 +81,12 @@ const KYC_STATUS_VARIANT: Record<KycDisplayStatus, StatusVariant> = {
 };
 const KYC_CATEGORIES: KycDocumentCategory[] = ['identity', 'address', 'tax', 'funds', 'bank', 'company', 'ubo', 'compliance'];
 
+const DOWNLOAD_SCOPES: { id: 'all' | 'kyc' | 'subscription' | 'custodianPack'; icon: LucideIcon }[] = [
+  { id: 'all', icon: Archive },
+  { id: 'kyc', icon: ShieldCheck },
+  { id: 'subscription', icon: FileSignature },
+  { id: 'custodianPack', icon: Landmark },
+];
 
 const daysFromNow = (days: number) => new Date(Date.now() + days * DAY_MS);
 
@@ -139,23 +149,35 @@ export function SubscriptionDocumentsTab({ subscription }: SubscriptionDocuments
 
   return (
     <div className="space-y-4">
-      <SegmentedControl<View>
-        aria-label={t(`${K}.viewSwitch`)}
-        value={view}
-        onValueChange={setView}
-        options={[
-          {
-            value: 'subscription',
-            icon: <FileSignature className="w-4 h-4" />,
-            label: t(`${K}.views.subscription`, { count: mockSubscriptionDocuments.length }),
-          },
-          {
-            value: 'kyc',
-            icon: <ShieldCheck className="w-4 h-4" />,
-            label: t(`${K}.views.kyc`, { count: kycDocuments.length }),
-          },
-        ]}
-      />
+      <div className="flex items-center justify-between gap-3">
+        <SegmentedControl<View>
+          aria-label={t(`${K}.viewSwitch`)}
+          value={view}
+          onValueChange={setView}
+          options={[
+            {
+              value: 'subscription',
+              icon: <FileSignature className="w-4 h-4" />,
+              label: t(`${K}.views.subscription`, { count: mockSubscriptionDocuments.length }),
+            },
+            {
+              value: 'kyc',
+              icon: <ShieldCheck className="w-4 h-4" />,
+              label: t(`${K}.views.kyc`, { count: kycDocuments.length }),
+            },
+          ]}
+        />
+        <ActionsMenu
+          variant="outline"
+          icon={MoreHorizontal}
+          label={t(`${K}.downloadMenu.label`)}
+          actions={DOWNLOAD_SCOPES.map(({ id, icon }) => ({
+            label: t(`${K}.downloadMenu.${id}`),
+            icon,
+            onClick: () => toast.success(t(`${K}.downloadMenu.toast.${id}`)),
+          }))}
+        />
+      </div>
       {view === 'subscription' ? (
         <SubscriptionDocumentsView />
       ) : (
@@ -312,10 +334,6 @@ function SubscriptionDocumentsView() {
           <Toolbar
             actions={
               <>
-                <Button variant="outline" onClick={() => toast.success(t(`${K}.toast.packExported`))}>
-                  <Download className="w-4 h-4" />
-                  {t(`${K}.subscription.exportPack`)}
-                </Button>
                 <Button onClick={() => toast.info(t(`${K}.toast.addDocument`))}>
                   <Plus className="w-4 h-4" />
                   {t(`${K}.addDocument`)}

@@ -909,6 +909,19 @@
           "subscription": "Documents de souscription · {{count}}",
           "kyc": "Documents KYC · {{count}}"
         },
+        "downloadMenu": {
+          "label": "Télécharger",
+          "all": "Tout télécharger",
+          "kyc": "Télécharger les documents KYC",
+          "subscription": "Télécharger les documents de souscription",
+          "custodianPack": "Télécharger le pack dépositaire",
+          "toast": {
+            "all": "Tous les documents téléchargés (ZIP)",
+            "kyc": "Documents KYC téléchargés (ZIP)",
+            "subscription": "Documents de souscription téléchargés (ZIP)",
+            "custodianPack": "Pack dépositaire téléchargé (ZIP)"
+          }
+        },
         "addDocument": "Ajouter un document",
         "searchPlaceholder": "Rechercher un document…",
         "entity": "document",
@@ -938,7 +951,6 @@
           "downloaded": "« {{name}} » téléchargé",
           "reminded": "Relance envoyée pour « {{name}} »",
           "deleted": "« {{name}} » supprimé",
-          "packExported": "Dossier de souscription exporté (ZIP)",
           "addDocument": "Ajout d'un document : bientôt disponible",
           "validated": "« {{name}} » validé",
           "rejected": "« {{name}} » refusé, l'investisseur sera notifié",
@@ -951,7 +963,6 @@
           "fileVersion": "{{category}} · v{{version}} · {{language}}",
           "signersProgress": "{{signed}} / {{total}}",
           "notSignable": "Remis pour information",
-          "exportPack": "Exporter le dossier",
           "deleteLocked": "Document déjà signé ou remis à l'investisseur : il ne peut plus être supprimé",
           "deleteTitle": "Supprimer le document",
           "deleteDescription": "« {{name}} » sera retiré du dossier de souscription. Cette action est irréversible.",
