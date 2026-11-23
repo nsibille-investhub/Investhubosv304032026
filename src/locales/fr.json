@@ -697,7 +697,6 @@
       },
       "signatureStep": {
         "stage": {
-          "draft": "Brouillon",
           "signing": "En signature",
           "counterSigning": "En contre-signature",
           "completed": "Signée"
@@ -711,7 +710,6 @@
           "title": "Suivi des signatures",
           "notSent": "Pack non envoyé",
           "sentOn": "Envoyé le {{date}}",
-          "draftSavedOn": "Brouillon enregistré le {{date}}",
           "lastReminder": "Dernière relance le {{date}}",
           "remindersOne": "{{count}} relance",
           "remindersMany": "{{count}} relances",
@@ -719,12 +717,21 @@
           "noCounterSignatory": "Aucun contre-signataire"
         },
         "actions": {
-          "saveDraft": "Enregistrer le brouillon",
+          "validateWithoutESignature": "Valider sans signature électronique",
           "send": "Envoyer en signature",
           "remindSignatories": "Relancer les signataires",
           "remindCounterSignatories": "Relancer les contre-signataires",
           "regenerateLinks": "Régénérer les liens",
           "toPayment": "Passer au paiement"
+        },
+        "manualValidation": {
+          "label": "Sans signature électronique",
+          "validatedOn": "Validé sans signature électronique le {{date}}",
+          "title": "Valider sans signature électronique ?",
+          "descriptionOne": "Le pack sera considéré comme signé sur la base de {{count}} document signé déposé. Aucun lien de signature ne sera envoyé.",
+          "descriptionMany": "Le pack sera considéré comme signé sur la base des {{count}} documents signés déposés. Aucun lien de signature ne sera envoyé.",
+          "blockedCompliance": "La conformité n'est pas validée",
+          "blockedNoSignedDocument": "Ajoutez au moins un document signé au pack"
         },
         "blockers": {
           "title": "Envoi impossible",
@@ -737,30 +744,26 @@
         },
         "pack": {
           "title": "Pack de signature",
-          "subtitle": "Documents prévus par le bulletin de souscription, complétés des pièces à signer ou à joindre.",
+          "subtitle": "Documents prévus par le bulletin de souscription, complétés des documents ajoutés.",
           "locked": "Pack verrouillé depuis l'envoi en signature.",
           "documentsCountOne": "{{count}} document",
           "documentsCountMany": "{{count}} documents",
           "addToSign": "Ajouter un document à signer",
-          "addAnnex": "Ajouter une annexe",
+          "addSigned": "Ajouter un document signé",
+          "downloadAll": "Télécharger le pack de souscription",
           "toSign": "Documents à signer",
-          "toSignHint": "Signés par les signataires puis contre-signés",
-          "annexes": "Annexes",
-          "annexesHint": "Jointes au pack, sans signature",
+          "toSignHint": "Signés par les signataires puis contre-signés, ou déposés déjà signés",
           "emptyToSign": "Aucun document à signer. Ajoutez au moins un document.",
-          "emptyAnnexes": "Aucune annexe jointe au pack.",
           "sourceBulletin": "Prévu par le bulletin",
           "sourceAdded": "Ajouté",
           "signed": "Signé",
-          "kind": {
-            "toSign": "À signer",
-            "annex": "Annexe"
-          },
           "preview": "Aperçu",
           "remove": "Retirer du pack",
           "newDocumentName": "Document complémentaire {{index}}",
           "toast": {
             "added": "Document ajouté au pack",
+            "addedSigned": "Document signé ajouté au pack",
+            "downloaded": "Pack de souscription téléchargé (ZIP)",
             "removed": "Document retiré du pack",
             "preview": "Aperçu du document"
           }
@@ -822,13 +825,13 @@
           "middleOffice": "Responsable middle-office"
         },
         "toast": {
-          "draftSaved": "Brouillon enregistré",
           "sent": "Pack envoyé en signature",
           "sentDescOne": "Lien de signature envoyé à {{count}} signataire",
           "sentDescMany": "Lien de signature envoyé à {{count}} signataires",
           "counterSignatureStarted": "Contre-signature lancée",
           "counterSignatureStartedDescOne": "{{count}} contre-signataire a reçu le lien de signature.",
           "counterSignatureStartedDescMany": "{{count}} contre-signataires ont reçu le lien de signature.",
+          "manuallyValidated": "Pack validé sans signature électronique",
           "fullySigned": "Pack entièrement signé",
           "fullySignedDesc": "Vous pouvez passer au paiement.",
           "toPayment": "Passage à l'étape de paiement"
