@@ -28,7 +28,10 @@ import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Checkbox } from './ui/checkbox';
+import { ConfirmDialog } from './ui/confirm-dialog';
 import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Switch } from './ui/switch';
 import {
   Select,
   SelectContent,
@@ -58,11 +61,11 @@ type PartyKind = 'signatory' | 'counterSignatory';
 
 interface SignatureParty {
   id: string;
+  firstName: string;
+  lastName: string;
   name: string;
-  /** Fonction issue de la fiche investisseur (donnee), ou cle de traduction pour les defauts du fonds. */
-  role?: string;
-  roleKey?: string;
   email: string;
+  phone: string;
   source: 'investor' | 'fund' | 'manual';
   included: boolean;
   status: PartyStatus;
@@ -107,6 +110,43 @@ const toMockEmail = (name: string) =>
     .trim()
     .replace(/\s+/g, '.')}@example.com`;
 
+const splitName = (name: string) => {
+  const [firstName = '', ...rest] = name.trim().split(/\s+/);
+  return { firstName, lastName: rest.join(' ') };
+};
+
+const toMockPhone = (name: string) => {
+  const seed = Array.from(name).reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  const pair = (offset: number) => String((seed * (offset + 3)) % 100).padStart(2, '0');
+  return `+33 6 ${pair(1)} ${pair(2)} ${pair(3)} ${pair(4)}`;
+};
+
+interface SignatureBox {
+  page: string;
+  x: string;
+  y: string;
+}
+
+/** Document du pack, avec l'emplacement des encarts de signature saisi à l'ajout. */
+type PackDocument = MockSignaturePackDocument & {
+  signatureBox?: SignatureBox;
+  counterSignatureBox?: SignatureBox;
+};
+
+interface PlacementDraft {
+  /** Document existant basculé en « à signer », ou null pour un ajout. */
+  docId: string | null;
+  name: string;
+  signatureBox: SignatureBox;
+  counterSignatureBox: SignatureBox;
+}
+
+const EMPTY_BOX: SignatureBox = { page: '', x: '', y: '' };
+
+const isBoxComplete = (box: SignatureBox) =>
+  [box.page, box.x, box.y].every(value => value.trim() !== '' && Number(value) >= 0) &&
+  Number(box.page) >= 1;
+
 const initials = (name: string) =>
   name
     .split(/\s+/)
@@ -116,15 +156,15 @@ const initials = (name: string) =>
     .join('');
 
 function buildDefaultSignatories(subscription: any): SignatureParty[] {
-  const fromInvestor: Array<{ name: string; role: string }> =
-    subscription?.signatures?.signatories ?? [];
+  const fromInvestor: Array<{ name: string }> = subscription?.signatures?.signatories ?? [];
 
   if (fromInvestor.length > 0) {
     return fromInvestor.map((signatory, idx) => ({
       id: `investor-${idx}`,
+      ...splitName(signatory.name),
       name: signatory.name,
-      role: signatory.role,
       email: toMockEmail(signatory.name),
+      phone: toMockPhone(signatory.name),
       source: 'investor',
       included: true,
       status: 'notSent',
@@ -141,9 +181,10 @@ function buildDefaultSignatories(subscription: any): SignatureParty[] {
   return [
     {
       id: 'investor-0',
+      ...splitName(fallbackName),
       name: fallbackName,
-      roleKey: `${KEY}.roles.investor`,
       email: toMockEmail(fallbackName),
+      phone: toMockPhone(fallbackName),
       source: 'investor',
       included: true,
       status: 'notSent',
@@ -155,9 +196,10 @@ function buildDefaultSignatories(subscription: any): SignatureParty[] {
 function buildDefaultCounterSignatories(): SignatureParty[] {
   return mockFundCounterSignatories.map(item => ({
     id: item.id,
+    ...splitName(item.name),
     name: item.name,
-    roleKey: item.roleKey,
     email: item.email,
+    phone: toMockPhone(item.name),
     source: 'fund',
     included: true,
     status: 'notSent',
@@ -192,7 +234,9 @@ export function SubscriptionSignatureStep({
   const [lastReminderAt, setLastReminderAt] = useState<string | null>(null);
   const [lastMailAt, setLastMailAt] = useState<string | null>(null);
   const [draftSavedAt, setDraftSavedAt] = useState<string | null>(null);
-  const [pack, setPack] = useState<MockSignaturePackDocument[]>(mockSignaturePack);
+  const [pack, setPack] = useState<PackDocument[]>(mockSignaturePack);
+  const [parallel, setParallel] = useState(false);
+  const [placement, setPlacement] = useState<PlacementDraft | null>(null);
   const [signatories, setSignatories] = useState<SignatureParty[]>(() =>
     buildDefaultSignatories(subscription),
   );
@@ -224,6 +268,17 @@ export function SubscriptionSignatureStep({
   const finishSignatures = (nextSignatories: SignatureParty[]) => {
     if (!allSigned(nextSignatories)) return;
     const stamp = now();
+    if (parallel && activeCounter.length > 0) {
+      if (allSigned(counterSignatories)) {
+        setStage('completed');
+        toast.success(t(`${KEY}.toast.fullySigned`), {
+          description: t(`${KEY}.toast.fullySignedDesc`),
+        });
+      } else {
+        setStage('counterSigning');
+      }
+      return;
+    }
     if (activeCounter.length > 0) {
       setCounterSignatories(prev => markSent(prev, stamp));
       setLastMailAt(stamp);
@@ -240,7 +295,7 @@ export function SubscriptionSignatureStep({
   };
 
   const finishCounterSignatures = (nextCounter: SignatureParty[]) => {
-    if (!allSigned(nextCounter)) return;
+    if (!allSigned(nextCounter) || !allSigned(signatories)) return;
     setStage('completed');
     toast.success(t(`${KEY}.toast.fullySigned`), {
       description: t(`${KEY}.toast.fullySignedDesc`),
@@ -259,8 +314,10 @@ export function SubscriptionSignatureStep({
     setLastMailAt(stamp);
     setStage('signing');
     setSignatories(prev => markSent(prev, stamp));
+    if (parallel) setCounterSignatories(prev => markSent(prev, stamp));
+    const recipients = activeSignatories.length + (parallel ? activeCounter.length : 0);
     toast.success(t(`${KEY}.toast.sent`), {
-      description: `${tc(`${KEY}.toast.sentDesc`, activeSignatories.length)} · ${tc(
+      description: `${tc(`${KEY}.toast.sentDesc`, recipients)} · ${tc(
         `${KEY}.pack.documentsCount`,
         toSignDocs.length,
       )}`,
@@ -278,34 +335,34 @@ export function SubscriptionSignatureStep({
   const handleUpdate = (
     kind: PartyKind,
     id: string,
-    patch: Pick<SignatureParty, 'name' | 'email'> & { role: string },
+    patch: PartyFormValues,
   ) => {
     setterFor(kind)(prev =>
       prev.map(party =>
         party.id === id
-          ? { ...party, name: patch.name, email: patch.email, role: patch.role, roleKey: undefined }
+          ? { ...party, ...patch, name: `${patch.firstName} ${patch.lastName}` }
           : party,
       ),
     );
     toast.success(t(`${KEY}.parties.toast.updated`));
   };
 
-  const handleAdd = (kind: PartyKind, values: { name: string; email: string; role: string }) => {
+  const handleAdd = (kind: PartyKind, values: PartyFormValues) => {
     const id = `${kind}-manual-${Date.now()}`;
+    const name = `${values.firstName} ${values.lastName}`;
     setterFor(kind)(prev => [
       ...prev,
       {
         id,
-        name: values.name,
-        role: values.role,
-        email: values.email,
+        ...values,
+        name,
         source: 'manual',
         included: true,
         status: 'notSent',
         reminders: 0,
       },
     ]);
-    toast.success(t(`${KEY}.parties.toast.added`), { description: values.name });
+    toast.success(t(`${KEY}.parties.toast.added`), { description: name });
   };
 
   const handleRemove = (kind: PartyKind, id: string) => {
@@ -366,25 +423,93 @@ export function SubscriptionSignatureStep({
       .filter(party => party.included && party.status === 'sent')
       .map(party => party.id);
 
+  /** Les encarts des gabarits du bulletin sont déjà placés ; un document ajouté doit les préciser. */
+  const needsPlacement = (doc: PackDocument) => doc.source === 'manual' && !doc.signatureBox;
+
   const handlePackKind = (id: string, kind: SignaturePackDocumentKind) => {
+    const target = pack.find(doc => doc.id === id);
+    if (kind === 'toSign' && target && needsPlacement(target)) {
+      setPlacement({
+        docId: id,
+        name: target.name,
+        signatureBox: EMPTY_BOX,
+        counterSignatureBox: EMPTY_BOX,
+      });
+      return;
+    }
     setPack(prev => prev.map(doc => (doc.id === id ? { ...doc, kind } : doc)));
   };
 
+  const nextManualIndex = pack.filter(doc => doc.source === 'manual').length + 1;
+
   const handlePackAdd = (kind: SignaturePackDocumentKind) => {
-    const index = pack.filter(doc => doc.source === 'manual').length + 1;
-    const name = t(`${KEY}.pack.newDocumentName`, { index });
+    const name = t(`${KEY}.pack.newDocumentName`, { index: nextManualIndex });
+    if (kind === 'toSign') {
+      setPlacement({
+        docId: null,
+        name,
+        signatureBox: EMPTY_BOX,
+        counterSignatureBox: EMPTY_BOX,
+      });
+      return;
+    }
     setPack(prev => [
       ...prev,
       {
         id: `pack-manual-${Date.now()}`,
         name,
-        file: `document-${index}.pdf`,
+        file: `document-${nextManualIndex}.pdf`,
         kind,
         source: 'manual',
       },
     ]);
     toast.success(t(`${KEY}.pack.toast.added`), { description: name });
   };
+
+  const placementNeedsCounter = activeCounter.length > 0;
+  const placementMissing =
+    placement !== null &&
+    (!placement.name.trim() ||
+      !isBoxComplete(placement.signatureBox) ||
+      (placementNeedsCounter && !isBoxComplete(placement.counterSignatureBox)));
+
+  const handlePlacementConfirm = () => {
+    if (!placement || placementMissing) return;
+    const name = placement.name.trim();
+    const boxes = {
+      signatureBox: placement.signatureBox,
+      counterSignatureBox: placementNeedsCounter ? placement.counterSignatureBox : undefined,
+    };
+    if (placement.docId) {
+      setPack(prev =>
+        prev.map(doc =>
+          doc.id === placement.docId ? { ...doc, name, kind: 'toSign', ...boxes } : doc,
+        ),
+      );
+      toast.success(t(`${KEY}.pack.toast.placed`), { description: name });
+    } else {
+      setPack(prev => [
+        ...prev,
+        {
+          id: `pack-manual-${Date.now()}`,
+          name,
+          file: `document-${nextManualIndex}.pdf`,
+          kind: 'toSign',
+          source: 'manual',
+          ...boxes,
+        },
+      ]);
+      toast.success(t(`${KEY}.pack.toast.added`), { description: name });
+    }
+    setPlacement(null);
+  };
+
+  const remindKinds: PartyKind[] =
+    stage === 'counterSigning'
+      ? ['counterSignatory']
+      : parallel
+        ? ['signatory', 'counterSignatory']
+        : ['signatory'];
 
   const handlePackRemove = (id: string) => {
     const removed = pack.find(doc => doc.id === id);
@@ -399,15 +524,17 @@ export function SubscriptionSignatureStep({
     downloadCsv(
       [
         t(`${KEY}.target.columns.type`),
-        t(`${KEY}.target.columns.name`),
-        t(`${KEY}.target.columns.role`),
+        t(`${KEY}.target.columns.lastName`),
+        t(`${KEY}.target.columns.firstName`),
         t(`${KEY}.target.columns.email`),
+        t(`${KEY}.target.columns.phone`),
       ],
       activeSignatories.map(party => [
         t(`${KEY}.target.type.${party.name === investorName ? 'investor' : 'contact'}`),
-        party.name,
-        party.roleKey ? t(party.roleKey) : (party.role ?? ''),
+        party.lastName,
+        party.firstName,
         party.email,
+        party.phone,
       ]),
       t(`${KEY}.target.filename`, { id: String(subscription?.id ?? '') }),
     );
@@ -492,7 +619,12 @@ export function SubscriptionSignatureStep({
         activeCounter.length === 0
           ? t(`${KEY}.tracking.noCounterSignatory`)
           : t(`${KEY}.tracking.progress`, { signed: signedCounter, total: activeCounter.length }),
-      state: stage === 'completed' ? 'done' : stage === 'counterSigning' ? 'current' : 'pending',
+      state:
+        stage === 'completed'
+          ? 'done'
+          : stage === 'counterSigning' || (parallel && stage === 'signing')
+            ? 'current'
+            : 'pending',
     },
   ];
 
@@ -553,12 +685,7 @@ export function SubscriptionSignatureStep({
                   variant="outline"
                   size="sm"
                   className="gap-1.5 text-xs h-9"
-                  onClick={() =>
-                    handleRegenerate(
-                      stage === 'signing' ? 'signatory' : 'counterSignatory',
-                      pendingIds(stage === 'signing' ? 'signatory' : 'counterSignatory'),
-                    )
-                  }
+                  onClick={() => remindKinds.forEach(kind => handleRegenerate(kind, pendingIds(kind)))}
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
                   {t(`${KEY}.actions.regenerateLinks`)}
@@ -566,12 +693,7 @@ export function SubscriptionSignatureStep({
                 <Button
                   className="gap-2 text-white hover:opacity-90"
                   style={{ background: PRIMARY_BUTTON_GRADIENT }}
-                  onClick={() =>
-                    handleRemind(
-                      stage === 'signing' ? 'signatory' : 'counterSignatory',
-                      pendingIds(stage === 'signing' ? 'signatory' : 'counterSignatory'),
-                    )
-                  }
+                  onClick={() => remindKinds.forEach(kind => handleRemind(kind, pendingIds(kind)))}
                 >
                   <Mail className="w-4 h-4" />
                   {stage === 'signing'
@@ -628,6 +750,21 @@ export function SubscriptionSignatureStep({
               </div>
             );
           })}
+        </div>
+
+        <div className="flex items-center justify-between gap-3 border-t px-4 py-3">
+          <div className="min-w-0">
+            <Label htmlFor="signature-parallel">{t(`${KEY}.sequencing.parallel`)}</Label>
+            <p className={WIDGET_SUBTITLE_CLASS}>
+              {t(`${KEY}.sequencing.${parallel ? 'parallelHint' : 'sequentialHint'}`)}
+            </p>
+          </div>
+          <Switch
+            id="signature-parallel"
+            checked={parallel}
+            onCheckedChange={setParallel}
+            disabled={locked}
+          />
         </div>
 
         {stage === 'draft' && blockers.length > 0 && (
@@ -747,7 +884,7 @@ export function SubscriptionSignatureStep({
           kind="counterSignatory"
           parties={counterSignatories}
           stage={stage}
-          active={stage === 'counterSigning'}
+          active={stage === 'counterSigning' || (parallel && stage === 'signing')}
           subtitle={t(`${KEY}.parties.counterSignatories.subtitle`, {
             fund: subscription?.fund?.name ?? '',
           })}
@@ -760,7 +897,79 @@ export function SubscriptionSignatureStep({
           onMarkSigned={id => handleMarkSigned('counterSignatory', id)}
         />
       </div>
+
+      <ConfirmDialog
+        open={placement !== null}
+        onOpenChange={open => !open && setPlacement(null)}
+        icon={PenTool}
+        title={t(`${KEY}.pack.placement.title`)}
+        description={t(`${KEY}.pack.placement.description`)}
+        confirmLabel={t(`${KEY}.pack.placement.confirm`)}
+        confirmDisabledReason={placementMissing ? t(`${KEY}.pack.placement.missing`) : undefined}
+        onConfirm={handlePlacementConfirm}
+      >
+        {placement && (
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="placement-name">{t(`${KEY}.pack.placement.name`)} *</Label>
+              <Input
+                id="placement-name"
+                value={placement.name}
+                onChange={event => setPlacement({ ...placement, name: event.target.value })}
+              />
+            </div>
+            <SignatureBoxFields
+              id="placement-signatory"
+              legend={t(`${KEY}.pack.placement.signatoryBox`)}
+              value={placement.signatureBox}
+              onChange={signatureBox => setPlacement({ ...placement, signatureBox })}
+            />
+            {placementNeedsCounter && (
+              <SignatureBoxFields
+                id="placement-counter"
+                legend={t(`${KEY}.pack.placement.counterSignatoryBox`)}
+                value={placement.counterSignatureBox}
+                onChange={counterSignatureBox => setPlacement({ ...placement, counterSignatureBox })}
+              />
+            )}
+            <p className={WIDGET_SUBTITLE_CLASS}>{t(`${KEY}.pack.placement.hint`)}</p>
+          </div>
+        )}
+      </ConfirmDialog>
     </div>
+  );
+}
+
+interface SignatureBoxFieldsProps {
+  id: string;
+  legend: string;
+  value: SignatureBox;
+  onChange: (value: SignatureBox) => void;
+}
+
+const BOX_FIELDS = ['page', 'x', 'y'] as const;
+
+function SignatureBoxFields({ id, legend, value, onChange }: SignatureBoxFieldsProps) {
+  const { t } = useTranslation();
+
+  return (
+    <fieldset className="space-y-1.5">
+      <legend className={WIDGET_LABEL_CLASS}>{legend}</legend>
+      <div className="grid grid-cols-3 gap-2">
+        {BOX_FIELDS.map(field => (
+          <div key={field} className="space-y-1.5">
+            <Label htmlFor={`${id}-${field}`}>{t(`${KEY}.pack.placement.${field}`)} *</Label>
+            <Input
+              id={`${id}-${field}`}
+              type="number"
+              min={field === 'page' ? 1 : 0}
+              value={value[field]}
+              onChange={event => onChange({ ...value, [field]: event.target.value })}
+            />
+          </div>
+        ))}
+      </div>
+    </fieldset>
   );
 }
 
@@ -770,7 +979,7 @@ interface PackGroupProps {
   hint: string;
   count: number;
   emptyLabel: string;
-  documents: MockSignaturePackDocument[];
+  documents: PackDocument[];
   locked: boolean;
   signed: boolean;
   onKindChange: (id: string, kind: SignaturePackDocumentKind) => void;
@@ -841,7 +1050,15 @@ function PackGroup({
                       {t(`${KEY}.pack.signed`)}
                     </Badge>
                   )}
-                  <span className="truncate text-xs text-foreground/70">{doc.file}</span>
+                  <span className="truncate text-xs text-foreground/70">
+                    {doc.file}
+                    {doc.kind === 'toSign' && doc.signatureBox && (
+                      <>
+                        {' · '}
+                        {t(`${KEY}.pack.placement.summary`, doc.signatureBox)}
+                      </>
+                    )}
+                  </span>
                 </div>
               </div>
 
@@ -903,10 +1120,13 @@ function PackGroup({
 }
 
 interface PartyFormValues {
-  name: string;
-  role: string;
+  firstName: string;
+  lastName: string;
   email: string;
+  phone: string;
 }
+
+const EMPTY_PARTY_FORM: PartyFormValues = { firstName: '', lastName: '', email: '', phone: '' };
 
 interface PartyCardProps {
   kind: PartyKind;
@@ -944,7 +1164,7 @@ function PartyCard({
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
-  const [form, setForm] = useState<PartyFormValues>({ name: '', role: '', email: '' });
+  const [form, setForm] = useState<PartyFormValues>(EMPTY_PARTY_FORM);
 
   const visible = locked ? parties.filter(party => party.included) : parties;
   const includedCount = parties.filter(party => party.included).length;
@@ -954,16 +1174,17 @@ function PartyCard({
     setAdding(false);
     setEditingId(party.id);
     setForm({
-      name: party.name,
-      role: party.roleKey ? t(party.roleKey) : party.role ?? '',
+      firstName: party.firstName,
+      lastName: party.lastName,
       email: party.email,
+      phone: party.phone,
     });
   };
 
   const startAdd = () => {
     setEditingId(null);
     setAdding(true);
-    setForm({ name: '', role: '', email: '' });
+    setForm(EMPTY_PARTY_FORM);
   };
 
   const cancelForm = () => {
@@ -972,11 +1193,16 @@ function PartyCard({
   };
 
   const submitForm = () => {
-    if (!form.name.trim() || !form.email.trim()) {
+    const values: PartyFormValues = {
+      firstName: form.firstName.trim(),
+      lastName: form.lastName.trim(),
+      email: form.email.trim(),
+      phone: form.phone.trim(),
+    };
+    if (Object.values(values).some(value => !value)) {
       toast.error(t(`${KEY}.parties.toast.invalid`));
       return;
     }
-    const values = { name: form.name.trim(), role: form.role.trim(), email: form.email.trim() };
     if (editingId) onUpdate(editingId, values);
     else onAdd(values);
     cancelForm();
@@ -993,25 +1219,36 @@ function PartyCard({
     <div className="grid gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3">
       <div className="grid grid-cols-2 gap-2">
         <Input
-          value={form.name}
-          onChange={event => setForm(prev => ({ ...prev, name: event.target.value }))}
-          placeholder={t(`${KEY}.parties.form.name`)}
+          value={form.lastName}
+          onChange={event => setForm(prev => ({ ...prev, lastName: event.target.value }))}
+          placeholder={`${t(`${KEY}.parties.form.lastName`)} *`}
+          aria-label={t(`${KEY}.parties.form.lastName`)}
           className="h-8 text-sm"
         />
         <Input
-          value={form.role}
-          onChange={event => setForm(prev => ({ ...prev, role: event.target.value }))}
-          placeholder={t(`${KEY}.parties.form.role`)}
+          value={form.firstName}
+          onChange={event => setForm(prev => ({ ...prev, firstName: event.target.value }))}
+          placeholder={`${t(`${KEY}.parties.form.firstName`)} *`}
+          aria-label={t(`${KEY}.parties.form.firstName`)}
+          className="h-8 text-sm"
+        />
+        <Input
+          type="email"
+          value={form.email}
+          onChange={event => setForm(prev => ({ ...prev, email: event.target.value }))}
+          placeholder={`${t(`${KEY}.parties.form.email`)} *`}
+          aria-label={t(`${KEY}.parties.form.email`)}
+          className="h-8 text-sm"
+        />
+        <Input
+          type="tel"
+          value={form.phone}
+          onChange={event => setForm(prev => ({ ...prev, phone: event.target.value }))}
+          placeholder={`${t(`${KEY}.parties.form.phone`)} *`}
+          aria-label={t(`${KEY}.parties.form.phone`)}
           className="h-8 text-sm"
         />
       </div>
-      <Input
-        type="email"
-        value={form.email}
-        onChange={event => setForm(prev => ({ ...prev, email: event.target.value }))}
-        placeholder={t(`${KEY}.parties.form.email`)}
-        className="h-8 text-sm"
-      />
       <div className="flex justify-end gap-2">
         <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs" onClick={cancelForm}>
           <X className="w-3.5 h-3.5" />
@@ -1051,10 +1288,12 @@ function PartyCard({
               <Badge className="bg-muted text-muted-foreground border-border tabular-nums">
                 {t(`${KEY}.parties.includedCount`, { count: includedCount })}
               </Badge>
-              <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={startAdd}>
-                <Plus className="w-3.5 h-3.5" />
-                {t(`${KEY}.parties.${groupKey}.add`)}
-              </Button>
+              {kind === 'signatory' && (
+                <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={startAdd}>
+                  <Plus className="w-3.5 h-3.5" />
+                  {t(`${KEY}.parties.signatories.add`)}
+                </Button>
+              )}
             </>
           )}
         </div>
@@ -1071,8 +1310,6 @@ function PartyCard({
           if (editingId === party.id) {
             return <li key={party.id}>{renderForm()}</li>;
           }
-
-          const roleLabel = party.roleKey ? t(party.roleKey) : party.role;
 
           return (
             <li
@@ -1118,7 +1355,7 @@ function PartyCard({
                   </Badge>
                 </div>
                 <span className="block truncate text-xs text-foreground/70">
-                  {roleLabel ? `${roleLabel} · ${party.email}` : party.email}
+                  {party.email} · {party.phone}
                 </span>
 
                 {locked && (
