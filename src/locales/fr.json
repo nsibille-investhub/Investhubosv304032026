@@ -1138,8 +1138,7 @@
           "critical": "Critique"
         },
         "scales": {
-          "profile": "Échelle du profil",
-          "class": "Échelle des classes"
+          "profile": "Échelle du profil"
         },
         "score": {
           "title": "Score de risque",
@@ -1151,7 +1150,15 @@
           "validate": "Valider le score",
           "validated": "Score validé",
           "noValidationNeeded": "Le palier atteint ne demande pas de validation manuelle.",
-          "invalidate": "Invalider le score"
+          "invalidate": "Rouvrir le score",
+          "computedDate": "Date de calcul",
+          "validationDate": "Date de validation",
+          "validatedByAt": "{{date}} par {{name}}",
+          "notValidated": "Non validé",
+          "force": "Forcer le score",
+          "forced": "Score global forcé",
+          "global": "Score global",
+          "editLockedReason": "Rouvrez le score pour le modifier."
         },
         "status": {
           "pending": "En attente",
@@ -1214,11 +1221,6 @@
         "profile": {
           "title": "Profil de risque et détail du calcul",
           "subtitle": "Profil, classes et composantes. Le calcul remonte des composantes vers le profil.",
-          "formula": "Formule du profil",
-          "formulaKind": {
-            "standard": "Formule standard",
-            "custom": "Formule personnalisée"
-          },
           "showScale": "Échelle et paliers",
           "scaleTitle": "Paliers de l'échelle",
           "tierRequiresValidation": "Validation conformité requise",
@@ -1227,15 +1229,32 @@
           "value": "Valeur retenue",
           "componentScore": "Score",
           "action": "Action",
-          "weight": "Poids {{weight}}",
           "manual": "Saisi",
-          "manualBy": "Score saisi par {{name}}, le {{date}}",
-          "setScore": "Saisir un score",
+          "manualBy": "Score modifié par {{name}}, le {{date}}",
           "computed": "Calculé",
           "unevaluatedOne": "{{count}} composante non évaluée",
           "unevaluatedMany": "{{count}} composantes non évaluées",
           "widgetTitle": "Profil de risque",
-          "widgetSubtitle": "{{name}} · profil issu de {{onboarding}}"
+          "widgetSubtitle": "{{name}} · profil issu de {{onboarding}}",
+          "editScore": "Modifier le score",
+          "edit": {
+            "save": "Enregistrer",
+            "scoreHint": "Valeur comprise entre {{min}} et {{max}}.",
+            "comment": "Commentaire",
+            "commentHint": "Le commentaire est conservé dans le détail des commentaires et dans le journal de conformité.",
+            "commentPlaceholder": "Motivez la modification du score",
+            "commentRequired": "Le commentaire est obligatoire.",
+            "backToComputed": "Revenir au score calculé"
+          },
+          "comments": {
+            "title": "Commentaires du score",
+            "subtitle": "Un commentaire est saisi à chaque modification de score.",
+            "openOne": "Détail des commentaires ({{count}})",
+            "openMany": "Détail des commentaires ({{count}})",
+            "empty": "Aucun score n'a été modifié.",
+            "computedValue": "calculé",
+            "close": "Fermer"
+          }
         },
         "screening": {
           "title": "Screening et surveillance continue",
@@ -1397,7 +1416,8 @@
           "exportScreeningDesc": "Les contrôles et les décisions sont exportés.",
           "noteAdded": "Note ajoutée au journal",
           "complianceReopenedDesc": "Score, correspondances et catégorisation sont de nouveau modifiables.",
-          "scoreInvalidated": "Validation du score retirée"
+          "scoreInvalidated": "Score rouvert",
+          "scoreReset": "Score calculé rétabli"
         },
         "chain": {
           "ariaLabel": "Circuit de validation",
