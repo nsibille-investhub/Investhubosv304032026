@@ -9,6 +9,7 @@ import {
   FileCheck,
   Globe,
   History,
+  Eye,
   ListChecks,
   MessageSquare,
   Pencil,
@@ -34,12 +35,8 @@ import {
   BigModalPanelFooter,
   BigModalPanelHeader,
 } from './ui/big-modal';
-import { ConfirmDialog } from './ui/confirm-dialog';
 import { DisabledReason } from './ui/disabled-reason';
-import { FormField } from './ui/form-field';
-import { Input } from './ui/input';
 import { RowActionButton } from './ui/row-actions';
-import { Textarea } from './ui/textarea';
 import {
   Select,
   SelectContent,
@@ -69,6 +66,13 @@ import {
   useSubscriptionScreening,
 } from './SubscriptionScreeningWidget';
 import type { LiveAuditInput } from '../utils/subscriptionAuditMock';
+import {
+  RiskScorePanel,
+  ScoreCommentItem,
+  type RiskScoreSave,
+  type RiskScoreTarget,
+  type ScoreComment,
+} from './RiskScorePanel';
 
 export type ComplianceStatus = 'pending' | 'awaitingValidation' | 'validated';
 
@@ -134,8 +138,6 @@ const now = () => {
   })}`;
 };
 
-const round1 = (value: number) => Math.round(value * 10) / 10;
-
 export function ToneBadge({ tone, label, className }: { tone: RiskTone; label: string; className?: string }) {
   return <Badge className={cn(TONE_STYLES[tone].badge, className)}>{label}</Badge>;
 }
@@ -184,133 +186,6 @@ function ScoreDonut({
   );
 }
 
-export interface ScoreComment {
-  id: string;
-  labelKey: string;
-  previous: number | null;
-  /** null : retour au score calculé. */
-  next: number | null;
-  comment: string;
-  by: string;
-  at: string;
-}
-
-interface ScoreEditTarget {
-  id: string;
-  labelKey: string;
-  min: number;
-  max: number;
-  current: number | null;
-  /** Score de section ou score global déjà saisi à la main : le retour au calcul est proposé. */
-  resettable: boolean;
-}
-
-const SCORE_FIELD_ID = 'risk-score-value';
-const COMMENT_FIELD_ID = 'risk-score-comment';
-
-/** Modification d'un score : nouvelle valeur et commentaire obligatoire. */
-function ScoreEditDialog({
-  target,
-  onClose,
-  onSubmit,
-}: {
-  target: ScoreEditTarget | null;
-  onClose: () => void;
-  onSubmit: (target: ScoreEditTarget, value: number | null, comment: string) => void;
-}) {
-  const { t } = useTranslation();
-  const [value, setValue] = useState('');
-  const [comment, setComment] = useState('');
-  const [openedFor, setOpenedFor] = useState<string | null>(null);
-
-  if (target && openedFor !== target.id) {
-    setOpenedFor(target.id);
-    setValue(target.current === null ? '' : String(target.current));
-    setComment('');
-  }
-  if (!target && openedFor !== null) setOpenedFor(null);
-
-  const parsed = value.trim() === '' ? Number.NaN : Number(value.replace(',', '.'));
-  const scoreValid = Boolean(target) && !Number.isNaN(parsed) && parsed >= target!.min && parsed <= target!.max;
-  const commentMissing = comment.trim() === '';
-  const forced = target?.id === PROFILE_SCORE_ID;
-
-  const commentReason = commentMissing
-    ? t('subscriptions.detail.compliance.profile.edit.commentRequired')
-    : undefined;
-  const confirmReason = !scoreValid
-    ? t('subscriptions.detail.compliance.toast.invalidScoreDesc', {
-        min: target?.min ?? 0,
-        max: target?.max ?? 0,
-      })
-    : commentReason;
-
-  return (
-    <ConfirmDialog
-      open={Boolean(target)}
-      onOpenChange={open => !open && onClose()}
-      icon={forced ? SlidersHorizontal : Pencil}
-      title={
-        forced
-          ? t('subscriptions.detail.compliance.score.force')
-          : t('subscriptions.detail.compliance.profile.editScore')
-      }
-      description={target ? t(target.labelKey) : undefined}
-      confirmLabel={t('subscriptions.detail.compliance.profile.edit.save')}
-      confirmDisabledReason={confirmReason}
-      onConfirm={() => target && onSubmit(target, round1(parsed), comment.trim())}
-    >
-      <div className="space-y-4">
-        <FormField
-          id={SCORE_FIELD_ID}
-          label={t('subscriptions.detail.compliance.profile.componentScore')}
-          required
-          hint={t('subscriptions.detail.compliance.profile.edit.scoreHint', {
-            min: target?.min ?? 0,
-            max: target?.max ?? 0,
-          })}
-        >
-          <Input
-            id={SCORE_FIELD_ID}
-            inputMode="decimal"
-            value={value}
-            onChange={event => setValue(event.target.value)}
-            className="h-11 tabular-nums"
-          />
-        </FormField>
-        <FormField
-          id={COMMENT_FIELD_ID}
-          label={t('subscriptions.detail.compliance.profile.edit.comment')}
-          required
-          hint={t('subscriptions.detail.compliance.profile.edit.commentHint')}
-        >
-          <Textarea
-            id={COMMENT_FIELD_ID}
-            value={comment}
-            onChange={event => setComment(event.target.value)}
-            placeholder={t('subscriptions.detail.compliance.profile.edit.commentPlaceholder')}
-            rows={3}
-          />
-        </FormField>
-        {target?.resettable && (
-          <DisabledReason reason={commentReason}>
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full gap-1.5"
-              disabled={commentMissing}
-              onClick={() => target && onSubmit(target, null, comment.trim())}
-            >
-              <RotateCcw className="w-4 h-4" />
-              {t('subscriptions.detail.compliance.profile.edit.backToComputed')}
-            </Button>
-          </DisabledReason>
-        )}
-      </div>
-    </ConfirmDialog>
-  );
-}
-
 /** Détail des commentaires saisis à chaque modification de score. */
 function ScoreCommentsDialog({
   open,
@@ -322,9 +197,6 @@ function ScoreCommentsDialog({
   comments: ScoreComment[];
 }) {
   const { t } = useTranslation();
-  const format = (value: number | null) =>
-    value === null ? t('subscriptions.detail.compliance.profile.comments.computedValue') : String(value);
-
   return (
     <BigModal open={open} onOpenChange={onOpenChange}>
       <BigModalContent className={`${BIG_MODAL_COMPACT} p-0 gap-0`}>
@@ -342,20 +214,9 @@ function ScoreCommentsDialog({
                 {t('subscriptions.detail.compliance.profile.comments.empty')}
               </p>
             ) : (
-              <ul className="space-y-3">
+              <ul className="divide-y divide-border rounded-lg border bg-card">
                 {comments.map(item => (
-                  <li key={item.id} className="rounded-lg border bg-card p-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <span className="text-sm font-semibold text-foreground">{t(item.labelKey)}</span>
-                      <span className="shrink-0 text-xs font-semibold text-foreground tabular-nums">
-                        {format(item.previous)} → {format(item.next)}
-                      </span>
-                    </div>
-                    <p className="mt-1.5 text-sm text-foreground">{item.comment}</p>
-                    <p className="mt-1.5 text-xs text-muted-foreground">
-                      {item.by} · {item.at}
-                    </p>
-                  </li>
+                  <ScoreCommentItem key={item.id} item={item} />
                 ))}
               </ul>
             )}
@@ -378,11 +239,9 @@ interface RiskProfileWidgetProps {
   locked: boolean;
   /** Scores saisis à la main, par composante, par section ou pour le score global. */
   manualScores: Record<string, number>;
-  onScoreChange: (
-    target: { id: string; labelKey: string; previous: number | null },
-    value: number | null,
-    comment: string,
-  ) => void;
+  /** Réponses modifiées depuis le panneau de détail, par composante. */
+  answers: Record<string, string>;
+  onScoreSave: (target: RiskScoreTarget, change: RiskScoreSave) => void;
   comments: ScoreComment[];
   computedAt: string;
   onRecompute: () => void;
@@ -397,7 +256,8 @@ interface RiskProfileWidgetProps {
 export function RiskProfileWidget({
   locked,
   manualScores,
-  onScoreChange,
+  answers,
+  onScoreSave,
   comments,
   computedAt,
   onRecompute,
@@ -410,7 +270,7 @@ export function RiskProfileWidget({
   const { t } = useTranslation();
   const [scaleVisible, setScaleVisible] = useState(false);
   const [commentsOpen, setCommentsOpen] = useState(false);
-  const [editTarget, setEditTarget] = useState<ScoreEditTarget | null>(null);
+  const [panel, setPanel] = useState<{ target: RiskScoreTarget; context?: string } | null>(null);
 
   const tc = (key: string, count: number) => t(`${key}${count === 1 ? 'One' : 'Many'}`, { count });
 
@@ -437,10 +297,12 @@ export function RiskProfileWidget({
     ? t('subscriptions.detail.compliance.score.editLockedReason')
     : undefined;
 
-  const lastChange = (labelKey: string) => comments.find(item => item.labelKey === labelKey);
+  const readOnlyReason = locked
+    ? t('subscriptions.detail.compliance.score.lockedReason')
+    : editLockedReason;
 
-  const manualMarker = (labelKey: string) => {
-    const change = lastChange(labelKey);
+  const manualMarker = (targetId: string) => {
+    const change = comments.find(item => item.targetId === targetId && item.scoreChange);
     return (
       <Tooltip>
         <TooltipTrigger asChild>
@@ -522,7 +384,7 @@ export function RiskProfileWidget({
 
           {forced && (
             <p className="flex items-center gap-1.5 text-xs text-amber-700">
-              {manualMarker('subscriptions.detail.compliance.score.global')}
+              {manualMarker(PROFILE_SCORE_ID)}
               {t('subscriptions.detail.compliance.score.forced')}
             </p>
           )}
@@ -554,13 +416,16 @@ export function RiskProfileWidget({
                   className="h-8 gap-1.5 text-xs"
                   disabled={scoreValidated}
                   onClick={() =>
-                    setEditTarget({
-                      id: PROFILE_SCORE_ID,
-                      labelKey: 'subscriptions.detail.compliance.score.global',
-                      min: 0,
-                      max: 100,
-                      current: profileScore,
-                      resettable: forced,
+                    setPanel({
+                      target: {
+                        id: PROFILE_SCORE_ID,
+                        kind: 'profile',
+                        labelKey: 'subscriptions.detail.compliance.score.global',
+                        min: 0,
+                        max: 100,
+                        score: profileScore,
+                        resettable: forced,
+                      },
                     })
                   }
                 >
@@ -618,27 +483,27 @@ export function RiskProfileWidget({
                     </TooltipContent>
                   </Tooltip>
                 )}
-                {classManual && manualMarker(riskClass.labelKey)}
+                {classManual && manualMarker(riskClass.id)}
                 <span className="text-sm font-bold text-foreground tabular-nums">
                   {score === null ? '-' : score.toFixed(2)}
                 </span>
-                {!locked && (
-                  <RowActionButton
-                    icon={Pencil}
-                    tooltip={t('subscriptions.detail.compliance.profile.editScore')}
-                    disabledReason={editLockedReason}
-                    onClick={() =>
-                      setEditTarget({
+                <RowActionButton
+                  icon={Eye}
+                  tooltip={t('subscriptions.detail.compliance.profile.viewDetail')}
+                  onClick={() =>
+                    setPanel({
+                      target: {
                         id: riskClass.id,
+                        kind: 'section',
                         labelKey: riskClass.labelKey,
                         min: 0,
                         max: 10,
-                        current: score,
+                        score,
                         resettable: classManual,
-                      })
-                    }
-                  />
-                )}
+                      },
+                    })
+                  }
+                />
               </div>
             </div>
 
@@ -655,31 +520,36 @@ export function RiskProfileWidget({
                     <span className="flex min-w-0 items-center gap-1.5 text-xs">
                       <SourceIcon className="w-3 h-3 shrink-0 text-muted-foreground" />
                       <span className="truncate text-foreground">{t(component.labelKey)}</span>
-                      <span className="truncate text-muted-foreground">{component.value}</span>
+                      <span className="truncate text-muted-foreground">
+                        {answers[component.id] ?? component.value}
+                      </span>
                     </span>
 
                     <span className="flex items-center gap-1.5 shrink-0">
-                      {manual && manualMarker(component.labelKey)}
+                      {manual && manualMarker(component.id)}
                       <span className="text-xs font-semibold text-foreground tabular-nums">
                         {shown === null ? '-' : shown.toFixed(2)}
                       </span>
-                      {!locked && (
-                        <RowActionButton
-                          icon={Pencil}
-                          tooltip={t('subscriptions.detail.compliance.profile.editScore')}
-                          disabledReason={editLockedReason}
-                          onClick={() =>
-                            setEditTarget({
+                      <RowActionButton
+                        icon={Eye}
+                        tooltip={t('subscriptions.detail.compliance.profile.viewDetail')}
+                        onClick={() =>
+                          setPanel({
+                            context: t(riskClass.labelKey),
+                            target: {
                               id: component.id,
+                              kind: component.source,
                               labelKey: component.labelKey,
+                              answer: answers[component.id] ?? component.value,
+                              answerOptions: component.answerOptions,
                               min: component.min,
                               max: component.max,
-                              current: shown,
+                              score: shown,
                               resettable: false,
-                            })
-                          }
-                        />
-                      )}
+                            },
+                          })
+                        }
+                      />
                     </span>
                   </li>
                 );
@@ -689,13 +559,17 @@ export function RiskProfileWidget({
         ))}
       </ul>
 
-      <ScoreEditDialog
-        target={editTarget}
-        onClose={() => setEditTarget(null)}
-        onSubmit={(target, value, comment) => {
-          onScoreChange({ id: target.id, labelKey: target.labelKey, previous: target.current }, value, comment);
-          setEditTarget(null);
+      <RiskScorePanel
+        target={panel?.target ?? null}
+        context={panel?.context}
+        comments={comments}
+        readOnlyReason={readOnlyReason}
+        onClose={() => setPanel(null)}
+        onSave={(target, change) => {
+          onScoreSave(target, change);
+          setPanel(null);
         }}
+        onOpenAllComments={() => setCommentsOpen(true)}
       />
       <ScoreCommentsDialog open={commentsOpen} onOpenChange={setCommentsOpen} comments={comments} />
     </Card>
@@ -749,15 +623,16 @@ export function SubscriptionComplianceSection({
 
   const [manualScores, setManualScores] = useState<Record<string, number>>({});
   const [computedAt, setComputedAt] = useState(mockRiskProfile.computedAt);
+  const [riskAnswers, setRiskAnswers] = useState<Record<string, string>>({});
   const [scoreComments, setScoreComments] = useState<ScoreComment[]>(() =>
     mockRiskProfile.classes
       .flatMap(item => item.components)
       .filter(component => typeof component.manualScore === 'number' && component.manualComment)
       .map(component => ({
         id: `seed-${component.id}`,
+        targetId: component.id,
         labelKey: component.labelKey,
-        previous: component.score,
-        next: component.manualScore ?? null,
+        scoreChange: { previous: component.score, next: component.manualScore ?? null },
         comment: component.manualComment ?? '',
         by: component.manualBy ?? CURRENT_OPERATOR,
         at: component.manualAt ?? mockRiskProfile.computedAt,
@@ -800,43 +675,71 @@ export function SubscriptionComplianceSection({
   ];
   const canValidate = blockers.length === 0 || overrideRequested;
 
-  const handleScoreChange = (
-    target: { id: string; labelKey: string; previous: number | null },
-    value: number | null,
-    comment: string,
-  ) => {
+  const handleScoreSave = (target: RiskScoreTarget, change: RiskScoreSave) => {
     const stamp = now();
-    logAudit({
-      type: 'manualScoreSet',
-      subject: t(target.labelKey),
-      previousValue: target.previous === null ? undefined : String(target.previous),
-      newValue:
-        value === null ? t('subscriptions.detail.compliance.profile.comments.computedValue') : String(value),
-      reason: comment,
-    });
-    setManualScores(prev => {
-      const next = { ...prev };
-      if (value === null) delete next[target.id];
-      else next[target.id] = value;
-      return next;
-    });
+    const subject = t(target.labelKey);
+    const answerChanged = change.answer !== undefined;
+    const scoreChanged = change.score !== undefined;
+
+    if (answerChanged) {
+      logAudit({
+        type: 'answerModified',
+        subject,
+        previousValue: target.answer || undefined,
+        newValue: change.answer,
+        reason: change.comment,
+      });
+      setRiskAnswers(prev => ({ ...prev, [target.id]: change.answer ?? '' }));
+    }
+    if (scoreChanged) {
+      const next = change.score ?? null;
+      logAudit({
+        type: 'manualScoreSet',
+        subject,
+        previousValue: target.score === null ? undefined : String(target.score),
+        newValue: next === null ? t('subscriptions.detail.compliance.profile.panel.computedValue') : String(next),
+        reason: change.comment,
+      });
+      setManualScores(prev => {
+        const scores = { ...prev };
+        if (next === null) delete scores[target.id];
+        else scores[target.id] = next;
+        return scores;
+      });
+    }
+    if (!answerChanged && !scoreChanged) {
+      logAudit({ type: 'commentAdded', subject, newValue: change.comment });
+    } else {
+      setComputedAt(stamp);
+    }
+
     setScoreComments(prev => [
       {
         id: `${target.id}-${Date.now()}`,
+        targetId: target.id,
         labelKey: target.labelKey,
-        previous: target.previous,
-        next: value,
-        comment,
+        scoreChange: scoreChanged ? { previous: target.score, next: change.score ?? null } : undefined,
+        answerChange: answerChanged ? { previous: target.answer ?? '', next: change.answer ?? '' } : undefined,
+        comment: change.comment,
         by: CURRENT_OPERATOR,
         at: stamp,
       },
       ...prev,
     ]);
-    setComputedAt(stamp);
-    toast.success(
-      t(`subscriptions.detail.compliance.toast.${value === null ? 'scoreReset' : 'manualScoreSaved'}`),
-      { description: t('subscriptions.detail.compliance.toast.manualScoreSavedDesc') },
-    );
+
+    const toastKey = !answerChanged && !scoreChanged
+      ? 'commentSaved'
+      : change.score === null
+        ? 'scoreReset'
+        : scoreChanged
+          ? 'manualScoreSaved'
+          : 'riskAnswerSaved';
+    toast.success(t(`subscriptions.detail.compliance.toast.${toastKey}`), {
+      description:
+        answerChanged || scoreChanged
+          ? t('subscriptions.detail.compliance.toast.manualScoreSavedDesc')
+          : undefined,
+    });
   };
 
   const handleRecompute = () => {
@@ -1257,7 +1160,8 @@ export function SubscriptionComplianceSection({
         <RiskProfileWidget
           locked={locked}
           manualScores={manualScores}
-          onScoreChange={handleScoreChange}
+          answers={riskAnswers}
+          onScoreSave={handleScoreSave}
           comments={scoreComments}
           computedAt={computedAt}
           onRecompute={handleRecompute}

@@ -1201,7 +1201,8 @@
           "force": "Force score",
           "forced": "Overall score forced",
           "global": "Overall score",
-          "editLockedReason": "Reopen the score to edit it."
+          "editLockedReason": "Reopen the score to edit it.",
+          "lockedReason": "The compliance file is validated: the score can no longer be edited."
         },
         "status": {
           "pending": "Pending",
@@ -1279,24 +1280,59 @@
           "unevaluatedMany": "{{count}} components not evaluated",
           "widgetTitle": "Risk profile",
           "widgetSubtitle": "{{name}} · profile from {{onboarding}}",
-          "editScore": "Edit score",
-          "edit": {
-            "save": "Save",
-            "scoreHint": "Value between {{min}} and {{max}}.",
-            "comment": "Comment",
-            "commentHint": "The comment is kept in the comment details and in the compliance log.",
-            "commentPlaceholder": "Explain why the score is changed",
-            "commentRequired": "A comment is required.",
-            "backToComputed": "Back to computed score"
-          },
           "comments": {
             "title": "Score comments",
             "subtitle": "A comment is entered each time a score is edited.",
             "openOne": "Comment details ({{count}})",
             "openMany": "Comment details ({{count}})",
             "empty": "No score has been edited.",
-            "computedValue": "computed",
             "close": "Close"
+          },
+          "viewDetail": "View details",
+          "panel": {
+            "answerTitle": "Answer",
+            "scoreTitle": "Score",
+            "currentValue": "Current value",
+            "newValue": "New value",
+            "noAnswer": "No answer",
+            "selectPlaceholder": "Select a value",
+            "currentScore": "Current score",
+            "newScore": "New score",
+            "notEvaluated": "Not evaluated",
+            "scoreHint": "Value between {{min}} and {{max}}.",
+            "backToComputed": "Back to computed score",
+            "backToComputedDesc": "The entered score is removed and the score is computed again from the level below.",
+            "commentTitle": "Comment",
+            "commentDesc": "Required for any change to the answer or the score. It can also be added on its own.",
+            "comment": "Comment",
+            "commentPlaceholder": "Explain the change or add a remark",
+            "commentRequired": "A comment is required to save a change.",
+            "nothingToSave": "Change the answer or the score, or enter a comment.",
+            "historyTitle": "Previous comments",
+            "historyDesc": "Changes and comments already saved on this score.",
+            "historyEmpty": "No comment on this score.",
+            "allComments": "View all profile comments ({{count}})",
+            "answerChange": "Answer: {{previous}} → {{next}}",
+            "scoreChange": "Score: {{previous}} → {{next}}",
+            "computedValue": "computed",
+            "afterSave": "After saving, the risk profile is recomputed. The investor receives no notification.",
+            "cancel": "Cancel",
+            "close": "Close",
+            "save": "Save",
+            "kind": {
+              "onboardingAnswer": "Onboarding question",
+              "manualQuestion": "Manual question",
+              "countryList": "Country list",
+              "screening": "Screening",
+              "externalService": "External service",
+              "section": "Section score",
+              "profile": "Overall score"
+            },
+            "answerLocked": {
+              "countryList": "The value comes from the country list. Only the score can be edited here.",
+              "screening": "The value comes from screening. Only the score can be edited here.",
+              "externalService": "The value comes from an external service. Only the score can be edited here."
+            }
           }
         },
         "screening": {
@@ -1460,7 +1496,9 @@
           "noteAdded": "Note added to the log",
           "complianceReopenedDesc": "Score, matches and categorisation can be changed again.",
           "scoreInvalidated": "Score reopened",
-          "scoreReset": "Computed score restored"
+          "scoreReset": "Computed score restored",
+          "commentSaved": "Comment saved",
+          "riskAnswerSaved": "Answer saved"
         },
         "chain": {
           "ariaLabel": "Validation circuit",
