@@ -25,25 +25,22 @@ export interface RiskComponent {
   score: number | null;
   min: number;
   max: number;
-  /** La composante autorise la saisie manuelle d'un score par un operateur. */
-  manualAllowed: boolean;
   /** Score saisi manuellement, prioritaire sur le score calcule. */
   manualScore?: number;
   manualBy?: string;
   manualAt?: string;
+  /** Commentaire obligatoire qui motive la saisie manuelle. */
+  manualComment?: string;
 }
 
 export interface RiskClass {
   id: string;
   labelKey: string;
-  formula: string;
-  formulaKind: 'standard' | 'custom';
-  /** Mode d'agregation des composantes, coherent avec la formule affichee. */
+  /** Mode d'agregation des composantes. */
   aggregate: 'max' | 'avg';
-  /** Poids de la classe dans la formule du profil. */
+  /** Poids de la classe dans le calcul du profil. */
   weight: number;
   components: RiskComponent[];
-  scaleId: string;
 }
 
 export type RiskTone = 'low' | 'medium' | 'high' | 'critical';
@@ -67,8 +64,6 @@ export interface RiskProfile {
   name: string;
   /** Onboarding d'ou vient le profil : le profil applique vient de l'onboarding. */
   originOnboarding: string;
-  formula: string;
-  formulaKind: 'standard' | 'custom';
   scaleId: string;
   classes: RiskClass[];
   computedAt: string;
@@ -85,23 +80,11 @@ export const mockRiskScales: RiskScale[] = [
       { min: 80, max: 100, labelKey: 'subscriptions.detail.compliance.tone.critical', tone: 'critical', requiresValidation: true },
     ],
   },
-  {
-    id: 'class',
-    labelKey: 'subscriptions.detail.compliance.scales.class',
-    tiers: [
-      { min: 0, max: 3.9, labelKey: 'subscriptions.detail.compliance.tone.low', tone: 'low', requiresValidation: false },
-      { min: 4, max: 6.9, labelKey: 'subscriptions.detail.compliance.tone.medium', tone: 'medium', requiresValidation: false },
-      { min: 7, max: 8.9, labelKey: 'subscriptions.detail.compliance.tone.high', tone: 'high', requiresValidation: true },
-      { min: 9, max: 10, labelKey: 'subscriptions.detail.compliance.tone.critical', tone: 'critical', requiresValidation: true },
-    ],
-  },
 ];
 
 export const mockRiskProfile: RiskProfile = {
   name: 'Profil FIA - Personne physique',
   originOnboarding: 'Onboarding Impact Growth II',
-  formula: '(pays * 3 + screening * 5 + profil_client + operation) / 10',
-  formulaKind: 'standard',
   scaleId: 'profile',
   computedAt: '19/05/2026 16:24',
   classes: [
@@ -110,9 +93,6 @@ export const mockRiskProfile: RiskProfile = {
       aggregate: 'max',
       weight: 3,
       labelKey: 'subscriptions.detail.compliance.classes.country',
-      formula: 'max(residence, nationalite, domiciliation_bancaire)',
-      formulaKind: 'standard',
-      scaleId: 'class',
       components: [
         {
           id: 'country-residence',
@@ -122,7 +102,6 @@ export const mockRiskProfile: RiskProfile = {
           score: 1,
           min: 0,
           max: 10,
-          manualAllowed: false,
         },
         {
           id: 'country-nationality',
@@ -132,7 +111,6 @@ export const mockRiskProfile: RiskProfile = {
           score: 1,
           min: 0,
           max: 10,
-          manualAllowed: false,
         },
         {
           id: 'country-bank',
@@ -142,7 +120,6 @@ export const mockRiskProfile: RiskProfile = {
           score: 4.8,
           min: 0,
           max: 10,
-          manualAllowed: false,
         },
       ],
     },
@@ -151,9 +128,6 @@ export const mockRiskProfile: RiskProfile = {
       aggregate: 'max',
       weight: 5,
       labelKey: 'subscriptions.detail.compliance.classes.screening',
-      formula: 'max(souscripteur, representant, beneficiaires)',
-      formulaKind: 'standard',
-      scaleId: 'class',
       components: [
         {
           id: 'screening-subscriber',
@@ -163,7 +137,6 @@ export const mockRiskProfile: RiskProfile = {
           score: 8,
           min: 0,
           max: 10,
-          manualAllowed: true,
         },
         {
           id: 'screening-representative',
@@ -173,7 +146,6 @@ export const mockRiskProfile: RiskProfile = {
           score: 6,
           min: 0,
           max: 10,
-          manualAllowed: true,
         },
         {
           id: 'screening-bo',
@@ -183,7 +155,6 @@ export const mockRiskProfile: RiskProfile = {
           score: 0,
           min: 0,
           max: 10,
-          manualAllowed: true,
         },
       ],
     },
@@ -192,9 +163,6 @@ export const mockRiskProfile: RiskProfile = {
       aggregate: 'avg',
       weight: 1,
       labelKey: 'subscriptions.detail.compliance.classes.clientProfile',
-      formula: '(categorie + origine_relation + origine_fonds) / 3',
-      formulaKind: 'standard',
-      scaleId: 'class',
       components: [
         {
           id: 'client-category',
@@ -204,7 +172,6 @@ export const mockRiskProfile: RiskProfile = {
           score: 2,
           min: 0,
           max: 10,
-          manualAllowed: false,
         },
         {
           id: 'client-relation',
@@ -214,7 +181,6 @@ export const mockRiskProfile: RiskProfile = {
           score: 3,
           min: 0,
           max: 10,
-          manualAllowed: false,
         },
         {
           id: 'client-funds',
@@ -224,10 +190,10 @@ export const mockRiskProfile: RiskProfile = {
           score: 5,
           min: 0,
           max: 10,
-          manualAllowed: true,
           manualScore: 6,
           manualBy: 'Marie Dubois',
           manualAt: '19/05/2026 16:31',
+          manualComment: "Justificatif de cession reçu, montant supérieur au seuil de vigilance.",
         },
       ],
     },
@@ -236,9 +202,6 @@ export const mockRiskProfile: RiskProfile = {
       aggregate: 'avg',
       weight: 1,
       labelKey: 'subscriptions.detail.compliance.classes.operation',
-      formula: 'service_externe(montant, mode_reglement)',
-      formulaKind: 'custom',
-      scaleId: 'class',
       components: [
         {
           id: 'operation-amount',
@@ -248,7 +211,6 @@ export const mockRiskProfile: RiskProfile = {
           score: 4,
           min: 0,
           max: 10,
-          manualAllowed: false,
         },
         {
           id: 'operation-payment',
@@ -258,7 +220,6 @@ export const mockRiskProfile: RiskProfile = {
           score: null,
           min: 0,
           max: 10,
-          manualAllowed: true,
         },
       ],
     },
@@ -495,11 +456,15 @@ export function componentScore(
   return component.score;
 }
 
-/** Score d'une classe, calcule depuis ses composantes evaluables. */
+/** Cle de la saisie manuelle qui force le score global du profil. */
+export const PROFILE_SCORE_ID = 'profile';
+
+/** Score d'une classe : la saisie manuelle prime, sinon calcul depuis les composantes evaluables. */
 export function aggregateClassScore(
   riskClass: RiskClass,
   overrides: Record<string, number> = {},
 ): number | null {
+  if (typeof overrides[riskClass.id] === 'number') return overrides[riskClass.id];
   const scores = riskClass.components
     .map(component => componentScore(component, overrides))
     .filter((value): value is number => typeof value === 'number');
@@ -508,8 +473,9 @@ export function aggregateClassScore(
   return round1(scores.reduce((sum, value) => sum + value, 0) / scores.length);
 }
 
-/** Score du profil, moyenne ponderee des classes ramenee sur 100. */
+/** Score du profil : le score force prime, sinon moyenne ponderee des classes ramenee sur 100. */
 export function computeProfileScore(overrides: Record<string, number> = {}): number | null {
+  if (typeof overrides[PROFILE_SCORE_ID] === 'number') return overrides[PROFILE_SCORE_ID];
   const weighted = mockRiskProfile.classes.reduce(
     (acc, riskClass) => {
       const score = aggregateClassScore(riskClass, overrides);

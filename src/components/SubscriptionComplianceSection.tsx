@@ -10,12 +10,14 @@ import {
   Globe,
   History,
   ListChecks,
+  MessageSquare,
   Pencil,
   Radar,
   RefreshCw,
   RotateCcw,
   ShieldAlert,
   ShieldCheck,
+  SlidersHorizontal,
   UserCheck,
   Users,
 } from 'lucide-react';
@@ -24,6 +26,20 @@ import { useTranslation } from '../utils/languageContext';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
+import {
+  BIG_MODAL_COMPACT,
+  BigModal,
+  BigModalBody,
+  BigModalContent,
+  BigModalPanelFooter,
+  BigModalPanelHeader,
+} from './ui/big-modal';
+import { ConfirmDialog } from './ui/confirm-dialog';
+import { DisabledReason } from './ui/disabled-reason';
+import { FormField } from './ui/form-field';
+import { Input } from './ui/input';
+import { RowActionButton } from './ui/row-actions';
+import { Textarea } from './ui/textarea';
 import {
   Select,
   SelectContent,
@@ -43,6 +59,7 @@ import {
   mockCategorisation,
   mockRiskProfile,
   mockRiskScales,
+  PROFILE_SCORE_ID,
   type InvestorCategory,
   type RiskComponentSource,
   type RiskTone,
@@ -167,33 +184,233 @@ function ScoreDonut({
   );
 }
 
+export interface ScoreComment {
+  id: string;
+  labelKey: string;
+  previous: number | null;
+  /** null : retour au score calculé. */
+  next: number | null;
+  comment: string;
+  by: string;
+  at: string;
+}
+
+interface ScoreEditTarget {
+  id: string;
+  labelKey: string;
+  min: number;
+  max: number;
+  current: number | null;
+  /** Score de section ou score global déjà saisi à la main : le retour au calcul est proposé. */
+  resettable: boolean;
+}
+
+const SCORE_FIELD_ID = 'risk-score-value';
+const COMMENT_FIELD_ID = 'risk-score-comment';
+
+/** Modification d'un score : nouvelle valeur et commentaire obligatoire. */
+function ScoreEditDialog({
+  target,
+  onClose,
+  onSubmit,
+}: {
+  target: ScoreEditTarget | null;
+  onClose: () => void;
+  onSubmit: (target: ScoreEditTarget, value: number | null, comment: string) => void;
+}) {
+  const { t } = useTranslation();
+  const [value, setValue] = useState('');
+  const [comment, setComment] = useState('');
+  const [openedFor, setOpenedFor] = useState<string | null>(null);
+
+  if (target && openedFor !== target.id) {
+    setOpenedFor(target.id);
+    setValue(target.current === null ? '' : String(target.current));
+    setComment('');
+  }
+  if (!target && openedFor !== null) setOpenedFor(null);
+
+  const parsed = value.trim() === '' ? Number.NaN : Number(value.replace(',', '.'));
+  const scoreValid = Boolean(target) && !Number.isNaN(parsed) && parsed >= target!.min && parsed <= target!.max;
+  const commentMissing = comment.trim() === '';
+  const forced = target?.id === PROFILE_SCORE_ID;
+
+  const commentReason = commentMissing
+    ? t('subscriptions.detail.compliance.profile.edit.commentRequired')
+    : undefined;
+  const confirmReason = !scoreValid
+    ? t('subscriptions.detail.compliance.toast.invalidScoreDesc', {
+        min: target?.min ?? 0,
+        max: target?.max ?? 0,
+      })
+    : commentReason;
+
+  return (
+    <ConfirmDialog
+      open={Boolean(target)}
+      onOpenChange={open => !open && onClose()}
+      icon={forced ? SlidersHorizontal : Pencil}
+      title={
+        forced
+          ? t('subscriptions.detail.compliance.score.force')
+          : t('subscriptions.detail.compliance.profile.editScore')
+      }
+      description={target ? t(target.labelKey) : undefined}
+      confirmLabel={t('subscriptions.detail.compliance.profile.edit.save')}
+      confirmDisabledReason={confirmReason}
+      onConfirm={() => target && onSubmit(target, round1(parsed), comment.trim())}
+    >
+      <div className="space-y-4">
+        <FormField
+          id={SCORE_FIELD_ID}
+          label={t('subscriptions.detail.compliance.profile.componentScore')}
+          required
+          hint={t('subscriptions.detail.compliance.profile.edit.scoreHint', {
+            min: target?.min ?? 0,
+            max: target?.max ?? 0,
+          })}
+        >
+          <Input
+            id={SCORE_FIELD_ID}
+            inputMode="decimal"
+            value={value}
+            onChange={event => setValue(event.target.value)}
+            className="h-11 tabular-nums"
+          />
+        </FormField>
+        <FormField
+          id={COMMENT_FIELD_ID}
+          label={t('subscriptions.detail.compliance.profile.edit.comment')}
+          required
+          hint={t('subscriptions.detail.compliance.profile.edit.commentHint')}
+        >
+          <Textarea
+            id={COMMENT_FIELD_ID}
+            value={comment}
+            onChange={event => setComment(event.target.value)}
+            placeholder={t('subscriptions.detail.compliance.profile.edit.commentPlaceholder')}
+            rows={3}
+          />
+        </FormField>
+        {target?.resettable && (
+          <DisabledReason reason={commentReason}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full gap-1.5"
+              disabled={commentMissing}
+              onClick={() => target && onSubmit(target, null, comment.trim())}
+            >
+              <RotateCcw className="w-4 h-4" />
+              {t('subscriptions.detail.compliance.profile.edit.backToComputed')}
+            </Button>
+          </DisabledReason>
+        )}
+      </div>
+    </ConfirmDialog>
+  );
+}
+
+/** Détail des commentaires saisis à chaque modification de score. */
+function ScoreCommentsDialog({
+  open,
+  onOpenChange,
+  comments,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  comments: ScoreComment[];
+}) {
+  const { t } = useTranslation();
+  const format = (value: number | null) =>
+    value === null ? t('subscriptions.detail.compliance.profile.comments.computedValue') : String(value);
+
+  return (
+    <BigModal open={open} onOpenChange={onOpenChange}>
+      <BigModalContent className={`${BIG_MODAL_COMPACT} p-0 gap-0`}>
+        <div className="flex flex-col overflow-hidden rounded-3xl">
+          <BigModalPanelHeader
+            icon={MessageSquare}
+            title={t('subscriptions.detail.compliance.profile.comments.title')}
+            subtitle={t('subscriptions.detail.compliance.profile.comments.subtitle')}
+            onClose={() => onOpenChange(false)}
+            closeLabel={t('common.confirmDialog.close')}
+          />
+          <BigModalBody>
+            {comments.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                {t('subscriptions.detail.compliance.profile.comments.empty')}
+              </p>
+            ) : (
+              <ul className="space-y-3">
+                {comments.map(item => (
+                  <li key={item.id} className="rounded-lg border bg-card p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="text-sm font-semibold text-foreground">{t(item.labelKey)}</span>
+                      <span className="shrink-0 text-xs font-semibold text-foreground tabular-nums">
+                        {format(item.previous)} → {format(item.next)}
+                      </span>
+                    </div>
+                    <p className="mt-1.5 text-sm text-foreground">{item.comment}</p>
+                    <p className="mt-1.5 text-xs text-muted-foreground">
+                      {item.by} · {item.at}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </BigModalBody>
+          <BigModalPanelFooter
+            end={
+              <Button variant="outline" size="sm" className="h-9" onClick={() => onOpenChange(false)}>
+                {t('subscriptions.detail.compliance.profile.comments.close')}
+              </Button>
+            }
+          />
+        </div>
+      </BigModalContent>
+    </BigModal>
+  );
+}
+
 interface RiskProfileWidgetProps {
   /** Dossier valide : les decisions ne sont plus modifiables. */
   locked: boolean;
+  /** Scores saisis à la main, par composante, par section ou pour le score global. */
   manualScores: Record<string, number>;
-  onManualScore: (componentId: string, value: number) => void;
+  onScoreChange: (
+    target: { id: string; labelKey: string; previous: number | null },
+    value: number | null,
+    comment: string,
+  ) => void;
+  comments: ScoreComment[];
   computedAt: string;
   onRecompute: () => void;
   scoreValidated: boolean;
   scoreValidatedBy: string | null;
   scoreValidatedAt: string | null;
+  onValidateScore: () => void;
+  onReopenScore: () => void;
 }
 
-/** Widget Risque : score, echelle et detail du calcul classe par classe. */
+/** Widget Risque : score global, dates de calcul et de validation, scores par section. */
 export function RiskProfileWidget({
   locked,
   manualScores,
-  onManualScore,
+  onScoreChange,
+  comments,
   computedAt,
   onRecompute,
   scoreValidated,
   scoreValidatedBy,
   scoreValidatedAt,
+  onValidateScore,
+  onReopenScore,
 }: RiskProfileWidgetProps) {
   const { t } = useTranslation();
   const [scaleVisible, setScaleVisible] = useState(false);
-  const [editingComponent, setEditingComponent] = useState<string | null>(null);
-  const [editingValue, setEditingValue] = useState('');
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<ScoreEditTarget | null>(null);
 
   const tc = (key: string, count: number) => t(`${key}${count === 1 ? 'One' : 'Many'}`, { count });
 
@@ -202,6 +419,7 @@ export function RiskProfileWidget({
       mockRiskProfile.classes.map(riskClass => ({
         riskClass,
         score: aggregateClassScore(riskClass, manualScores),
+        manual: typeof manualScores[riskClass.id] === 'number',
         unevaluated: riskClass.components.filter(
           component => componentScore(component, manualScores) === null,
         ).length,
@@ -213,17 +431,31 @@ export function RiskProfileWidget({
   const profileTier = findRiskTier(mockRiskProfile.scaleId, profileScore);
   const tone: RiskTone = profileTier?.tone ?? 'medium';
   const validationRequired = profileTier?.requiresValidation ?? false;
+  const forced = typeof manualScores[PROFILE_SCORE_ID] === 'number';
 
-  const handleSave = (componentId: string, min: number, max: number) => {
-    const parsed = Number(editingValue.replace(',', '.'));
-    if (Number.isNaN(parsed) || parsed < min || parsed > max) {
-      toast.error(t('subscriptions.detail.compliance.toast.invalidScore'), {
-        description: t('subscriptions.detail.compliance.toast.invalidScoreDesc', { min, max }),
-      });
-      return;
-    }
-    onManualScore(componentId, round1(parsed));
-    setEditingComponent(null);
+  const editLockedReason = scoreValidated
+    ? t('subscriptions.detail.compliance.score.editLockedReason')
+    : undefined;
+
+  const lastChange = (labelKey: string) => comments.find(item => item.labelKey === labelKey);
+
+  const manualMarker = (labelKey: string) => {
+    const change = lastChange(labelKey);
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Pencil className="w-3 h-3 text-amber-600" />
+        </TooltipTrigger>
+        <TooltipContent>
+          <span className="text-xs">
+            {t('subscriptions.detail.compliance.profile.manualBy', {
+              name: change?.by ?? CURRENT_OPERATOR,
+              date: change?.at ?? computedAt,
+            })}
+          </span>
+        </TooltipContent>
+      </Tooltip>
+    );
   };
 
   return (
@@ -241,27 +473,23 @@ export function RiskProfileWidget({
           </p>
         </div>
         <div className="flex items-center gap-1 shrink-0">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0 text-muted-foreground"
-            title={t('subscriptions.detail.compliance.profile.showScale')}
-            aria-label={t('subscriptions.detail.compliance.profile.showScale')}
+          <RowActionButton
+            icon={ListChecks}
+            tooltip={t('subscriptions.detail.compliance.profile.showScale')}
             onClick={() => setScaleVisible(prev => !prev)}
-          >
-            <ListChecks className="w-4 h-4" />
-          </Button>
+          />
+          <RowActionButton
+            icon={MessageSquare}
+            tooltip={tc('subscriptions.detail.compliance.profile.comments.open', comments.length)}
+            onClick={() => setCommentsOpen(true)}
+          />
           {!locked && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0 text-muted-foreground"
-              title={t('subscriptions.detail.compliance.score.recompute')}
-              aria-label={t('subscriptions.detail.compliance.score.recompute')}
+            <RowActionButton
+              icon={RefreshCw}
+              tooltip={t('subscriptions.detail.compliance.score.recompute')}
+              disabledReason={editLockedReason}
               onClick={onRecompute}
-            >
-              <RefreshCw className="w-4 h-4" />
-            </Button>
+            />
           )}
         </div>
       </div>
@@ -273,40 +501,74 @@ export function RiskProfileWidget({
           label={profileTier ? t(profileTier.labelKey) : t('subscriptions.detail.compliance.score.unavailable')}
         />
 
-        <div className="min-w-0 flex-1 space-y-1">
-          <Badge
-            className={
-              mockRiskProfile.formulaKind === 'custom'
-                ? 'bg-amber-50 text-amber-700 border-amber-200 text-xs'
-                : 'bg-muted text-muted-foreground text-xs'
-            }
-          >
-            {t(`subscriptions.detail.compliance.profile.formulaKind.${mockRiskProfile.formulaKind}`)}
-          </Badge>
-          <p className="text-xs text-muted-foreground">{mockRiskProfile.formula}</p>
-          <p className="text-xs text-muted-foreground">
-            {t('subscriptions.detail.compliance.score.computedAt', { date: computedAt })}
-          </p>
+        <div className="min-w-0 flex-1 space-y-2">
+          <dl className="space-y-1 text-xs">
+            <div className="flex flex-wrap gap-1.5">
+              <dt className="text-muted-foreground">{t('subscriptions.detail.compliance.score.computedDate')}</dt>
+              <dd className="font-medium text-foreground">{computedAt}</dd>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              <dt className="text-muted-foreground">{t('subscriptions.detail.compliance.score.validationDate')}</dt>
+              <dd className="font-medium text-foreground">
+                {scoreValidated
+                  ? t('subscriptions.detail.compliance.score.validatedByAt', {
+                      date: scoreValidatedAt ?? '',
+                      name: scoreValidatedBy ?? '',
+                    })
+                  : t('subscriptions.detail.compliance.score.notValidated')}
+              </dd>
+            </div>
+          </dl>
 
-          {validationRequired ? (
-            scoreValidated ? (
-              <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
-                <span>
-                  {t('subscriptions.detail.compliance.score.validated')} · {scoreValidatedBy} ·{' '}
-                  {scoreValidatedAt}
-                </span>
-              </p>
-            ) : (
-              <p className="flex items-start gap-1.5 text-xs text-amber-700">
-                <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                {t('subscriptions.detail.compliance.score.validationRequired')}
-              </p>
-            )
-          ) : (
-            <p className="text-xs text-muted-foreground">
-              {t('subscriptions.detail.compliance.score.noValidationNeeded')}
+          {forced && (
+            <p className="flex items-center gap-1.5 text-xs text-amber-700">
+              {manualMarker('subscriptions.detail.compliance.score.global')}
+              {t('subscriptions.detail.compliance.score.forced')}
             </p>
+          )}
+
+          {validationRequired && !scoreValidated && (
+            <p className="flex items-start gap-1.5 text-xs text-amber-700">
+              <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+              {t('subscriptions.detail.compliance.score.validationRequired')}
+            </p>
+          )}
+
+          {!locked && (
+            <div className="flex flex-wrap items-center gap-2">
+              {scoreValidated ? (
+                <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={onReopenScore}>
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  {t('subscriptions.detail.compliance.score.invalidate')}
+                </Button>
+              ) : (
+                <Button variant="primary" size="sm" className="h-8 gap-1.5 text-xs" onClick={onValidateScore}>
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  {t('subscriptions.detail.compliance.score.validate')}
+                </Button>
+              )}
+              <DisabledReason reason={editLockedReason}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 gap-1.5 text-xs"
+                  disabled={scoreValidated}
+                  onClick={() =>
+                    setEditTarget({
+                      id: PROFILE_SCORE_ID,
+                      labelKey: 'subscriptions.detail.compliance.score.global',
+                      min: 0,
+                      max: 100,
+                      current: profileScore,
+                      resettable: forced,
+                    })
+                  }
+                >
+                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                  {t('subscriptions.detail.compliance.score.force')}
+                </Button>
+              </DisabledReason>
+            </div>
           )}
         </div>
       </div>
@@ -325,7 +587,7 @@ export function RiskProfileWidget({
                     {t(tier.labelKey)}
                   </div>
                   <div className="text-[11px] text-muted-foreground tabular-nums">
-                    {tier.min} – {tier.max}
+                    {tier.min} - {tier.max}
                   </div>
                   {tier.requiresValidation && (
                     <ShieldCheck className="w-3 h-3 mt-1 text-muted-foreground" />
@@ -337,126 +599,105 @@ export function RiskProfileWidget({
       )}
 
       <ul className="divide-y">
-        {classScores.map(({ riskClass, score, unevaluated }) => {
-          const tier = findRiskTier(riskClass.scaleId, score);
-          return (
-            <li key={riskClass.id} className="px-4 py-2.5">
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-foreground">{t(riskClass.labelKey)}</span>
-                    <span className="text-[11px] text-muted-foreground">
-                      {t('subscriptions.detail.compliance.profile.weight', { weight: riskClass.weight })}
-                    </span>
-                  </div>
-                  <div className="text-[11px] text-muted-foreground truncate">{riskClass.formula}</div>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  {unevaluated > 0 && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <span className="text-xs">
-                          {tc('subscriptions.detail.compliance.profile.unevaluated', unevaluated)}
-                        </span>
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
-                  <span className="text-sm font-bold text-foreground tabular-nums">
-                    {score === null ? '—' : score.toFixed(2)}
-                  </span>
-                  {tier ? (
-                    <ToneBadge tone={tier.tone} label={t(tier.labelKey)} className="text-xs" />
-                  ) : (
-                    <Badge className="bg-muted text-muted-foreground text-xs">
-                      {t('subscriptions.detail.compliance.score.unavailable')}
-                    </Badge>
-                  )}
-                </div>
+        {classScores.map(({ riskClass, score, manual: classManual, unevaluated }) => (
+          <li key={riskClass.id} className="px-4 py-2">
+            <div className="flex items-center justify-between gap-2">
+              <span className="min-w-0 truncate text-sm font-semibold text-foreground">
+                {t(riskClass.labelKey)}
+              </span>
+              <div className="flex items-center gap-1.5 shrink-0">
+                {unevaluated > 0 && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <span className="text-xs">
+                        {tc('subscriptions.detail.compliance.profile.unevaluated', unevaluated)}
+                      </span>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+                {classManual && manualMarker(riskClass.labelKey)}
+                <span className="text-sm font-bold text-foreground tabular-nums">
+                  {score === null ? '-' : score.toFixed(2)}
+                </span>
+                {!locked && (
+                  <RowActionButton
+                    icon={Pencil}
+                    tooltip={t('subscriptions.detail.compliance.profile.editScore')}
+                    disabledReason={editLockedReason}
+                    onClick={() =>
+                      setEditTarget({
+                        id: riskClass.id,
+                        labelKey: riskClass.labelKey,
+                        min: 0,
+                        max: 10,
+                        current: score,
+                        resettable: classManual,
+                      })
+                    }
+                  />
+                )}
               </div>
+            </div>
 
-              <ul className="mt-1.5 space-y-1">
-                {riskClass.components.map(component => {
-                  const SourceIcon = SOURCE_ICONS[component.source];
-                  const shown = componentScore(component, manualScores);
-                  const manual =
-                    typeof manualScores[component.id] === 'number' ||
-                    typeof component.manualScore === 'number';
-                  const isEditing = editingComponent === component.id;
+            <ul>
+              {riskClass.components.map(component => {
+                const SourceIcon = SOURCE_ICONS[component.source];
+                const shown = componentScore(component, manualScores);
+                const manual =
+                  typeof manualScores[component.id] === 'number' ||
+                  typeof component.manualScore === 'number';
 
-                  return (
-                    <li key={component.id} className="flex items-center justify-between gap-2">
-                      <span className="flex min-w-0 items-center gap-1.5 text-xs">
-                        <SourceIcon className="w-3 h-3 shrink-0 text-muted-foreground" />
-                        <span className="truncate text-foreground">{t(component.labelKey)}</span>
-                        <span className="truncate text-muted-foreground">{component.value}</span>
+                return (
+                  <li key={component.id} className="flex items-center justify-between gap-2">
+                    <span className="flex min-w-0 items-center gap-1.5 text-xs">
+                      <SourceIcon className="w-3 h-3 shrink-0 text-muted-foreground" />
+                      <span className="truncate text-foreground">{t(component.labelKey)}</span>
+                      <span className="truncate text-muted-foreground">{component.value}</span>
+                    </span>
+
+                    <span className="flex items-center gap-1.5 shrink-0">
+                      {manual && manualMarker(component.labelKey)}
+                      <span className="text-xs font-semibold text-foreground tabular-nums">
+                        {shown === null ? '-' : shown.toFixed(2)}
                       </span>
-
-                      <span className="flex items-center gap-1 shrink-0">
-                        {manual && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Pencil className="w-3 h-3 text-amber-600" />
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <span className="text-xs">
-                                {t('subscriptions.detail.compliance.profile.manualBy', {
-                                  name: component.manualBy ?? CURRENT_OPERATOR,
-                                  date: component.manualAt ?? computedAt,
-                                })}
-                              </span>
-                            </TooltipContent>
-                          </Tooltip>
-                        )}
-
-                        {isEditing ? (
-                          <>
-                            <Input
-                              value={editingValue}
-                              onChange={event => setEditingValue(event.target.value)}
-                              className="h-6 w-14 text-right text-xs"
-                            />
-                            <Button
-                              size="sm"
-                              className="h-6 w-6 p-0"
-                              onClick={() => handleSave(component.id, component.min, component.max)}
-                            >
-                              <Check className="w-3 h-3" />
-                            </Button>
-                          </>
-                        ) : (
-                          <>
-                            <span className="text-xs font-semibold text-foreground tabular-nums">
-                              {shown === null ? '—' : shown.toFixed(2)}
-                            </span>
-                            {component.manualAllowed && !locked && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-6 w-6 p-0 text-muted-foreground"
-                                title={t('subscriptions.detail.compliance.profile.setScore')}
-                                aria-label={t('subscriptions.detail.compliance.profile.setScore')}
-                                onClick={() => {
-                                  setEditingComponent(component.id);
-                                  setEditingValue(shown === null ? '' : String(shown));
-                                }}
-                              >
-                                <Pencil className="w-3 h-3" />
-                              </Button>
-                            )}
-                          </>
-                        )}
-                      </span>
-                    </li>
-                  );
-                })}
-              </ul>
-            </li>
-          );
-        })}
+                      {!locked && (
+                        <RowActionButton
+                          icon={Pencil}
+                          tooltip={t('subscriptions.detail.compliance.profile.editScore')}
+                          disabledReason={editLockedReason}
+                          onClick={() =>
+                            setEditTarget({
+                              id: component.id,
+                              labelKey: component.labelKey,
+                              min: component.min,
+                              max: component.max,
+                              current: shown,
+                              resettable: false,
+                            })
+                          }
+                        />
+                      )}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </li>
+        ))}
       </ul>
+
+      <ScoreEditDialog
+        target={editTarget}
+        onClose={() => setEditTarget(null)}
+        onSubmit={(target, value, comment) => {
+          onScoreChange({ id: target.id, labelKey: target.labelKey, previous: target.current }, value, comment);
+          setEditTarget(null);
+        }}
+      />
+      <ScoreCommentsDialog open={commentsOpen} onOpenChange={setCommentsOpen} comments={comments} />
     </Card>
   );
 }
@@ -508,6 +749,20 @@ export function SubscriptionComplianceSection({
 
   const [manualScores, setManualScores] = useState<Record<string, number>>({});
   const [computedAt, setComputedAt] = useState(mockRiskProfile.computedAt);
+  const [scoreComments, setScoreComments] = useState<ScoreComment[]>(() =>
+    mockRiskProfile.classes
+      .flatMap(item => item.components)
+      .filter(component => typeof component.manualScore === 'number' && component.manualComment)
+      .map(component => ({
+        id: `seed-${component.id}`,
+        labelKey: component.labelKey,
+        previous: component.score,
+        next: component.manualScore ?? null,
+        comment: component.manualComment ?? '',
+        by: component.manualBy ?? CURRENT_OPERATOR,
+        at: component.manualAt ?? mockRiskProfile.computedAt,
+      })),
+  );
 
   const [category, setCategory] = useState<InvestorCategory>(mockCategorisation.category);
   const [categoryDecidedBy, setCategoryDecidedBy] = useState(mockCategorisation.decidedBy);
@@ -545,23 +800,43 @@ export function SubscriptionComplianceSection({
   ];
   const canValidate = blockers.length === 0 || overrideRequested;
 
-  const handleManualScore = (componentId: string, value: number) => {
-    const component = mockRiskProfile.classes
-      .flatMap(item => item.components)
-      .find(item => item.id === componentId);
-    const label = component ? t(component.labelKey) : componentId;
-    const previous = manualScores[componentId] ?? component?.manualScore ?? component?.score;
+  const handleScoreChange = (
+    target: { id: string; labelKey: string; previous: number | null },
+    value: number | null,
+    comment: string,
+  ) => {
+    const stamp = now();
     logAudit({
       type: 'manualScoreSet',
-      subject: label,
-      previousValue: previous !== undefined && previous !== null ? String(previous) : undefined,
-      newValue: String(value),
+      subject: t(target.labelKey),
+      previousValue: target.previous === null ? undefined : String(target.previous),
+      newValue:
+        value === null ? t('subscriptions.detail.compliance.profile.comments.computedValue') : String(value),
+      reason: comment,
     });
-    setManualScores(prev => ({ ...prev, [componentId]: value }));
-    setComputedAt(now());
-    toast.success(t('subscriptions.detail.compliance.toast.manualScoreSaved'), {
-      description: t('subscriptions.detail.compliance.toast.manualScoreSavedDesc'),
+    setManualScores(prev => {
+      const next = { ...prev };
+      if (value === null) delete next[target.id];
+      else next[target.id] = value;
+      return next;
     });
+    setScoreComments(prev => [
+      {
+        id: `${target.id}-${Date.now()}`,
+        labelKey: target.labelKey,
+        previous: target.previous,
+        next: value,
+        comment,
+        by: CURRENT_OPERATOR,
+        at: stamp,
+      },
+      ...prev,
+    ]);
+    setComputedAt(stamp);
+    toast.success(
+      t(`subscriptions.detail.compliance.toast.${value === null ? 'scoreReset' : 'manualScoreSaved'}`),
+      { description: t('subscriptions.detail.compliance.toast.manualScoreSavedDesc') },
+    );
   };
 
   const handleRecompute = () => {
@@ -777,7 +1052,7 @@ export function SubscriptionComplianceSection({
                 <Radar className="w-3.5 h-3.5" />
                 {t('subscriptions.detail.compliance.score.title')}
               </span>
-              {!locked && validationRequired && (
+              {!locked && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -808,18 +1083,18 @@ export function SubscriptionComplianceSection({
               )}
             </div>
 
-            {!validationRequired ? (
-              <p className="mt-1.5 flex items-start gap-1.5 text-xs text-muted-foreground">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
-                {t('subscriptions.detail.compliance.score.noValidationNeeded')}
-              </p>
-            ) : scoreValidated ? (
+            {scoreValidated ? (
               <p className="mt-1.5 flex items-start gap-1.5 text-xs text-muted-foreground">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
                 {t('subscriptions.detail.compliance.final.scoreValidatedBy', {
                   name: scoreValidatedBy ?? '',
                   date: scoreValidatedAt ?? '',
                 })}
+              </p>
+            ) : !validationRequired ? (
+              <p className="mt-1.5 flex items-start gap-1.5 text-xs text-muted-foreground">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                {t('subscriptions.detail.compliance.score.noValidationNeeded')}
               </p>
             ) : (
               <p className="mt-1.5 flex items-start gap-1.5 text-xs text-amber-700">
@@ -982,12 +1257,15 @@ export function SubscriptionComplianceSection({
         <RiskProfileWidget
           locked={locked}
           manualScores={manualScores}
-          onManualScore={handleManualScore}
+          onScoreChange={handleScoreChange}
+          comments={scoreComments}
           computedAt={computedAt}
           onRecompute={handleRecompute}
           scoreValidated={scoreValidated}
           scoreValidatedBy={scoreValidatedBy}
           scoreValidatedAt={scoreValidatedAt}
+          onValidateScore={onValidateScore}
+          onReopenScore={onInvalidateScore}
         />
 
         <SubscriptionScreeningWidget

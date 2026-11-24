@@ -1181,8 +1181,7 @@
           "critical": "Critical"
         },
         "scales": {
-          "profile": "Profile scale",
-          "class": "Class scale"
+          "profile": "Profile scale"
         },
         "score": {
           "title": "Risk score",
@@ -1194,7 +1193,15 @@
           "validate": "Validate score",
           "validated": "Score validated",
           "noValidationNeeded": "The tier reached does not require manual validation.",
-          "invalidate": "Invalidate score"
+          "invalidate": "Reopen score",
+          "computedDate": "Computed on",
+          "validationDate": "Validated on",
+          "validatedByAt": "{{date}} by {{name}}",
+          "notValidated": "Not validated",
+          "force": "Force score",
+          "forced": "Overall score forced",
+          "global": "Overall score",
+          "editLockedReason": "Reopen the score to edit it."
         },
         "status": {
           "pending": "Pending",
@@ -1257,11 +1264,6 @@
         "profile": {
           "title": "Risk profile and calculation detail",
           "subtitle": "Profile, classes and components. The calculation runs bottom-up.",
-          "formula": "Profile formula",
-          "formulaKind": {
-            "standard": "Standard formula",
-            "custom": "Custom formula"
-          },
           "showScale": "Scale and tiers",
           "scaleTitle": "Scale tiers",
           "tierRequiresValidation": "Compliance validation required",
@@ -1270,15 +1272,32 @@
           "value": "Value used",
           "componentScore": "Score",
           "action": "Action",
-          "weight": "Weight {{weight}}",
           "manual": "Manual",
-          "manualBy": "Score set by {{name}} on {{date}}",
-          "setScore": "Set a score",
+          "manualBy": "Score edited by {{name}} on {{date}}",
           "computed": "Computed",
           "unevaluatedOne": "{{count}} component not evaluated",
           "unevaluatedMany": "{{count}} components not evaluated",
           "widgetTitle": "Risk profile",
-          "widgetSubtitle": "{{name}} · profile from {{onboarding}}"
+          "widgetSubtitle": "{{name}} · profile from {{onboarding}}",
+          "editScore": "Edit score",
+          "edit": {
+            "save": "Save",
+            "scoreHint": "Value between {{min}} and {{max}}.",
+            "comment": "Comment",
+            "commentHint": "The comment is kept in the comment details and in the compliance log.",
+            "commentPlaceholder": "Explain why the score is changed",
+            "commentRequired": "A comment is required.",
+            "backToComputed": "Back to computed score"
+          },
+          "comments": {
+            "title": "Score comments",
+            "subtitle": "A comment is entered each time a score is edited.",
+            "openOne": "Comment details ({{count}})",
+            "openMany": "Comment details ({{count}})",
+            "empty": "No score has been edited.",
+            "computedValue": "computed",
+            "close": "Close"
+          }
         },
         "screening": {
           "title": "Screening and ongoing monitoring",
@@ -1440,7 +1459,8 @@
           "exportScreeningDesc": "Screenings and decisions are being exported.",
           "noteAdded": "Note added to the log",
           "complianceReopenedDesc": "Score, matches and categorisation can be changed again.",
-          "scoreInvalidated": "Score validation removed"
+          "scoreInvalidated": "Score reopened",
+          "scoreReset": "Computed score restored"
         },
         "chain": {
           "ariaLabel": "Validation circuit",
