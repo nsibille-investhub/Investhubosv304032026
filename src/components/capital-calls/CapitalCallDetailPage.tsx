@@ -20,6 +20,7 @@ import type { CapitalCallLine } from '../../utils/capitalCallLines';
 import type { FundCallSettings } from '../../utils/capitalCallWizard';
 import { getHashParams } from '../../utils/routing';
 import { CapitalCallLinesTab } from './CapitalCallLinesTab';
+import type { NoticeLineBindings } from '../notices/noticeListing';
 import { CapitalCallParametersTab } from './CapitalCallParametersTab';
 import { DetailLink } from '../ui/detail-summary';
 import { DetailTabsList } from '../ui/detail-tabs';
@@ -39,6 +40,8 @@ function tabFromHash(): TabId {
 interface CapitalCallDetailPageProps {
   call: CapitalCall;
   lines: CapitalCallLine[];
+  /** Actions sur les lignes : réglages, droits et mise à jour des lignes. */
+  lineBindings: NoticeLineBindings<CapitalCallLine>;
   /** Parts du fonds, pour le filtre des lignes. */
   fundShares: string[];
   /** Paramètres de l'instance qui pilotent les colonnes de la ventilation. */
@@ -47,7 +50,7 @@ interface CapitalCallDetailPageProps {
   onBack: () => void;
 }
 
-export function CapitalCallDetailPage({ call, lines, fundShares, settings, onOpenFund, onBack }: CapitalCallDetailPageProps) {
+export function CapitalCallDetailPage({ call, lines, lineBindings, fundShares, settings, onOpenFund, onBack }: CapitalCallDetailPageProps) {
   const { t, lang } = useTranslation();
   const [tab, setTab] = useState<TabId>(tabFromHash);
 
@@ -145,7 +148,7 @@ export function CapitalCallDetailPage({ call, lines, fundShares, settings, onOpe
         </div>
         <div className="px-8 py-6">
           <TabsContent value="lines">
-            <CapitalCallLinesTab call={call} lines={lines} fundShares={fundShares} />
+            <CapitalCallLinesTab call={call} lines={lines} fundShares={fundShares} {...lineBindings} />
           </TabsContent>
           <TabsContent value="parameters">
             <CapitalCallParametersTab call={call} settings={settings} />

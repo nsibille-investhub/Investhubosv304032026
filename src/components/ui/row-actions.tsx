@@ -95,12 +95,47 @@ interface ActionsMenuProps {
   icon?: LucideIcon;
   /** `ghost` dans une ligne de tableau, `outline` dans une barre d'actions. */
   variant?: 'ghost' | 'outline';
+  /** Libellé affiché à côté de l'icône : bouton d'action global d'une sélection. */
+  text?: string;
 }
 
 /** Menu d'actions derrière un bouton icône : suite des actions d'une ligne, ou actions groupées d'une barre. */
-export function ActionsMenu({ actions, label, icon: Icon = MoreVertical, variant = 'ghost' }: ActionsMenuProps) {
+export function ActionsMenu({ actions, label, icon: Icon = MoreVertical, variant = 'ghost', text }: ActionsMenuProps) {
   const { t } = useTranslation();
   const tooltip = label ?? t('common.listing.moreActions');
+  const items = (
+    <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+      {actions.map((action, index) => (
+        <React.Fragment key={action.label}>
+          {action.separatorBefore && index > 0 && <DropdownMenuSeparator />}
+          <DropdownMenuItem
+            onClick={action.onClick}
+            disabled={Boolean(action.disabledReason)}
+            variant={action.intent === 'danger' ? 'destructive' : 'default'}
+          >
+            <action.icon className="h-4 w-4" />
+            <span className="flex flex-col">
+              <span>{action.label}</span>
+              {action.disabledReason && <span className="text-xs text-muted-foreground">{action.disabledReason}</span>}
+            </span>
+          </DropdownMenuItem>
+        </React.Fragment>
+      ))}
+    </DropdownMenuContent>
+  );
+  if (text) {
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm" className="h-8 bg-card" onClick={(e) => e.stopPropagation()}>
+            <Icon className="h-4 w-4" />
+            {text}
+          </Button>
+        </DropdownMenuTrigger>
+        {items}
+      </DropdownMenu>
+    );
+  }
   return (
     <DropdownMenu>
       <Tooltip>
@@ -119,24 +154,7 @@ export function ActionsMenu({ actions, label, icon: Icon = MoreVertical, variant
         </TooltipTrigger>
         <TooltipContent>{tooltip}</TooltipContent>
       </Tooltip>
-      <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-        {actions.map((action, index) => (
-          <React.Fragment key={action.label}>
-            {action.separatorBefore && index > 0 && <DropdownMenuSeparator />}
-            <DropdownMenuItem
-              onClick={action.onClick}
-              disabled={Boolean(action.disabledReason)}
-              variant={action.intent === 'danger' ? 'destructive' : 'default'}
-            >
-              <action.icon className="h-4 w-4" />
-              <span className="flex flex-col">
-                <span>{action.label}</span>
-                {action.disabledReason && <span className="text-xs text-muted-foreground">{action.disabledReason}</span>}
-              </span>
-            </DropdownMenuItem>
-          </React.Fragment>
-        ))}
-      </DropdownMenuContent>
+      {items}
     </DropdownMenu>
   );
 }

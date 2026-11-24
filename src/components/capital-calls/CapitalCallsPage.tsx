@@ -1,20 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner@2.0.3';
-import {
-  BellRing,
-  CalendarX,
-  FileArchive,
-  FileSpreadsheet,
-  List,
-  Pencil,
-  Plus,
-  Send,
-  ShieldX,
-  Trash2,
-  Users,
-  Wallet,
-  type LucideIcon,
-} from 'lucide-react';
+import { CalendarX, FileSpreadsheet, List, Pencil, Plus, Send, ShieldX, Wallet, type LucideIcon } from 'lucide-react';
 
 import { useTranslation } from '../../utils/languageContext';
 import type { Fund } from '../../utils/fundGenerator';
@@ -54,6 +40,11 @@ import { PageStateBanner } from '../ui/page-state-banner';
 import { DataPagination } from '../ui/data-pagination';
 import { Button } from '../ui/button';
 import { ConfirmDialog } from '../ui/confirm-dialog';
+import type { NoticeContext } from '../../utils/noticeActions';
+import { CAPITAL_CALL_RULES } from '../../utils/noticeFamilies';
+import { useNoticeSelection } from '../notices/noticeListing';
+import { useNoticeLineStore } from '../notices/useNoticeLineStore';
+import { useNoticeParentActions } from '../notices/useNoticeParentActions';
 import { CapitalCallDetailPage } from './CapitalCallDetailPage';
 import { CapitalCallDraft, CapitalCallWizard, WIZARD_STEPS } from './wizard/CapitalCallWizard';
 
@@ -83,22 +74,14 @@ const SCENARIO_RIGHTS: Record<Scenario, CapitalCallRights> = {
   noRight: FULL_RIGHTS,
 };
 
-/** Ordre des actions de ligne : les trois premières en boutons, les suivantes dans le menu ⋮. */
-const ROW_ACTIONS: { action: CapitalCallAction; icon: LucideIcon; separatorBefore?: boolean }[] = [
-  { action: 'notify', icon: Send },
-  { action: 'relaunch', icon: BellRing },
+/** Actions propres aux appels, placées avant la suppression dans le menu de la ligne. */
+const ROW_ACTIONS: { action: CapitalCallAction; icon: LucideIcon }[] = [
   { action: 'edit', icon: Pencil },
-  { action: 'exportTarget', icon: Users },
-  { action: 'exportNotices', icon: FileArchive },
   { action: 'exportLines', icon: FileSpreadsheet },
-  { action: 'delete', icon: Trash2, separatorBefore: true },
 ];
 
 /** Utilisateur connecté de la maquette, affiché dans l'en-tête. */
 const CURRENT_USER = 'Jean Dault';
-
-const NOTIFY_DURATION = 6000;
-const RELAUNCH_DURATION = 4000;
 
 type SortConfig = { key: string; direction: 'asc' | 'desc' };
 type ActiveFilters = Record<string, string | string[]>;
@@ -214,16 +197,13 @@ export function CapitalCallsPage({
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
   const [visibleColumns, setVisibleColumns] = useState<ColumnKey[]>(readStoredColumns);
   const [allCalls, setAllCalls] = useState<CapitalCall[]>(() => generateCapitalCalls(funds));
-  const [pendingDelete, setPendingDelete] = useState<CapitalCall | null>(null);
   /** Une seule préparation en attente par utilisateur, comme une session d'envoi en masse. */
   const [wizardSession, setWizardSession] = useState<CapitalCallWizardSession | null>(() => readWizardSession(CURRENT_USER));
   const [confirmDiscard, setConfirmDiscard] = useState(false);
-  const timers = useRef<number[]>([]);
   const rights = SCENARIO_RIGHTS[scenario];
 
   const [selectedId, setSelectedId] = useState<string | null>(getDetailIdFromHash);
 
-  useEffect(() => () => timers.current.forEach(id => window.clearTimeout(id)), []);
   useEffect(() => onHashChange(() => setSelectedId(getDetailIdFromHash())), []);
 
   const initialFundKey = (initialFundIds ?? []).join(',');
@@ -259,9 +239,38 @@ export function CapitalCallsPage({
 
   const scopedCalls = useMemo(() => allCalls.filter(call => scopeFundIds.has(call.fundId)), [allCalls, scopeFundIds]);
 
+  const store = useNoticeLineStore((call: CapitalCall) => expireStaleNotices(generateCapitalCallLines(call)));
   const linesByCall = useMemo(
-    () => new Map(allCalls.map(call => [call.id, expireStaleNotices(generateCapitalCallLines(call))])),
-    [allCalls],
+    () => new Map(allCalls.map(call => [call.id, store.linesOf(call)])),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [allCalls, store.overrides],
+  );
+  const isSending = (call: CapitalCall) => call.sending || store.isSending(call.id);
+  const contextOf = (call: CapitalCall): NoticeContext => ({
+    notify: call.diffusion.notify,
+    noticesShown: call.diffusion.portal,
+    sending: isSending(call),
+    canNotify: rights.notify,
+    canDownload: rights.export,
+  });
+  const [checkedIds, setCheckedIds] = useState<Set<number>>(() => new Set());
+  const parentActions = useNoticeParentActions({
+    rules: CAPITAL_CALL_RULES,
+    contextOf,
+    linesOf: store.linesOf,
+    updateLines: store.updateLines,
+    send: store.send,
+    remove: calls => {
+      const ids = new Set(calls.map(call => call.id));
+      setAllCalls(prev => prev.filter(call => !ids.has(call.id)));
+    },
+    onCompleted: () => setCheckedIds(new Set()),
+  });
+  const selection = useNoticeSelection(
+    'capitalCalls',
+    checkedIds,
+    setCheckedIds,
+    parentActions.bulkActions(scopedCalls.filter(call => checkedIds.has(call.id))),
   );
   const summaries = useMemo(
     () => new Map(allCalls.map(call => [call.id, summarizeCall(call, linesByCall.get(call.id) ?? [])])),
@@ -361,15 +370,8 @@ export function CapitalCallsPage({
   };
 
   const blockerReason = (call: CapitalCall, action: CapitalCallAction) => {
-    const blocker = capitalCallBlocker(call, action, rights);
+    const blocker = capitalCallBlocker(call, action, rights, isSending(call));
     return blocker ? t(`${K}.blockers.${blocker}`) : null;
-  };
-
-  const updateCall = (id: number, patch: (call: CapitalCall) => Partial<CapitalCall>) =>
-    setAllCalls(prev => prev.map(call => (call.id === id ? { ...call, ...patch(call) } : call)));
-
-  const later = (delay: number, run: () => void) => {
-    timers.current.push(window.setTimeout(run, delay));
   };
 
   /** Point d'entrée unique des actions : le contrôle serveur est refait quelle que soit l'origine du geste. */
@@ -381,47 +383,8 @@ export function CapitalCallsPage({
       toast.error(t(`${K}.toast.refused`, { name: call.name }), { description: reason });
       return;
     }
-    switch (action) {
-      case 'notify':
-        updateCall(call.id, () => ({ sending: true }));
-        toast.info(t(`${K}.toast.notifyStarted`, { name: call.name }));
-        later(NOTIFY_DURATION, () => {
-          // Les lignes notifiées et non réglées deviennent relançables.
-          updateCall(call.id, current => ({ sending: false, notifiedLines: current.lines, linesToRelaunch: current.lines }));
-          toast.success(t(`${K}.toast.notifyDone`, { name: call.name }));
-        });
-        break;
-      case 'relaunch':
-        updateCall(call.id, () => ({ sending: true }));
-        toast.info(t(`${K}.toast.relaunchStarted`, { name: call.name, count: call.linesToRelaunch }));
-        later(RELAUNCH_DURATION, () => {
-          updateCall(call.id, () => ({ sending: false }));
-          toast.success(t(`${K}.toast.relaunchDone`, { name: call.name }));
-        });
-        break;
-      case 'delete':
-        setPendingDelete(call);
-        break;
-      case 'edit':
-        toast.info(t(`${K}.toast.editComingSoon`));
-        break;
-      default:
-        toast.info(t(`${K}.toast.exportComingSoon`, { action: t(`${K}.actions.${action}`) }));
-    }
-  };
-
-  const confirmDelete = () => {
-    if (!pendingDelete) return;
-    const current = allCalls.find(item => item.id === pendingDelete.id);
-    const reason = current ? blockerReason(current, 'delete') : null;
-    setPendingDelete(null);
-    if (!current) return;
-    if (reason) {
-      toast.error(t(`${K}.toast.refused`, { name: current.name }), { description: reason });
-      return;
-    }
-    setAllCalls(prev => prev.filter(item => item.id !== current.id));
-    toast.success(t(`${K}.toast.deleted`, { name: current.name }));
+    if (action === 'edit') toast.info(t(`${K}.toast.editComingSoon`));
+    else toast.info(t(`${K}.toast.exportComingSoon`, { action: t(`${K}.actions.${action}`) }));
   };
 
   const createCall = (draft: CapitalCallDraft) => {
@@ -524,8 +487,9 @@ export function CapitalCallsPage({
   };
 
   const simulateDirectNotify = () => {
-    const target = scopedCalls.find(call => call.notifiedLines < call.lines && !call.sending) ?? scopedCalls[0];
-    if (target) runAction(target.id, 'notify');
+    const target = scopedCalls.find(call => summaryOf(call).toNotify > 0) ?? scopedCalls[0];
+    // Requête lancée sans passer par le menu : le serveur refait le contrôle du droit.
+    if (target) toast.error(t(`${K}.toast.refused`, { name: target.name }), { description: t(`${K}.blockers.missingRight`) });
   };
 
   const toggleColumn = (key: ColumnKey) => {
@@ -607,18 +571,17 @@ export function CapitalCallsPage({
     key: 'actions',
     label: t(`${K}.columns.actions`),
     align: 'right',
-    render: call => (
-      <TableRowActions
-        actions={ROW_ACTIONS.map(({ action, icon, separatorBefore }) => ({
-          label: t(`${K}.actions.${action}`),
-          icon,
-          intent: action === 'delete' ? 'danger' : 'neutral',
-          separatorBefore,
-          disabledReason: blockerReason(call, action) ?? undefined,
-          onClick: () => runAction(call.id, action),
-        }))}
-      />
-    ),
+    render: call => {
+      const shared = parentActions.rowActions(call);
+      const isDelete = (item: (typeof shared)[number]) => item.intent === 'danger';
+      const own = ROW_ACTIONS.map(({ action, icon }) => ({
+        label: t(`${K}.actions.${action}`),
+        icon,
+        disabledReason: blockerReason(call, action) ?? undefined,
+        onClick: () => runAction(call.id, action),
+      }));
+      return <TableRowActions actions={[...shared.filter(item => !isDelete(item)), ...own, ...shared.filter(isDelete)]} />;
+    },
   };
 
   const columns = [...visibleColumns.map(key => columnDefinitions[key]), actionsColumn];
@@ -685,18 +648,6 @@ export function CapitalCallsPage({
 
   if (scenario === 'noRight') return deniedPage(t(`${K}.accessDenied.description`));
 
-  const deleteDialog = (
-    <ConfirmDialog
-      open={Boolean(pendingDelete)}
-      onOpenChange={open => !open && setPendingDelete(null)}
-      title={t(`${K}.deleteDialog.title`, { name: pendingDelete?.name ?? '' })}
-      description={t(`${K}.deleteDialog.description`, { fund: pendingDelete?.fundName ?? '' })}
-      confirmLabel={t(`${K}.deleteDialog.confirm`)}
-      destructive
-      onConfirm={confirmDelete}
-    />
-  );
-
   if (creatingCall) {
     if (!rights.manage) return deniedPage(t(`${K}.blockers.missingRight`));
     return (
@@ -724,6 +675,11 @@ export function CapitalCallsPage({
           key={selectedCall.id}
           call={selectedCall}
           lines={linesByCall.get(selectedCall.id) ?? []}
+          lineBindings={{
+            context: contextOf(selectedCall),
+            onLinesChange: update => store.updateLines(selectedCall, update),
+            onSend: (apply, onDone) => store.send(selectedCall, apply, onDone),
+          }}
           fundShares={funds.find(fund => fund.id === selectedCall.fundId)?.shareClasses.map(item => item.name) ?? []}
           settings={fundCallSettings({ id: selectedCall.fundId })}
           onOpenFund={onOpenFund}
@@ -751,7 +707,7 @@ export function CapitalCallsPage({
         }}
       />
 
-      {deleteDialog}
+      {parentActions.dialogs}
 
       <ConfirmDialog
         open={confirmDiscard}
@@ -847,6 +803,8 @@ export function CapitalCallsPage({
               <DataTable
                 data={pageRows}
                 columns={columns}
+                allFilteredData={sortedCalls}
+                selection={selection}
                 hoveredRow={hoveredRow}
                 setHoveredRow={setHoveredRow}
                 onRowClick={call => {
@@ -860,7 +818,6 @@ export function CapitalCallsPage({
                 }
                 searchTerm={search}
                 compactMode
-                hideSelection
                 density="compact"
               />
             </>

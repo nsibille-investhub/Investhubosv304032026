@@ -17,6 +17,12 @@ import { ListingCard, ListingColumnsMenu, ListingNameCell, ListingTruncatedText 
 import { DemoScenarioBar } from '../ui/demo-scenario-bar';
 import { PageHeader } from '../ui/page-header';
 import { DataPagination } from '../ui/data-pagination';
+import { TableRowActions } from '../ui/row-actions';
+import type { NoticeContext } from '../../utils/noticeActions';
+import { RELEASE_RULES } from '../../utils/noticeFamilies';
+import { useNoticeSelection } from '../notices/noticeListing';
+import { useNoticeLineStore } from '../notices/useNoticeLineStore';
+import { useNoticeParentActions } from '../notices/useNoticeParentActions';
 import { Button } from '../ui/button';
 import { ReleaseDetailPage } from './ReleaseDetailPage';
 
@@ -112,7 +118,7 @@ export function ReleasesPage({ funds, onOpenFund, onSelectedReleaseChange }: Rel
   const [pageSize, setPageSize] = useState(stored.pageSize ?? 20);
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
   const [visibleColumns, setVisibleColumns] = useState<ColumnKey[]>(readStoredColumns);
-  const [allReleases] = useState<Release[]>(() => generateReleases(funds));
+  const [allReleases, setAllReleases] = useState<Release[]>(() => generateReleases(funds));
   const [selectedId, setSelectedId] = useState<string | null>(getDetailIdFromHash);
 
   useEffect(() => onHashChange(() => setSelectedId(getDetailIdFromHash())), []);
@@ -183,9 +189,34 @@ export function ReleasesPage({ funds, onOpenFund, onSelectedReleaseChange }: Rel
     () => funds.find(fund => fund.id === selected?.fundId)?.shareClasses.map(item => item.name) ?? [],
     [funds, selected?.fundId],
   );
-  const selectedLines = useMemo(
-    () => (selected ? generateReleaseLines(selected, selectedShares) : []),
-    [selected, selectedShares],
+  const sharesOf = (fundId: number) => funds.find(fund => fund.id === fundId)?.shareClasses.map(item => item.name) ?? [];
+  const store = useNoticeLineStore((item: Release) => generateReleaseLines(item, sharesOf(item.fundId)));
+  const selectedLines = selected ? store.linesOf(selected) : [];
+  const contextOf = (item: Release): NoticeContext => ({
+    notify: true,
+    noticesShown: true,
+    sending: store.isSending(item.id),
+    canNotify: true,
+    canDownload: true,
+  });
+  const [checkedIds, setCheckedIds] = useState<Set<number>>(() => new Set());
+  const parentActions = useNoticeParentActions({
+    rules: RELEASE_RULES,
+    contextOf,
+    linesOf: store.linesOf,
+    updateLines: store.updateLines,
+    send: store.send,
+    remove: items => {
+      const ids = new Set(items.map(item => item.id));
+      setAllReleases(prev => prev.filter(item => !ids.has(item.id)));
+    },
+    onCompleted: () => setCheckedIds(new Set()),
+  });
+  const selection = useNoticeSelection(
+    'releases',
+    checkedIds,
+    setCheckedIds,
+    parentActions.bulkActions(scoped.filter(item => checkedIds.has(item.id))),
   );
 
   const sorted = useMemo(() => {
@@ -262,12 +293,20 @@ export function ReleasesPage({ funds, onOpenFund, onSelectedReleaseChange }: Rel
     createdAt: item => dateTime(item.createdAt),
     updatedAt: item => dateTime(item.updatedAt),
   };
-    const columns: ColumnConfig<Release>[] = visibleColumns.map(key => ({
-    key,
-    label: t(`${K}.columns.${key}`),
-    sortable: !UNSORTABLE.includes(key),
-    render: renderers[key],
-  }));
+  const columns: ColumnConfig<Release>[] = [
+    ...visibleColumns.map(key => ({
+      key,
+      label: t(`${K}.columns.${key}`),
+      sortable: !UNSORTABLE.includes(key),
+      render: renderers[key],
+    })),
+    {
+      key: 'actions',
+      label: t('funds.notices.common.columns.actions'),
+      align: 'right' as const,
+      render: (item: Release) => <TableRowActions actions={parentActions.rowActions(item)} />,
+    },
+  ];
 
   const scenarioBar = (
     <DemoScenarioBar
@@ -301,6 +340,11 @@ export function ReleasesPage({ funds, onOpenFund, onSelectedReleaseChange }: Rel
           key={selected.id}
           release={selected}
           lines={selectedLines}
+          lineBindings={{
+            context: contextOf(selected),
+            onLinesChange: update => store.updateLines(selected, update),
+            onSend: (apply, onDone) => store.send(selected, apply, onDone),
+          }}
           fundShares={selectedShares}
           onOpenFund={onOpenFund}
           onBack={openListing}
@@ -314,6 +358,8 @@ export function ReleasesPage({ funds, onOpenFund, onSelectedReleaseChange }: Rel
       {scenarioBar}
 
       <PageHeader hideBackButton title={t(`${K}.title`)} subtitle={t(`${K}.subtitle`)} />
+
+      {parentActions.dialogs}
 
       <div className="flex flex-1 flex-col gap-4 px-6 py-6">
         <ListingCard
@@ -374,6 +420,8 @@ export function ReleasesPage({ funds, onOpenFund, onSelectedReleaseChange }: Rel
             <DataTable
               data={pageRows}
               columns={columns}
+              allFilteredData={sorted}
+              selection={selection}
               hoveredRow={hoveredRow}
               setHoveredRow={setHoveredRow}
               onRowClick={item => {
@@ -387,7 +435,6 @@ export function ReleasesPage({ funds, onOpenFund, onSelectedReleaseChange }: Rel
               }
               searchTerm={search}
               compactMode
-              hideSelection
               density="compact"
             />
           )}

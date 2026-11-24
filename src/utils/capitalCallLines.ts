@@ -1,4 +1,5 @@
 import type { CapitalCall } from './capitalCallGenerator';
+import { generatedDocument, type NoticeDocument } from './noticeActions';
 
 export type LineState =
   | 'toNotify'
@@ -91,6 +92,8 @@ export interface CapitalCallLine {
   compensated: boolean;
   transferred: boolean;
   hiddenOnPortal: boolean;
+  /** Avis de la ligne : source, fichiers complémentaires et dates. */
+  document: NoticeDocument;
 }
 
 const INVESTORS = [
@@ -223,6 +226,16 @@ export function generateCapitalCallLines(call: CapitalCall): CapitalCallLine[] {
       noticeEvents.splice(0, noticeEvents.length, { at: noticeRequestedAt, kind: 'requested' });
     }
 
+    const document: NoticeDocument =
+      noticeState === 'replaced'
+        ? {
+            manualFile: `avis-${call.id * 1000 + index + 1}.pdf`,
+            extraFiles: [],
+            generatedAt: null,
+            addedAt: new Date(Math.min(call.createdAt.getTime() + DAY, now)),
+          }
+        : generatedDocument(noticeState === 'available' ? failedAt : null);
+
     const investor = INVESTORS[(call.id + index) % INVESTORS.length];
     const subscription = defaultSubscriptionName(investor, calledAmount * 4, call, share.share);
     const lastReminderAt =
@@ -256,6 +269,7 @@ export function generateCapitalCallLines(call: CapitalCall): CapitalCallLine[] {
       compensated: call.compensations.length > 0 && random() < 0.3,
       transferred: random() < 0.05,
       hiddenOnPortal: random() < 0.05,
+      document,
     };
   });
 }

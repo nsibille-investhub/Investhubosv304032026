@@ -1,6 +1,7 @@
 import type { Fund } from './fundGenerator';
 import { capitalCallCurrency, sameDay, type CapitalCall } from './capitalCallGenerator';
 import { investorDemoId, subscriptionDemoId } from './capitalCallLines';
+import { generatedDocument, type NoticeDocument } from './noticeActions';
 
 export interface DistributionLink {
   id: number;
@@ -63,6 +64,8 @@ export interface DistributionLine {
   createdAt: Date;
   updatedAt: Date;
   hiddenOnPortal: boolean;
+  /** Avis de la ligne : source, fichiers complémentaires et dates. */
+  document: NoticeDocument;
 }
 
 const INVESTORS = [
@@ -243,6 +246,7 @@ export function generateDistributionLines(distribution: Distribution, fundShares
       createdAt: distribution.createdAt,
       updatedAt: paidAt ?? (notified ? notifiedAt : distribution.createdAt),
       hiddenOnPortal: random() < 0.05,
+      document: generatedDocument(distribution.createdAt),
     };
   });
 }

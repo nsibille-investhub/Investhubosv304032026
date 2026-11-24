@@ -18,6 +18,12 @@ import { ListingCard, ListingColumnsMenu, ListingNameCell } from '../ui/listing'
 import { DemoScenarioBar } from '../ui/demo-scenario-bar';
 import { PageHeader } from '../ui/page-header';
 import { DataPagination } from '../ui/data-pagination';
+import { TableRowActions } from '../ui/row-actions';
+import type { NoticeContext } from '../../utils/noticeActions';
+import { CAPITAL_ACCOUNT_RULES } from '../../utils/noticeFamilies';
+import { useNoticeSelection } from '../notices/noticeListing';
+import { useNoticeLineStore } from '../notices/useNoticeLineStore';
+import { useNoticeParentActions } from '../notices/useNoticeParentActions';
 import { Button } from '../ui/button';
 import { CapitalAccountDetailPage } from './CapitalAccountDetailPage';
 
@@ -132,7 +138,7 @@ export function CapitalAccountsPage({ funds, onOpenFund, onSelectedAccountChange
   const [pageSize, setPageSize] = useState(stored.pageSize ?? 20);
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
   const [visibleColumns, setVisibleColumns] = useState<ColumnKey[]>(readStoredColumns);
-  const [allAccounts] = useState<CapitalAccount[]>(() => generateCapitalAccounts(funds));
+  const [allAccounts, setAllAccounts] = useState<CapitalAccount[]>(() => generateCapitalAccounts(funds));
   const [selectedId, setSelectedId] = useState<string | null>(getDetailIdFromHash);
 
   useEffect(() => onHashChange(() => setSelectedId(getDetailIdFromHash())), []);
@@ -203,9 +209,34 @@ export function CapitalAccountsPage({ funds, onOpenFund, onSelectedAccountChange
     () => funds.find(fund => fund.id === selected?.fundId)?.shareClasses.map(item => item.name) ?? [],
     [funds, selected?.fundId],
   );
-  const selectedLines = useMemo(
-    () => (selected ? generateCapitalAccountLines(selected, selectedShares) : []),
-    [selected, selectedShares],
+  const sharesOf = (fundId: number) => funds.find(fund => fund.id === fundId)?.shareClasses.map(item => item.name) ?? [];
+  const store = useNoticeLineStore((item: CapitalAccount) => generateCapitalAccountLines(item, sharesOf(item.fundId)));
+  const selectedLines = selected ? store.linesOf(selected) : [];
+  const contextOf = (item: CapitalAccount): NoticeContext => ({
+    notify: item.notify,
+    noticesShown: true,
+    sending: store.isSending(item.id),
+    canNotify: true,
+    canDownload: true,
+  });
+  const [checkedIds, setCheckedIds] = useState<Set<number>>(() => new Set());
+  const parentActions = useNoticeParentActions({
+    rules: CAPITAL_ACCOUNT_RULES,
+    contextOf,
+    linesOf: store.linesOf,
+    updateLines: store.updateLines,
+    send: store.send,
+    remove: items => {
+      const ids = new Set(items.map(item => item.id));
+      setAllAccounts(prev => prev.filter(item => !ids.has(item.id)));
+    },
+    onCompleted: () => setCheckedIds(new Set()),
+  });
+  const selection = useNoticeSelection(
+    'capitalAccounts',
+    checkedIds,
+    setCheckedIds,
+    parentActions.bulkActions(scoped.filter(item => checkedIds.has(item.id))),
   );
 
   const sorted = useMemo(() => {
@@ -304,13 +335,21 @@ export function CapitalAccountsPage({ funds, onOpenFund, onSelectedAccountChange
     updatedAt: item => dateTime(item.updatedAt),
   };
   const RIGHT_ALIGNED: ColumnKey[] = ['capitalGains', 'unrealizedGains', 'netResult'];
-  const columns: ColumnConfig<CapitalAccount>[] = visibleColumns.map(key => ({
-    key,
-    label: t(`${K}.columns.${key}`),
-    sortable: !UNSORTABLE.includes(key),
-    align: RIGHT_ALIGNED.includes(key) ? 'right' : undefined,
-    render: renderers[key],
-  }));
+  const columns: ColumnConfig<CapitalAccount>[] = [
+    ...visibleColumns.map(key => ({
+      key,
+      label: t(`${K}.columns.${key}`),
+      sortable: !UNSORTABLE.includes(key),
+      align: RIGHT_ALIGNED.includes(key) ? 'right' : undefined,
+      render: renderers[key],
+    })),
+    {
+      key: 'actions',
+      label: t('funds.notices.common.columns.actions'),
+      align: 'right' as const,
+      render: (item: CapitalAccount) => <TableRowActions actions={parentActions.rowActions(item)} />,
+    },
+  ];
 
   const scenarioBar = (
     <DemoScenarioBar
@@ -344,6 +383,11 @@ export function CapitalAccountsPage({ funds, onOpenFund, onSelectedAccountChange
           key={selected.id}
           account={selected}
           lines={selectedLines}
+          lineBindings={{
+            context: contextOf(selected),
+            onLinesChange: update => store.updateLines(selected, update),
+            onSend: (apply, onDone) => store.send(selected, apply, onDone),
+          }}
           fundShares={selectedShares}
           onOpenFund={onOpenFund}
           onBack={openListing}
@@ -357,6 +401,8 @@ export function CapitalAccountsPage({ funds, onOpenFund, onSelectedAccountChange
       {scenarioBar}
 
       <PageHeader hideBackButton title={t(`${K}.title`)} subtitle={t(`${K}.subtitle`)} />
+
+      {parentActions.dialogs}
 
       <div className="flex flex-1 flex-col gap-4 px-6 py-6">
         <ListingCard
@@ -417,6 +463,8 @@ export function CapitalAccountsPage({ funds, onOpenFund, onSelectedAccountChange
             <DataTable
               data={pageRows}
               columns={columns}
+              allFilteredData={sorted}
+              selection={selection}
               hoveredRow={hoveredRow}
               setHoveredRow={setHoveredRow}
               onRowClick={item => {
@@ -430,7 +478,6 @@ export function CapitalAccountsPage({ funds, onOpenFund, onSelectedAccountChange
               }
               searchTerm={search}
               compactMode
-              hideSelection
               density="compact"
             />
           )}

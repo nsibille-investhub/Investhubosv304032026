@@ -1,17 +1,26 @@
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner@2.0.3';
-import { FileText, Users } from 'lucide-react';
+import { Users } from 'lucide-react';
 
 import { useTranslation } from '../../utils/languageContext';
 import type { Release, ReleaseLine } from '../../utils/releaseGenerator';
-import { openDemoPdf } from '../../utils/demoPdf';
 import { ColumnConfig, DataTable } from '../DataTable';
 import { EmptyState } from '../EmptyState';
 import { FilterBar, FilterConfig } from '../FilterBar';
 import { ListingCard, ListingColumnsMenu, ListingNameCell } from '../ui/listing';
-import { RowActionButton } from '../ui/row-actions';
 import { Button } from '../ui/button';
 import { DataPagination } from '../ui/data-pagination';
+import { TableRowActions } from '../ui/row-actions';
+import type { NoticeContext } from '../../utils/noticeActions';
+import { RELEASE_RULES } from '../../utils/noticeFamilies';
+import {
+  NOTICE_DOCUMENT_COLUMNS,
+  NOTICE_DOCUMENT_HIDDEN,
+  isNoticeDocumentColumn,
+  useNoticeDocumentColumns,
+  useNoticeSelection,
+} from '../notices/noticeListing';
+import { useNoticeLineActions } from '../notices/useNoticeLineActions';
 
 const K = 'funds.releases.detail.lines';
 
@@ -25,17 +34,18 @@ const COLUMN_KEYS = [
   'bic',
   'notified',
   'notifiedOn',
-  'letter',
+  ...NOTICE_DOCUMENT_COLUMNS,
 ] as const;
 type ColumnKey = (typeof COLUMN_KEYS)[number];
 
-const HIDDEN_BY_DEFAULT: ColumnKey[] = ['fees', 'bic', 'notifiedOn'];
+const HIDDEN_BY_DEFAULT: ColumnKey[] = ['fees', 'bic', 'notifiedOn', ...NOTICE_DOCUMENT_HIDDEN];
 const DEFAULT_COLUMNS: ColumnKey[] = COLUMN_KEYS.filter(key => !HIDDEN_BY_DEFAULT.includes(key));
-const UNSORTABLE: ColumnKey[] = ['iban', 'bic', 'notified', 'letter'];
+const UNSORTABLE: ColumnKey[] = ['iban', 'bic', 'notified'];
 const RIGHT_ALIGNED: ColumnKey[] = ['amount', 'fees'];
-const COLUMNS_STORAGE_KEY = 'investhub-columns-release-lines';
+const COLUMNS_STORAGE_KEY = 'investhub-columns-release-lines-v2';
 const LISTING_STORAGE_KEY = 'investhub-listing-release-lines';
 
+type NoticeDocumentColumnKey = (typeof NOTICE_DOCUMENT_COLUMNS)[number];
 type SortConfig = { key: string; direction: 'asc' | 'desc' };
 type ActiveFilters = Record<string, string | string[]>;
 
@@ -93,10 +103,33 @@ interface ReleaseLinesTabProps {
   lines: ReleaseLine[];
   /** Parts du fonds, proposées par le filtre Part. */
   fundShares: string[];
+  /** Réglages de l'objet et droits de l'utilisateur, pour la disponibilité des actions. */
+  context: NoticeContext;
+  onLinesChange: (update: (lines: ReleaseLine[]) => ReleaseLine[]) => void;
+  onSend: (apply: (lines: ReleaseLine[]) => ReleaseLine[], onDone: () => void) => void;
 }
 
-export function ReleaseLinesTab({ release, lines, fundShares }: ReleaseLinesTabProps) {
+export function ReleaseLinesTab({ release, lines, fundShares, context, onLinesChange, onSend }: ReleaseLinesTabProps) {
   const { t, lang } = useTranslation();
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(() => new Set());
+  const documentColumns = useNoticeDocumentColumns<ReleaseLine>(RELEASE_RULES.documentKind);
+  const lineActions = useNoticeLineActions({
+    rules: RELEASE_RULES,
+    context,
+    parentName: release.name,
+    fundName: release.fundName,
+    lines,
+    onLinesChange,
+    onSend,
+    onCompleted: () => setSelectedIds(new Set()),
+  });
+  const selection = useNoticeSelection(
+    'lines',
+    selectedIds,
+    setSelectedIds,
+    lineActions.bulkActions(lines.filter(line => selectedIds.has(line.id))),
+  );
+  const columnLabel = (key: ColumnKey) => (isNoticeDocumentColumn(key) ? documentColumns.label(key) : t(`${K}.columns.${key}`));
   const [stored] = useState(() => readListingState(release.id));
   const [activeFilters, setActiveFilters] = useState<ActiveFilters>(stored.activeFilters ?? {});
   const [sortConfig, setSortConfig] = useState<SortConfig>(stored.sortConfig ?? DEFAULT_SORT);
@@ -153,6 +186,7 @@ export function ReleaseLinesTab({ release, lines, fundShares }: ReleaseLinesTabP
           { value: 'no', label: t(`${K}.no`) },
         ],
       },
+      documentColumns.filter,
     ];
   }, [lines, fundShares, lang, t]);
 
@@ -162,7 +196,9 @@ export function ReleaseLinesTab({ release, lines, fundShares }: ReleaseLinesTabP
     const subscriptions = pick('subscription');
     const shares = pick('share');
     const notified = typeof activeFilters.notified === 'string' ? activeFilters.notified : '';
+    const sources = pick('documentSource');
     return lines.filter(line => {
+      if (!documentColumns.matches(line, sources)) return false;
       if (investors.length > 0 && !investors.includes(line.investor)) return false;
       if (subscriptions.length > 0 && !subscriptions.includes(line.subscription)) return false;
       if (shares.length > 0 && !shares.includes(line.share)) return false;
@@ -174,8 +210,10 @@ export function ReleaseLinesTab({ release, lines, fundShares }: ReleaseLinesTabP
   const sorted = useMemo(() => {
     const factor = sortConfig.direction === 'asc' ? 1 : -1;
     return [...filtered].sort((a, b) => {
-      const left = sortValue(a, sortConfig.key);
-      const right = sortValue(b, sortConfig.key);
+      const value = (line: ReleaseLine) =>
+        isNoticeDocumentColumn(sortConfig.key) ? documentColumns.sortValue(line, sortConfig.key) : sortValue(line, sortConfig.key);
+      const left = value(a);
+      const right = value(b);
       if (left < right) return -factor;
       if (left > right) return factor;
       return a.investor.localeCompare(b.investor, lang) || a.id - b.id;
@@ -211,29 +249,10 @@ export function ReleaseLinesTab({ release, lines, fundShares }: ReleaseLinesTabP
 
   const dateFormat = new Intl.DateTimeFormat(lang, { day: '2-digit', month: '2-digit', year: 'numeric' });
   const moneyFormat = new Intl.NumberFormat(lang, { style: 'currency', currency: release.currency });
-  const letterMoneyFormat = new Intl.NumberFormat(lang, {
-    style: 'currency',
-    currency: release.currency,
-    currencyDisplay: 'code',
-  });
   const empty = <span className="text-muted-foreground">-</span>;
   const notInMockup = (name: string) => toast.info(t('funds.releases.detail.toast.notInMockup', { name }));
 
-  const openLetter = (line: ReleaseLine) =>
-    openDemoPdf([
-      t(`${K}.letter.title`, { name: release.name }),
-      '',
-      t(`${K}.letter.fund`, { fund: release.fundName }),
-      t(`${K}.letter.date`, { date: dateFormat.format(release.date) }),
-      t(`${K}.letter.investor`, { investor: line.investor }),
-      t(`${K}.letter.subscription`, { subscription: line.subscription }),
-      t(`${K}.letter.amount`, { amount: letterMoneyFormat.format(line.amount) }),
-      t(`${K}.letter.iban`, { iban: line.iban }),
-      '',
-      t(`${K}.letter.demo`),
-    ]);
-
-  const renderers: Record<ColumnKey, ColumnConfig<ReleaseLine>['render']> = {
+  const renderers: Record<Exclude<ColumnKey, NoticeDocumentColumnKey>, ColumnConfig<ReleaseLine>['render']> = {
     investor: line => <ListingNameCell name={line.investor} id={line.investorId} />,
     share: line => <span className="whitespace-nowrap text-sm">{t('funds.detail.sharePrefix', { name: line.share })}</span>,
     subscription: line => (
@@ -253,24 +272,27 @@ export function ReleaseLinesTab({ release, lines, fundShares }: ReleaseLinesTabP
     notified: line => <span className="text-sm">{t(line.notified ? `${K}.yes` : `${K}.no`)}</span>,
     notifiedOn: line =>
       line.notifiedAt ? <span className="text-sm tabular-nums">{dateFormat.format(line.notifiedAt)}</span> : empty,
-    letter: line => (
-      <RowActionButton
-        icon={FileText}
-        tooltip={t(`${K}.openLetter`)}
-        onClick={event => {
-          event.stopPropagation();
-          openLetter(line);
-        }}
-      />
-    ),
   };
-  const columns: ColumnConfig<ReleaseLine>[] = visibleColumns.map(key => ({
-    key,
-    label: t(`${K}.columns.${key}`),
-    sortable: !UNSORTABLE.includes(key),
-    align: RIGHT_ALIGNED.includes(key) ? 'right' : undefined,
-    render: renderers[key],
-  }));
+  const actionsColumn: ColumnConfig<ReleaseLine> = {
+    key: 'actions',
+    label: t('funds.notices.common.columns.actions'),
+    align: 'right',
+    render: line => <TableRowActions actions={lineActions.rowActions(line)} />,
+  };
+  const columns: ColumnConfig<ReleaseLine>[] = [
+    ...visibleColumns.map(key =>
+      isNoticeDocumentColumn(key)
+        ? documentColumns.columns[key]
+        : {
+            key,
+            label: t(`${K}.columns.${key}`),
+            sortable: !UNSORTABLE.includes(key),
+            align: RIGHT_ALIGNED.includes(key) ? 'right' : undefined,
+            render: renderers[key],
+          },
+    ),
+    actionsColumn,
+  ];
 
   if (lines.length === 0) {
     return (
@@ -281,6 +303,8 @@ export function ReleaseLinesTab({ release, lines, fundShares }: ReleaseLinesTabP
   }
 
   return (
+    <>
+    {lineActions.dialogs}
     <ListingCard
       toolbar={
         <div className="flex items-start justify-between gap-3">
@@ -295,7 +319,7 @@ export function ReleaseLinesTab({ release, lines, fundShares }: ReleaseLinesTabP
             onClearAll={resetFilters}
           />
           <ListingColumnsMenu
-            columns={COLUMN_KEYS.map(key => ({ key, label: t(`${K}.columns.${key}`) }))}
+            columns={COLUMN_KEYS.map(key => ({ key, label: columnLabel(key) }))}
             visible={visibleColumns}
             onToggle={key => toggleColumn(key as ColumnKey)}
             onReset={() => setVisibleColumns(DEFAULT_COLUMNS)}
@@ -336,6 +360,8 @@ export function ReleaseLinesTab({ release, lines, fundShares }: ReleaseLinesTabP
         <DataTable
           data={pageRows}
           columns={columns}
+          allFilteredData={sorted}
+          selection={selection}
           hoveredRow={hoveredRow}
           setHoveredRow={setHoveredRow}
           onRowClick={line => notInMockup(line.investor)}
@@ -347,10 +373,10 @@ export function ReleaseLinesTab({ release, lines, fundShares }: ReleaseLinesTabP
             )
           }
           compactMode
-          hideSelection
           density="compact"
         />
       )}
     </ListingCard>
+    </>
   );
 }
