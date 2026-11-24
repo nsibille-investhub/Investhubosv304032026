@@ -5594,6 +5594,7 @@
       "downloadReport": "Download report",
       "downloadAuditTrail": "Download audit trail",
       "reportUnavailable": "The report is not available from the provider for this entity.",
+      "rerunClosed": "Entity closed: screening can no longer be re-run.",
       "csv": {
         "columns": {
           "date": "Event date",

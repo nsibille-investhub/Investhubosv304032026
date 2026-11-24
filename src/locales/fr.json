@@ -5594,6 +5594,7 @@
       "downloadReport": "Télécharger le rapport",
       "downloadAuditTrail": "Télécharger la piste d'audit",
       "reportUnavailable": "Le rapport n'est pas disponible chez le fournisseur pour cette entité.",
+      "rerunClosed": "Entité clôturée : le screening ne peut plus être relancé.",
       "csv": {
         "columns": {
           "date": "Date de l'événement",
