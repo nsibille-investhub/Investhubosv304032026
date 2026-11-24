@@ -716,7 +716,30 @@
           "remindersOne": "{{count}} reminder",
           "remindersMany": "{{count}} reminders",
           "progress": "{{signed}}/{{total}} signed",
-          "noCounterSignatory": "No counter-signatory"
+          "noCounterSignatory": "No counter-signatory",
+          "lastMailOn": "Last email sent on {{date}}"
+        },
+        "template": {
+          "label": "Template:",
+          "open": "Open the email template in a new tab",
+          "none": "No template"
+        },
+        "target": {
+          "export": "Export the target (investor and contacts)",
+          "exported": "Target exported",
+          "exportedDescOne": "{{count}} recipient exported as CSV.",
+          "exportedDescMany": "{{count}} recipients exported as CSV.",
+          "filename": "signature-target-subscription-{{id}}.csv",
+          "columns": {
+            "type": "Type",
+            "name": "Name",
+            "role": "Role",
+            "email": "Email"
+          },
+          "type": {
+            "investor": "Investor",
+            "contact": "Contact"
+          }
         },
         "actions": {
           "saveDraft": "Save draft",

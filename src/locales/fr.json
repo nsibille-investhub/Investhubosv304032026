@@ -716,7 +716,30 @@
           "remindersOne": "{{count}} relance",
           "remindersMany": "{{count}} relances",
           "progress": "{{signed}}/{{total}} signés",
-          "noCounterSignatory": "Aucun contre-signataire"
+          "noCounterSignatory": "Aucun contre-signataire",
+          "lastMailOn": "Dernier mail envoyé le {{date}}"
+        },
+        "template": {
+          "label": "Gabarit :",
+          "open": "Ouvrir le gabarit du mail dans un nouvel onglet",
+          "none": "Aucun gabarit"
+        },
+        "target": {
+          "export": "Exporter la cible (investisseur et contacts)",
+          "exported": "Cible exportée",
+          "exportedDescOne": "{{count}} destinataire exporté au format CSV.",
+          "exportedDescMany": "{{count}} destinataires exportés au format CSV.",
+          "filename": "cible-signature-souscription-{{id}}.csv",
+          "columns": {
+            "type": "Type",
+            "name": "Nom",
+            "role": "Fonction",
+            "email": "Email"
+          },
+          "type": {
+            "investor": "Investisseur",
+            "contact": "Contact"
+          }
         },
         "actions": {
           "saveDraft": "Enregistrer le brouillon",

@@ -230,7 +230,10 @@ export function MailTemplatesSettings() {
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
   const [paginationPage, setPaginationPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
-  const [detailId, setDetailId] = useState<number | null>(null);
+  const [detailId, setDetailId] = useState<number | null>(() => {
+    const slug = new URLSearchParams(window.location.hash.split('?')[1] ?? '').get('template');
+    return MAIL_TEMPLATES.find((tpl) => tpl.slug === slug)?.id ?? null;
+  });
   const [formMode, setFormMode] = useState<FormMode | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [draft, setDraft] = useState<TemplateDraft>(EMPTY_DRAFT);

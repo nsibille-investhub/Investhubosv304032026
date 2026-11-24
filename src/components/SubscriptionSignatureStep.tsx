@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import {
   AlertCircle,
   Check,
   CheckCircle2,
   ChevronRight,
   Clock,
+  Download,
   Eye,
   FileText,
   Landmark,
@@ -38,6 +39,8 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { cn, WIDGET_LABEL_CLASS, WIDGET_SUBTITLE_CLASS, WIDGET_TITLE_CLASS } from './ui/utils';
 import { PRIMARY_BUTTON_GRADIENT } from './ui/page-header';
+import { DetailLink } from './ui/detail-summary';
+import { RowActionButton } from './ui/row-actions';
 import { type ComplianceStatus } from './SubscriptionComplianceSection';
 import {
   mockFundCounterSignatories,
@@ -45,6 +48,8 @@ import {
   type MockSignaturePackDocument,
   type SignaturePackDocumentKind,
 } from '../utils/subscriptionDetailMockData';
+import { MAIL_TEMPLATES } from '../utils/mailTemplatesMockData';
+import { downloadCsv } from '../utils/capitalCallRecipients';
 
 export type SignatureStage = 'draft' | 'signing' | 'counterSigning' | 'completed';
 
@@ -81,6 +86,9 @@ interface SubscriptionSignatureStepProps {
 }
 
 const KEY = 'subscriptions.detail.signatureStep';
+
+/** Gabarit d'envoi du lien de signature, à défaut de gabarit spécifique sur la part. */
+const SIGNATURE_TEMPLATE = MAIL_TEMPLATES.find(template => template.slug === 'signature_doc');
 
 const now = () => {
   const date = new Date();
@@ -182,6 +190,7 @@ export function SubscriptionSignatureStep({
   const [stage, setStage] = useState<SignatureStage>('draft');
   const [sentAt, setSentAt] = useState<string | null>(null);
   const [lastReminderAt, setLastReminderAt] = useState<string | null>(null);
+  const [lastMailAt, setLastMailAt] = useState<string | null>(null);
   const [draftSavedAt, setDraftSavedAt] = useState<string | null>(null);
   const [pack, setPack] = useState<MockSignaturePackDocument[]>(mockSignaturePack);
   const [signatories, setSignatories] = useState<SignatureParty[]>(() =>
@@ -217,6 +226,7 @@ export function SubscriptionSignatureStep({
     const stamp = now();
     if (activeCounter.length > 0) {
       setCounterSignatories(prev => markSent(prev, stamp));
+      setLastMailAt(stamp);
       setStage('counterSigning');
       toast.success(t(`${KEY}.toast.counterSignatureStarted`), {
         description: tc(`${KEY}.toast.counterSignatureStartedDesc`, activeCounter.length),
@@ -246,6 +256,7 @@ export function SubscriptionSignatureStep({
     if (!canSend) return;
     const stamp = now();
     setSentAt(stamp);
+    setLastMailAt(stamp);
     setStage('signing');
     setSignatories(prev => markSent(prev, stamp));
     toast.success(t(`${KEY}.toast.sent`), {
@@ -307,6 +318,7 @@ export function SubscriptionSignatureStep({
     if (ids.length === 0) return;
     const stamp = now();
     setLastReminderAt(stamp);
+    setLastMailAt(stamp);
     setterFor(kind)(prev =>
       prev.map(party =>
         ids.includes(party.id) && party.status === 'sent'
@@ -326,6 +338,7 @@ export function SubscriptionSignatureStep({
   const handleRegenerate = (kind: PartyKind, ids: string[]) => {
     if (ids.length === 0) return;
     const stamp = now();
+    setLastMailAt(stamp);
     setterFor(kind)(prev =>
       prev.map(party =>
         ids.includes(party.id) && party.status === 'sent' ? { ...party, sentAt: stamp } : party,
@@ -379,6 +392,30 @@ export function SubscriptionSignatureStep({
     toast.info(t(`${KEY}.pack.toast.removed`), { description: removed?.name });
   };
 
+  const investorName: string =
+    subscription?.contrepartie?.investor || subscription?.contrepartie?.name || '';
+
+  const handleExportTarget = () => {
+    downloadCsv(
+      [
+        t(`${KEY}.target.columns.type`),
+        t(`${KEY}.target.columns.name`),
+        t(`${KEY}.target.columns.role`),
+        t(`${KEY}.target.columns.email`),
+      ],
+      activeSignatories.map(party => [
+        t(`${KEY}.target.type.${party.name === investorName ? 'investor' : 'contact'}`),
+        party.name,
+        party.roleKey ? t(party.roleKey) : (party.role ?? ''),
+        party.email,
+      ]),
+      t(`${KEY}.target.filename`, { id: String(subscription?.id ?? '') }),
+    );
+    toast.success(t(`${KEY}.target.exported`), {
+      description: tc(`${KEY}.target.exportedDesc`, activeSignatories.length),
+    });
+  };
+
   const stageBadge: Record<SignatureStage, { className: string; icon: typeof Clock }> = {
     draft: { className: 'bg-muted text-muted-foreground border-border', icon: Pencil },
     signing: { className: 'bg-amber-100 text-amber-700 border-amber-300', icon: Clock },
@@ -393,13 +430,44 @@ export function SubscriptionSignatureStep({
     label: string;
     detail: string;
     state: 'done' | 'current' | 'pending';
+    meta?: ReactNode;
+    action?: ReactNode;
   }> = [
     {
       id: 'send',
       icon: Send,
       label: t(`${KEY}.substeps.send`),
-      detail: sentAt ? t(`${KEY}.tracking.sentOn`, { date: sentAt }) : t(`${KEY}.stage.draft`),
+      detail: lastMailAt
+        ? t(`${KEY}.tracking.lastMailOn`, { date: lastMailAt })
+        : t(`${KEY}.stage.draft`),
       state: stage === 'draft' ? 'current' : 'done',
+      meta: (
+        <span className="flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
+          <span className="shrink-0">{t(`${KEY}.template.label`)}</span>
+          {SIGNATURE_TEMPLATE ? (
+            <DetailLink
+              href={`#/settings/mail-templates?template=${SIGNATURE_TEMPLATE.slug}`}
+              icon={Mail}
+              title={t(`${KEY}.template.open`)}
+              className="min-w-0 text-xs"
+            >
+              <span className="truncate">{SIGNATURE_TEMPLATE.name}</span>
+            </DetailLink>
+          ) : (
+            <span>{t(`${KEY}.template.none`)}</span>
+          )}
+        </span>
+      ),
+      action: (
+        <RowActionButton
+          icon={Download}
+          tooltip={t(`${KEY}.target.export`)}
+          onClick={handleExportTarget}
+          disabledReason={
+            activeSignatories.length === 0 ? t(`${KEY}.blockers.noSignatory`) : undefined
+          }
+        />
+      ),
     },
     {
       id: 'signatures',
@@ -423,9 +491,7 @@ export function SubscriptionSignatureStep({
       detail:
         activeCounter.length === 0
           ? t(`${KEY}.tracking.noCounterSignatory`)
-          : stage === 'counterSigning' || stage === 'completed'
-            ? t(`${KEY}.tracking.progress`, { signed: signedCounter, total: activeCounter.length })
-            : t(`${KEY}.parties.status.waitingSignatories`),
+          : t(`${KEY}.tracking.progress`, { signed: signedCounter, total: activeCounter.length }),
       state: stage === 'completed' ? 'done' : stage === 'counterSigning' ? 'current' : 'pending',
     },
   ];
@@ -553,10 +619,12 @@ export function SubscriptionSignatureStep({
                 >
                   {step.state === 'done' ? <Check className="w-4 h-4" /> : <Icon className="w-4 h-4" />}
                 </span>
-                <span className="min-w-0">
+                <span className="min-w-0 flex-1">
                   <span className="block text-sm font-medium text-foreground">{step.label}</span>
                   <span className="block truncate text-xs text-muted-foreground">{step.detail}</span>
+                  {step.meta}
                 </span>
+                {step.action}
               </div>
             );
           })}

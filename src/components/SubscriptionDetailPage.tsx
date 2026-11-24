@@ -1967,9 +1967,11 @@ export function SubscriptionDetailPage({ subscription: subscriptionProp, onBack,
             </div>
 
             <div className="px-8 py-6">
-              <div className="mb-6">
-                {detailSummary}
-              </div>
+              {currentStep !== 3 && (
+                <div className="mb-6">
+                  {detailSummary}
+                </div>
+              )}
 
                 <div>
                   {currentStep === 0 && (
