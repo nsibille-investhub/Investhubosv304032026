@@ -1264,9 +1264,6 @@
         "profile": {
           "title": "Risk profile and calculation detail",
           "subtitle": "Profile, classes and components. The calculation runs bottom-up.",
-          "showScale": "Scale and tiers",
-          "scaleTitle": "Scale tiers",
-          "tierRequiresValidation": "Compliance validation required",
           "component": "Component",
           "source": "Source",
           "value": "Value used",
@@ -1290,13 +1287,7 @@
             "backToComputed": "Back to computed score"
           },
           "comments": {
-            "title": "Score comments",
-            "subtitle": "A comment is entered each time a score is edited.",
-            "openOne": "Comment details ({{count}})",
-            "openMany": "Comment details ({{count}})",
-            "empty": "No score has been edited.",
-            "computedValue": "computed",
-            "close": "Close"
+            "computedValue": "computed"
           },
           "detail": {
             "openGlobal": "View global score detail",
@@ -1320,7 +1311,8 @@
             "current": "Current score",
             "change": "{{previous}} → {{next}}",
             "answer": "Answer: {{value}}",
-            "notEvaluated": "not evaluated"
+            "notEvaluated": "not evaluated",
+            "answerChange": "Answer: {{previous}} → {{value}}"
           }
         },
         "screening": {

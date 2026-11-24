@@ -27,14 +27,6 @@ import { useTranslation } from '../utils/languageContext';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
-import {
-  BIG_MODAL_COMPACT,
-  BigModal,
-  BigModalBody,
-  BigModalContent,
-  BigModalPanelFooter,
-  BigModalPanelHeader,
-} from './ui/big-modal';
 import { ConfirmDialog } from './ui/confirm-dialog';
 import { DisabledReason } from './ui/disabled-reason';
 import { FormField } from './ui/form-field';
@@ -69,7 +61,6 @@ import {
   findRiskTier,
   mockCategorisation,
   mockRiskProfile,
-  mockRiskScales,
   PROFILE_SCORE_ID,
   type InvestorCategory,
   type RiskClass,
@@ -148,6 +139,12 @@ const now = () => {
 
 const round1 = (value: number) => Math.round(value * 10) / 10;
 
+/** Valeur triable d'un horodatage "jj/mm/aaaa hh:mm". */
+const stampValue = (stamp: string) => {
+  const [day, month, year, hour = '0', minute = '0'] = stamp.split(/[/ :]/);
+  return new Date(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute)).getTime();
+};
+
 export function ToneBadge({ tone, label, className }: { tone: RiskTone; label: string; className?: string }) {
   return <Badge className={cn(TONE_STYLES[tone].badge, className)}>{label}</Badge>;
 }
@@ -202,9 +199,14 @@ export interface ScoreComment {
   previous: number | null;
   /** null : retour au score calculé. */
   next: number | null;
+  /** Vide pour un changement de réponse sans commentaire. */
   comment: string;
   by: string;
   at: string;
+  /** Réponse retenue au moment de la modification. */
+  answer?: string;
+  /** Réponse précédente, quand c'est le changement de réponse qui a fait bouger le score. */
+  previousAnswer?: string;
 }
 
 interface ScoreEditTarget {
@@ -339,7 +341,7 @@ function ScoreHistory({ comments }: { comments: ScoreComment[] }) {
     seen.add(item.labelKey);
     const rising = item.previous !== null && item.next !== null && item.next > item.previous;
     const falling = item.previous !== null && item.next !== null && item.next < item.previous;
-    const answer = answers.get(item.labelKey);
+    const answer = item.answer ?? answers.get(item.labelKey);
     return {
       id: item.id,
       badge: (
@@ -357,51 +359,17 @@ function ScoreHistory({ comments }: { comments: ScoreComment[] }) {
       meta: t(item.labelKey),
       date: item.at,
       author: item.by,
-      detail: answer ? t(`${H}.answer`, { value: answer }) : undefined,
-      comment: item.comment,
+      detail: !answer
+        ? undefined
+        : item.previousAnswer
+          ? t(`${H}.answerChange`, { previous: item.previousAnswer, value: answer })
+          : t(`${H}.answer`, { value: answer }),
+      comment: item.comment || undefined,
     };
   });
   return <DecisionTimeline entries={entries} currentLabel={t(`${H}.current`)} emptyLabel={t(`${H}.empty`)} />;
 }
 
-/** Détail des commentaires saisis à chaque modification de score. */
-function ScoreCommentsDialog({
-  open,
-  onOpenChange,
-  comments,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  comments: ScoreComment[];
-}) {
-  const { t } = useTranslation();
-
-  return (
-    <BigModal open={open} onOpenChange={onOpenChange}>
-      <BigModalContent className={`${BIG_MODAL_COMPACT} p-0 gap-0`}>
-        <div className="flex flex-col overflow-hidden rounded-3xl">
-          <BigModalPanelHeader
-            icon={MessageSquare}
-            title={t('subscriptions.detail.compliance.profile.comments.title')}
-            subtitle={t('subscriptions.detail.compliance.profile.comments.subtitle')}
-            onClose={() => onOpenChange(false)}
-            closeLabel={t('common.confirmDialog.close')}
-          />
-          <BigModalBody>
-            <ScoreHistory comments={comments} />
-          </BigModalBody>
-          <BigModalPanelFooter
-            end={
-              <Button variant="outline" size="sm" className="h-9" onClick={() => onOpenChange(false)}>
-                {t('subscriptions.detail.compliance.profile.comments.close')}
-              </Button>
-            }
-          />
-        </div>
-      </BigModalContent>
-    </BigModal>
-  );
-}
 
 export interface ScoreChange {
   id: string;
@@ -658,8 +626,6 @@ export function RiskProfileWidget({
   onReopenScore,
 }: RiskProfileWidgetProps) {
   const { t } = useTranslation();
-  const [scaleVisible, setScaleVisible] = useState(false);
-  const [commentsOpen, setCommentsOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<ScoreEditTarget | null>(null);
   const [detailScope, setDetailScope] = useState<ScoreDetailScope | null>(null);
 
@@ -727,16 +693,6 @@ export function RiskProfileWidget({
             icon={Eye}
             tooltip={t('subscriptions.detail.compliance.profile.detail.openGlobal')}
             onClick={() => setDetailScope({ kind: 'profile' })}
-          />
-          <RowActionButton
-            icon={ListChecks}
-            tooltip={t('subscriptions.detail.compliance.profile.showScale')}
-            onClick={() => setScaleVisible(prev => !prev)}
-          />
-          <RowActionButton
-            icon={MessageSquare}
-            tooltip={tc('subscriptions.detail.compliance.profile.comments.open', comments.length)}
-            onClick={() => setCommentsOpen(true)}
           />
           {!locked && (
             <RowActionButton
@@ -828,31 +784,6 @@ export function RiskProfileWidget({
         </div>
       </div>
 
-      {scaleVisible && (
-        <div className="px-4 py-3 border-b">
-          <div className="grid grid-cols-4 gap-1.5">
-            {mockRiskScales
-              .find(scale => scale.id === mockRiskProfile.scaleId)
-              ?.tiers.map(tier => (
-                <div
-                  key={tier.labelKey}
-                  className={cn('rounded-lg border p-2', TONE_STYLES[tier.tone].soft)}
-                >
-                  <div className={cn('text-xs font-semibold', TONE_STYLES[tier.tone].text)}>
-                    {t(tier.labelKey)}
-                  </div>
-                  <div className="text-[11px] text-muted-foreground tabular-nums">
-                    {tier.min} - {tier.max}
-                  </div>
-                  {tier.requiresValidation && (
-                    <ShieldCheck className="w-3 h-3 mt-1 text-muted-foreground" />
-                  )}
-                </div>
-              ))}
-          </div>
-        </div>
-      )}
-
       <ul className="divide-y">
         {classScores.map(({ riskClass, score, unevaluated }) => (
           <li key={riskClass.id} className="px-4 py-2">
@@ -933,7 +864,6 @@ export function RiskProfileWidget({
           setDetailScope(null);
         }}
       />
-      <ScoreCommentsDialog open={commentsOpen} onOpenChange={setCommentsOpen} comments={comments} />
     </Card>
   );
 }
@@ -985,9 +915,9 @@ export function SubscriptionComplianceSection({
 
   const [manualScores, setManualScores] = useState<Record<string, number>>({});
   const [computedAt, setComputedAt] = useState(mockRiskProfile.computedAt);
-  const [scoreComments, setScoreComments] = useState<ScoreComment[]>(() =>
-    mockRiskProfile.classes
-      .flatMap(item => item.components)
+  const [scoreComments, setScoreComments] = useState<ScoreComment[]>(() => {
+    const components = mockRiskProfile.classes.flatMap(item => item.components);
+    const manual: ScoreComment[] = components
       .filter(component => typeof component.manualScore === 'number' && component.manualComment)
       .map(component => ({
         id: `seed-${component.id}`,
@@ -997,8 +927,23 @@ export function SubscriptionComplianceSection({
         comment: component.manualComment ?? '',
         by: component.manualBy ?? CURRENT_OPERATOR,
         at: component.manualAt ?? mockRiskProfile.computedAt,
+        answer: component.value,
+      }));
+    const answers: ScoreComment[] = components.flatMap(component =>
+      (component.answerHistory ?? []).map((change, index) => ({
+        id: `answer-${component.id}-${index}`,
+        labelKey: component.labelKey,
+        previous: change.previousScore,
+        next: change.score,
+        comment: change.comment ?? '',
+        by: change.by,
+        at: change.at,
+        answer: change.value,
+        previousAnswer: change.previousValue,
       })),
-  );
+    );
+    return [...manual, ...answers].sort((a, b) => stampValue(b.at) - stampValue(a.at));
+  });
 
   const [category, setCategory] = useState<InvestorCategory>(mockCategorisation.category);
   const [categoryDecidedBy, setCategoryDecidedBy] = useState(mockCategorisation.decidedBy);
@@ -1057,6 +1002,7 @@ export function SubscriptionComplianceSection({
         comment,
         by: CURRENT_OPERATOR,
         at: stamp,
+        answer: mockRiskProfile.classes.flatMap(item => item.components).find(item => item.id === change.id)?.value,
       })),
       ...prev,
     ]);

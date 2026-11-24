@@ -1264,9 +1264,6 @@
         "profile": {
           "title": "Profil de risque et détail du calcul",
           "subtitle": "Profil, classes et composantes. Le calcul remonte des composantes vers le profil.",
-          "showScale": "Échelle et paliers",
-          "scaleTitle": "Paliers de l'échelle",
-          "tierRequiresValidation": "Validation conformité requise",
           "component": "Composante",
           "source": "Source",
           "value": "Valeur retenue",
@@ -1290,13 +1287,7 @@
             "backToComputed": "Revenir au score calculé"
           },
           "comments": {
-            "title": "Commentaires du score",
-            "subtitle": "Un commentaire est saisi à chaque modification de score.",
-            "openOne": "Détail des commentaires ({{count}})",
-            "openMany": "Détail des commentaires ({{count}})",
-            "empty": "Aucun score n'a été modifié.",
-            "computedValue": "calculé",
-            "close": "Fermer"
+            "computedValue": "calculé"
           },
           "detail": {
             "openGlobal": "Voir le détail du score global",
@@ -1320,7 +1311,8 @@
             "current": "Score actuel",
             "change": "{{previous}} → {{next}}",
             "answer": "Réponse : {{value}}",
-            "notEvaluated": "non évalué"
+            "notEvaluated": "non évalué",
+            "answerChange": "Réponse : {{previous}} → {{value}}"
           }
         },
         "screening": {
