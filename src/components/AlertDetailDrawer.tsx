@@ -32,6 +32,7 @@ import {
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { SIDE_PANEL_WIDE_STYLE, SidePanelCard, SidePanelSection } from './ui/side-panel';
+import { DecisionTimeline } from './ui/decision-timeline';
 import { Textarea } from './ui/textarea';
 import { StatusBadge } from './StatusBadge';
 import {
@@ -130,15 +131,6 @@ function strengthFromScore(score: number): Strength {
   if (score >= 90) return 'high';
   if (score >= 80) return 'medium';
   return 'low';
-}
-
-function initials(name: string): string {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? '')
-    .join('');
 }
 
 const INNER_CARD_STYLE = { borderColor: '#000E2B33' } as const;
@@ -508,65 +500,20 @@ export function AlertDetailDrawer({
           {/* DECISION HISTORY SECTION */}
           <SidePanelSection icon={History} title={t('complianceAlerts.drawer.decisionHistory')}>
             <SidePanelCard>
-              {decisionHistory.length === 0 ? (
-                <p className="text-sm text-slate-500">
-                  {t('complianceAlerts.drawer.noDecisionYet')}
-                </p>
-              ) : (
-                <div className="relative">
-                  <span
-                    aria-hidden
-                    className="absolute left-2 top-3 bottom-0 w-px bg-gray-200"
-                  />
-                  <ol className="space-y-4">
-                    {decisionHistory.map((entry, idx) => (
-                      <li key={entry.id} className="relative pl-7">
-                        <span
-                          aria-hidden
-                          className={`absolute left-1 top-1.5 w-2 h-2 rounded-full ring-2 ring-white ${
-                            DECISION_DOT[entry.decision]
-                          }`}
-                        />
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <StatusBadge
-                            label={t(DECISION_KEY[entry.decision])}
-                            variant={DECISION_VARIANT[entry.decision]}
-                          />
-                          {idx === 0 && (
-                            <span className="rounded-full bg-gray-900 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
-                              {t('complianceAlerts.drawer.currentDecision')}
-                            </span>
-                          )}
-                          <span className="text-xs text-slate-500">
-                            {t('complianceEntities.matches.revision', {
-                              n: entry.revision,
-                            })}
-                          </span>
-                          <span className="flex-1" />
-                          <span className="text-xs text-slate-500 tabular-nums">
-                            {formatDateTime(entry.date, lang)}
-                          </span>
-                        </div>
-
-                        <div className="mt-1.5 flex items-center gap-2 text-xs text-slate-600">
-                          <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-[9px] font-semibold text-slate-600">
-                            {initials(entry.analyst)}
-                          </span>
-                          <span className="font-medium text-slate-700">
-                            {entry.analyst}
-                          </span>
-                        </div>
-
-                        {entry.comment && (
-                          <p className="mt-2 rounded-lg border-l-2 border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-700">
-                            {entry.comment}
-                          </p>
-                        )}
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-              )}
+              <DecisionTimeline
+                currentLabel={t('complianceAlerts.drawer.currentDecision')}
+                emptyLabel={t('complianceAlerts.drawer.noDecisionYet')}
+                entries={decisionHistory.map((entry, idx) => ({
+                  id: entry.id,
+                  badge: <StatusBadge label={t(DECISION_KEY[entry.decision])} variant={DECISION_VARIANT[entry.decision]} />,
+                  dotClassName: DECISION_DOT[entry.decision],
+                  current: idx === 0,
+                  meta: t('complianceEntities.matches.revision', { n: entry.revision }),
+                  date: formatDateTime(entry.date, lang),
+                  author: entry.analyst,
+                  comment: entry.comment,
+                }))}
+              />
             </SidePanelCard>
           </SidePanelSection>
 
