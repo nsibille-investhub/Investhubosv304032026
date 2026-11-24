@@ -407,8 +407,11 @@ export interface ScoreChange {
   value: number;
 }
 
-/** Portée du détail : tout le profil, ou une seule section. */
-type ScoreDetailScope = { kind: 'profile' } | { kind: 'section'; classId: string };
+/** Portée du détail : tout le profil, une section, ou une seule question. */
+type ScoreDetailScope =
+  | { kind: 'profile' }
+  | { kind: 'section'; classId: string }
+  | { kind: 'question'; classId: string; componentId: string };
 
 const DETAIL_COMMENT_FIELD_ID = 'risk-detail-comment';
 
@@ -439,7 +442,13 @@ function ScoreDetailPanel({
   const { t } = useTranslation();
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [comment, setComment] = useState('');
-  const scopeKey = scope ? (scope.kind === 'profile' ? 'profile' : scope.classId) : null;
+  const scopeKey = !scope
+    ? null
+    : scope.kind === 'profile'
+      ? 'profile'
+      : scope.kind === 'section'
+        ? scope.classId
+        : scope.componentId;
   const [openedFor, setOpenedFor] = useState<string | null>(null);
 
   if (scopeKey !== openedFor) {
@@ -453,8 +462,16 @@ function ScoreDetailPanel({
     ? []
     : scope.kind === 'profile'
       ? mockRiskProfile.classes
-      : mockRiskProfile.classes.filter(item => item.id === scope.classId);
+      : mockRiskProfile.classes
+          .filter(item => item.id === scope.classId)
+          .map(item =>
+            scope.kind === 'question'
+              ? { ...item, components: item.components.filter(component => component.id === scope.componentId) }
+              : item,
+          );
   const components = classes.flatMap(item => item.components);
+  // Le score de la section tient compte de toutes ses questions, même quand une seule est affichée.
+  const fullClass = (riskClass: RiskClass) => mockRiskProfile.classes.find(item => item.id === riskClass.id) ?? riskClass;
   const scopeLabels = new Set(components.map(component => component.labelKey));
   if (scope?.kind === 'profile') scopeLabels.add('subscriptions.detail.compliance.score.global');
   const scopeHistory = comments.filter(item => scopeLabels.has(item.labelKey));
@@ -506,11 +523,13 @@ function ScoreDetailPanel({
       <SheetContent side="right" style={SIDE_PANEL_WIDE_STYLE} className="h-full p-0 gap-0">
         <SidePanelHeader
           title={
-            scope?.kind === 'section' && classes[0]
-              ? t(`${D}.titleSection`, { name: t(classes[0].labelKey) })
-              : t(`${D}.titleGlobal`)
+            scope?.kind === 'question' && components[0]
+              ? t(`${D}.titleSection`, { name: t(components[0].labelKey) })
+              : scope?.kind === 'section' && classes[0]
+                ? t(`${D}.titleSection`, { name: t(classes[0].labelKey) })
+                : t(`${D}.titleGlobal`)
           }
-          description={readOnlyReason ?? t(`${D}.description`)}
+          description={readOnlyReason ?? t(scope?.kind === 'question' ? `${D}.descriptionQuestion` : `${D}.description`)}
         >
           {scope?.kind === 'profile' && (
             <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
@@ -531,7 +550,7 @@ function ScoreDetailPanel({
               key={riskClass.id}
               icon={ListChecks}
               title={t(riskClass.labelKey)}
-              description={t(`${D}.sectionScore`, { score: format(aggregateClassScore(riskClass, liveScores)) })}
+              description={t(`${D}.sectionScore`, { score: format(aggregateClassScore(fullClass(riskClass), liveScores)) })}
             >
               <SidePanelCard>
                 <div className="flex flex-col gap-4">
@@ -874,6 +893,13 @@ export function RiskProfileWidget({
                       <span className="text-xs font-semibold text-foreground tabular-nums">
                         {shown === null ? '-' : shown.toFixed(2)}
                       </span>
+                      <RowActionButton
+                        icon={Eye}
+                        tooltip={t('subscriptions.detail.compliance.profile.detail.openQuestion')}
+                        onClick={() =>
+                          setDetailScope({ kind: 'question', classId: riskClass.id, componentId: component.id })
+                        }
+                      />
                     </span>
                   </li>
                 );

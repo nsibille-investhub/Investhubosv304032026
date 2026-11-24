@@ -1303,7 +1303,9 @@
             "invalid": "A score is outside its allowed range.",
             "noChange": "No score was edited.",
             "cancel": "Cancel",
-            "saveMany": "Save the {{count}} scores"
+            "saveMany": "Save the {{count}} scores",
+            "openQuestion": "View question detail",
+            "descriptionQuestion": "Edit the question score, then save with a comment. Its section score is recalculated."
           },
           "history": {
             "title": "Change history",

@@ -1303,7 +1303,9 @@
             "invalid": "Un score sort de sa plage autorisée.",
             "noChange": "Aucun score n'a été modifié.",
             "cancel": "Annuler",
-            "saveMany": "Enregistrer les {{count}} scores"
+            "saveMany": "Enregistrer les {{count}} scores",
+            "openQuestion": "Voir le détail de la question",
+            "descriptionQuestion": "Modifiez le score de la question, puis enregistrez avec un commentaire. Le score de sa section se recalcule."
           },
           "history": {
             "title": "Historique des modifications",
