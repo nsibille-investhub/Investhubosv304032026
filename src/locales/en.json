@@ -714,7 +714,31 @@
           "remindersOne": "{{count}} reminder",
           "remindersMany": "{{count}} reminders",
           "progress": "{{signed}}/{{total}} signed",
-          "noCounterSignatory": "No counter-signatory"
+          "noCounterSignatory": "No counter-signatory",
+          "lastMailOn": "Last email sent on {{date}}"
+        },
+        "template": {
+          "label": "Template:",
+          "open": "Open the email template in a new tab",
+          "none": "No template"
+        },
+        "target": {
+          "export": "Export the target (investor and contacts)",
+          "exported": "Target exported",
+          "exportedDescOne": "{{count}} recipient exported as CSV.",
+          "exportedDescMany": "{{count}} recipients exported as CSV.",
+          "filename": "signature-target-subscription-{{id}}.csv",
+          "columns": {
+            "type": "Type",
+            "lastName": "Last name",
+            "firstName": "First name",
+            "email": "Email",
+            "phone": "Phone"
+          },
+          "type": {
+            "investor": "Investor",
+            "contact": "Contact"
+          }
         },
         "actions": {
           "validateWithoutESignature": "Validate without e-signature",
@@ -766,19 +790,32 @@
             "downloaded": "Subscription pack downloaded (ZIP)",
             "removed": "Document removed from the pack",
             "preview": "Document preview"
+          },
+          "placement": {
+            "title": "Place the signature boxes",
+            "description": "Specify where the signature boxes go in the document. These coordinates are required to send for signature.",
+            "name": "Document name",
+            "signatoryBox": "Signatory box",
+            "counterSignatoryBox": "Counter-signatory box",
+            "page": "Page",
+            "x": "X position",
+            "y": "Y position",
+            "hint": "Positions in points, from the top-left corner of the page.",
+            "confirm": "Add to pack",
+            "missing": "Enter the document name and all box coordinates.",
+            "summary": "Box p. {{page}} ({{x}}, {{y}})"
           }
         },
         "parties": {
           "signatories": {
             "title": "Signatories",
-            "subtitle": "By default, the investor's authorized signatories. Edit the list or add a signatory.",
+            "subtitle": "By default, the investor's authorised signatories. Last name, first name, email and phone are required for each signatory.",
             "add": "Add a signatory",
             "empty": "No signatory. Add at least one signatory."
           },
           "counterSignatories": {
             "title": "Counter-signatories",
             "subtitle": "By default, the counter-signatories defined at the {{fund}} fund level.",
-            "add": "Add a counter-signatory",
             "empty": "No counter-signatory. The pack is considered signed after the last investor signature."
           },
           "includedCount": "{{count}} included in the sending",
@@ -792,9 +829,10 @@
           "regenerateLink": "Regenerate link",
           "markSigned": "Record a manual signature",
           "form": {
-            "name": "Full name",
-            "role": "Role",
+            "lastName": "Last name",
+            "firstName": "First name",
             "email": "Email",
+            "phone": "Phone",
             "save": "Save",
             "cancel": "Cancel"
           },
@@ -811,7 +849,7 @@
             "added": "Signatory added",
             "removed": "Signatory removed",
             "updated": "Signatory updated",
-            "invalid": "Enter a name and an email.",
+            "invalid": "Enter the last name, first name, email and phone number.",
             "reminded": "Reminder sent",
             "remindedDesc": "A reminder was sent to {{names}}.",
             "linkRegenerated": "Link regenerated",
@@ -835,6 +873,11 @@
           "fullySigned": "Pack fully signed",
           "fullySignedDesc": "You can continue to payment.",
           "toPayment": "Proceeding to payment step"
+        },
+        "sequencing": {
+          "parallel": "Send in parallel",
+          "sequentialHint": "Sequenced signatures: the investor's signatories first, then the counter-signatories.",
+          "parallelHint": "Signatories and counter-signatories receive the signature link at the same time."
         }
       },
       "paymentStep": {

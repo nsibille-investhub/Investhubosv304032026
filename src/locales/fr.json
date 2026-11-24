@@ -714,7 +714,31 @@
           "remindersOne": "{{count}} relance",
           "remindersMany": "{{count}} relances",
           "progress": "{{signed}}/{{total}} signés",
-          "noCounterSignatory": "Aucun contre-signataire"
+          "noCounterSignatory": "Aucun contre-signataire",
+          "lastMailOn": "Dernier mail envoyé le {{date}}"
+        },
+        "template": {
+          "label": "Gabarit :",
+          "open": "Ouvrir le gabarit du mail dans un nouvel onglet",
+          "none": "Aucun gabarit"
+        },
+        "target": {
+          "export": "Exporter la cible (investisseur et contacts)",
+          "exported": "Cible exportée",
+          "exportedDescOne": "{{count}} destinataire exporté au format CSV.",
+          "exportedDescMany": "{{count}} destinataires exportés au format CSV.",
+          "filename": "cible-signature-souscription-{{id}}.csv",
+          "columns": {
+            "type": "Type",
+            "lastName": "Nom",
+            "firstName": "Prénom",
+            "email": "Email",
+            "phone": "Téléphone"
+          },
+          "type": {
+            "investor": "Investisseur",
+            "contact": "Contact"
+          }
         },
         "actions": {
           "validateWithoutESignature": "Valider sans signature électronique",
@@ -766,19 +790,32 @@
             "downloaded": "Pack de souscription téléchargé (ZIP)",
             "removed": "Document retiré du pack",
             "preview": "Aperçu du document"
+          },
+          "placement": {
+            "title": "Placer les encarts de signature",
+            "description": "Indiquez où placer les encarts de signature dans le document. Ces coordonnées sont obligatoires pour l'envoi en signature.",
+            "name": "Nom du document",
+            "signatoryBox": "Encart du signataire",
+            "counterSignatoryBox": "Encart du contre-signataire",
+            "page": "Page",
+            "x": "Position X",
+            "y": "Position Y",
+            "hint": "Positions en points, depuis le coin supérieur gauche de la page.",
+            "confirm": "Ajouter au pack",
+            "missing": "Renseignez le nom du document et toutes les coordonnées des encarts.",
+            "summary": "Encart p. {{page}} ({{x}}, {{y}})"
           }
         },
         "parties": {
           "signatories": {
             "title": "Signataires",
-            "subtitle": "Par défaut, les signataires autorisés de l'investisseur. Modifiez la liste ou ajoutez un signataire.",
+            "subtitle": "Par défaut, les signataires autorisés de l'investisseur. Nom, prénom, email et téléphone sont obligatoires pour chaque signataire.",
             "add": "Ajouter un signataire",
             "empty": "Aucun signataire. Ajoutez au moins un signataire."
           },
           "counterSignatories": {
             "title": "Contre-signataires",
             "subtitle": "Par défaut, les contre-signataires définis au niveau du fonds {{fund}}.",
-            "add": "Ajouter un contre-signataire",
             "empty": "Aucun contre-signataire. Le pack sera considéré signé dès la dernière signature investisseur."
           },
           "includedCount": "{{count}} inclus dans l'envoi",
@@ -792,9 +829,10 @@
           "regenerateLink": "Régénérer le lien",
           "markSigned": "Enregistrer une signature manuelle",
           "form": {
-            "name": "Nom complet",
-            "role": "Fonction",
+            "lastName": "Nom",
+            "firstName": "Prénom",
             "email": "Email",
+            "phone": "Téléphone",
             "save": "Enregistrer",
             "cancel": "Annuler"
           },
@@ -811,7 +849,7 @@
             "added": "Signataire ajouté",
             "removed": "Signataire retiré",
             "updated": "Signataire mis à jour",
-            "invalid": "Renseignez un nom et un email.",
+            "invalid": "Renseignez le nom, le prénom, l'email et le numéro de téléphone.",
             "reminded": "Relance envoyée",
             "remindedDesc": "Un rappel a été envoyé à {{names}}.",
             "linkRegenerated": "Lien régénéré",
@@ -835,6 +873,11 @@
           "fullySigned": "Pack entièrement signé",
           "fullySignedDesc": "Vous pouvez passer au paiement.",
           "toPayment": "Passage à l'étape de paiement"
+        },
+        "sequencing": {
+          "parallel": "Envoi en parallèle",
+          "sequentialHint": "Signatures séquencées : les signataires de l'investisseur d'abord, puis les contre-signataires.",
+          "parallelHint": "Signataires et contre-signataires reçoivent le lien de signature en même temps."
         }
       },
       "paymentStep": {
