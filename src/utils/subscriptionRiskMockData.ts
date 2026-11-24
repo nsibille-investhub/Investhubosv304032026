@@ -11,12 +11,20 @@
 export type RiskComponentSource =
   | 'onboardingAnswer'
   | 'manualQuestion'
-  | 'screening';
+  | 'countryList'
+  | 'screening'
+  | 'externalService';
 
-/** Reponse proposee pour une question manuelle, avec le score qu'elle porte. */
-export interface RiskAnswerOption {
-  label: string;
-  score: number;
+/** Changement de reponse d'une question, qui a fait recalculer son score. */
+export interface RiskAnswerChange {
+  at: string;
+  /** Auteur du changement : investisseur, operateur, ou traitement automatique. */
+  by: string;
+  previousValue: string;
+  value: string;
+  previousScore: number | null;
+  score: number | null;
+  comment?: string;
 }
 
 export interface RiskComponent {
@@ -35,14 +43,8 @@ export interface RiskComponent {
   manualAt?: string;
   /** Commentaire obligatoire qui motive la saisie manuelle. */
   manualComment?: string;
-  /** Parametre "Score modifiable" de la composante. Sans effet sur une question manuelle. */
-  scoreModifiable: boolean;
-  /** Question manuelle : reponses parametrees et leur score. */
-  answerOptions?: RiskAnswerOption[];
-  /** Question manuelle sans saisie : la reponse par defaut s'applique. */
-  defaultAnswer?: boolean;
-  /** Screening : scores proposes a la correction, entre le minimum et le maximum, valeurs exclues retirees. */
-  scoreValues?: number[];
+  /** Reponses successives, de la plus ancienne a la plus recente. */
+  answerHistory?: RiskAnswerChange[];
 }
 
 export interface RiskClass {
@@ -108,9 +110,8 @@ export const mockRiskProfile: RiskProfile = {
       components: [
         {
           id: 'country-residence',
-          scoreModifiable: true,
           labelKey: 'subscriptions.detail.compliance.components.taxResidence',
-          source: 'onboardingAnswer',
+          source: 'countryList',
           value: 'France',
           score: 1,
           min: 0,
@@ -118,9 +119,8 @@ export const mockRiskProfile: RiskProfile = {
         },
         {
           id: 'country-nationality',
-          scoreModifiable: false,
           labelKey: 'subscriptions.detail.compliance.components.nationality',
-          source: 'onboardingAnswer',
+          source: 'countryList',
           value: 'France',
           score: 1,
           min: 0,
@@ -128,13 +128,22 @@ export const mockRiskProfile: RiskProfile = {
         },
         {
           id: 'country-bank',
-          scoreModifiable: true,
           labelKey: 'subscriptions.detail.compliance.components.bankDomiciliation',
-          source: 'onboardingAnswer',
+          source: 'countryList',
           value: 'Suisse',
           score: 4.8,
           min: 0,
           max: 10,
+          answerHistory: [
+            {
+              at: '02/04/2026 09:12',
+              by: 'Jean-Pierre Durand',
+              previousValue: 'France',
+              value: 'Suisse',
+              previousScore: 1,
+              score: 4.8,
+            },
+          ],
         },
       ],
     },
@@ -146,19 +155,33 @@ export const mockRiskProfile: RiskProfile = {
       components: [
         {
           id: 'screening-subscriber',
-          scoreModifiable: true,
-          scoreValues: [0, 2, 3, 4, 5, 6, 7, 8, 10],
           labelKey: 'subscriptions.detail.compliance.components.screeningSubscriber',
           source: 'screening',
           value: '2 correspondances',
           score: 8,
           min: 0,
           max: 10,
+          answerHistory: [
+            {
+              at: '02/04/2026 09:12',
+              by: 'Marie Dubois',
+              previousValue: '0 correspondance',
+              value: '1 correspondance',
+              previousScore: 0,
+              score: 6,
+            },
+            {
+              at: '19/05/2026 16:10',
+              by: 'Automatique',
+              previousValue: '1 correspondance',
+              value: '2 correspondances',
+              previousScore: 6,
+              score: 8,
+            },
+          ],
         },
         {
           id: 'screening-representative',
-          scoreModifiable: true,
-          scoreValues: [0, 2, 3, 4, 5, 6, 7, 8, 10],
           labelKey: 'subscriptions.detail.compliance.components.screeningRepresentative',
           source: 'screening',
           value: '1 correspondance',
@@ -168,10 +191,9 @@ export const mockRiskProfile: RiskProfile = {
         },
         {
           id: 'screening-bo',
-          scoreModifiable: false,
           labelKey: 'subscriptions.detail.compliance.components.screeningBeneficialOwners',
           source: 'screening',
-          value: 'No matches',
+          value: '0 correspondance',
           score: 0,
           min: 0,
           max: 10,
@@ -186,7 +208,6 @@ export const mockRiskProfile: RiskProfile = {
       components: [
         {
           id: 'client-category',
-          scoreModifiable: false,
           labelKey: 'subscriptions.detail.compliance.components.investorCategory',
           source: 'onboardingAnswer',
           value: 'Professionnel par nature',
@@ -196,26 +217,28 @@ export const mockRiskProfile: RiskProfile = {
         },
         {
           id: 'client-relation',
-          scoreModifiable: false,
           labelKey: 'subscriptions.detail.compliance.components.relationOrigin',
-          source: 'manualQuestion',
+          source: 'onboardingAnswer',
           value: 'Apport distributeur',
-          defaultAnswer: true,
-          answerOptions: [
-            { label: 'Relation directe', score: 1 },
-            { label: 'Recommandation', score: 2 },
-            { label: 'Apport distributeur', score: 3 },
-            { label: 'Sollicitation entrante', score: 6 },
-          ],
           score: 3,
           min: 0,
           max: 10,
+          answerHistory: [
+            {
+              at: '12/03/2026 10:05',
+              by: 'Marie Dubois',
+              previousValue: 'Relation directe',
+              value: 'Apport distributeur',
+              previousScore: 1,
+              score: 3,
+              comment: 'Correction après vérification de la convention de distribution.',
+            },
+          ],
         },
         {
           id: 'client-funds',
-          scoreModifiable: true,
           labelKey: 'subscriptions.detail.compliance.components.fundsOrigin',
-          source: 'onboardingAnswer',
+          source: 'manualQuestion',
           value: 'Cession de participation',
           score: 5,
           min: 0,
@@ -235,19 +258,27 @@ export const mockRiskProfile: RiskProfile = {
       components: [
         {
           id: 'operation-amount',
-          scoreModifiable: false,
           labelKey: 'subscriptions.detail.compliance.components.subscribedAmount',
           source: 'onboardingAnswer',
           value: '250 000 €',
           score: 4,
           min: 0,
           max: 10,
+          answerHistory: [
+            {
+              at: '28/04/2026 14:40',
+              by: 'Jean-Pierre Durand',
+              previousValue: '150 000 €',
+              value: '250 000 €',
+              previousScore: 3,
+              score: 4,
+            },
+          ],
         },
         {
           id: 'operation-payment',
-          scoreModifiable: true,
           labelKey: 'subscriptions.detail.compliance.components.paymentMode',
-          source: 'onboardingAnswer',
+          source: 'externalService',
           value: 'Virement - compte tiers',
           score: null,
           min: 0,
@@ -491,7 +522,7 @@ export function componentScore(
 /** Cle de la saisie manuelle qui force le score global du profil. */
 export const PROFILE_SCORE_ID = 'profile';
 
-/** Score d'une classe, calcule depuis ses composantes evaluables. */
+/** Score d'une classe : toujours calcule depuis ses composantes evaluables, jamais saisi a la main. */
 export function aggregateClassScore(
   riskClass: RiskClass,
   overrides: Record<string, number> = {},

@@ -1198,11 +1198,8 @@
           "validationDate": "Date de validation",
           "validatedByAt": "{{date}} par {{name}}",
           "notValidated": "Non validé",
-          "force": "Forcer le score",
-          "forced": "Score global forcé",
           "global": "Score global",
-          "editLockedReason": "Rouvrez le score pour le modifier.",
-          "lockedReason": "Le dossier de conformité est validé : le score ne se modifie plus."
+          "editLockedReason": "Rouvrez le score pour le modifier."
         },
         "status": {
           "pending": "En attente",
@@ -1265,9 +1262,6 @@
         "profile": {
           "title": "Profil de risque et détail du calcul",
           "subtitle": "Profil, classes et composantes. Le calcul remonte des composantes vers le profil.",
-          "showScale": "Échelle et paliers",
-          "scaleTitle": "Paliers de l'échelle",
-          "tierRequiresValidation": "Validation conformité requise",
           "component": "Composante",
           "source": "Source",
           "value": "Valeur retenue",
@@ -1280,65 +1274,60 @@
           "unevaluatedMany": "{{count}} composantes non évaluées",
           "widgetTitle": "Profil de risque",
           "widgetSubtitle": "{{name}} · profil issu de {{onboarding}}",
-          "comments": {
-            "title": "Commentaires du score",
-            "subtitle": "Un commentaire est saisi à chaque modification de score.",
-            "openOne": "Détail des commentaires ({{count}})",
-            "openMany": "Détail des commentaires ({{count}})",
-            "empty": "Aucun score n'a été modifié.",
-            "close": "Fermer"
-          },
-          "viewDetail": "Voir le détail",
-          "panel": {
-            "answerTitle": "Réponse",
-            "scoreTitle": "Score",
-            "currentValue": "Valeur actuelle",
-            "newValue": "Nouvelle valeur",
-            "noAnswer": "Aucune réponse",
-            "selectPlaceholder": "Choisissez une valeur",
-            "currentScore": "Score actuel",
-            "newScore": "Nouveau score",
-            "notEvaluated": "Non évalué",
-            "scoreHint": "Valeur comprise entre {{min}} et {{max}}, tronquée à l'entier.",
-            "backToComputed": "Revenir au score calculé",
-            "backToComputedDesc": "Le forçage est retiré, le score global est de nouveau calculé à partir des sections.",
-            "commentTitle": "Commentaire",
-            "commentDesc": "Obligatoire pour toute modification de la réponse ou du score. Il peut aussi être ajouté seul.",
-            "comment": "Commentaire",
-            "commentPlaceholder": "Motivez la modification ou ajoutez une remarque",
-            "commentRequired": "Le commentaire est obligatoire pour enregistrer une modification.",
-            "nothingToSave": "Modifiez la réponse ou le score, ou saisissez un commentaire.",
-            "historyTitle": "Commentaires précédents",
-            "historyDesc": "Modifications et commentaires déjà enregistrés sur ce score.",
-            "historyEmpty": "Aucun commentaire sur ce score.",
-            "allComments": "Voir tous les commentaires du profil ({{count}})",
-            "answerChange": "Réponse : {{previous}} → {{next}}",
-            "scoreChange": "Score : {{previous}} → {{next}}",
-            "computedValue": "calculé",
-            "afterSave": "Après enregistrement, le calcul complet est relancé : score de la section, puis score global. L'investisseur ne reçoit aucune notification.",
-            "cancel": "Annuler",
-            "close": "Fermer",
+          "editScore": "Modifier le score",
+          "edit": {
             "save": "Enregistrer",
-            "kind": {
-              "onboardingAnswer": "Question d'onboarding",
-              "manualQuestion": "Question manuelle",
-              "screening": "Screening",
-              "profile": "Score global"
-            },
-            "answerLocked": {
-              "onboardingAnswer": "La réponse vient du questionnaire de l'investisseur. Elle ne se modifie pas ici.",
-              "screening": "La valeur vient des correspondances du screening. Elle ne se modifie pas ici."
-            },
-            "scoreLocked": {
-              "notModifiable": "\"Score modifiable\" n'est pas activé sur cette composante : le score ne se corrige pas.",
-              "manualQuestion": "Le score suit la réponse choisie. Il ne se saisit pas."
-            },
-            "defaultAnswer": "[Réponse par défaut]",
-            "answerScore": "Score de la réponse choisie : {{score}}",
-            "optionWithScore": "{{label}} · score {{score}}",
-            "selectScorePlaceholder": "Choisissez un score",
-            "frozen": "Score corrigé à la main : la composante est figée sur cette valeur. Une réponse ou une correspondance modifiée ensuite ne la change plus.",
-            "freezeWarning": "La correction fige la composante et ne se retire pas. Pour revenir en arrière, saisissez une autre valeur."
+            "scoreHint": "Valeur comprise entre {{min}} et {{max}}.",
+            "comment": "Commentaire",
+            "commentHint": "Le commentaire est conservé dans le détail des commentaires et dans le journal de conformité.",
+            "commentPlaceholder": "Motivez la modification du score",
+            "commentRequired": "Le commentaire est obligatoire.",
+            "backToComputed": "Revenir au score calculé"
+          },
+          "comments": {
+            "computedValue": "calculé"
+          },
+          "detail": {
+            "openGlobal": "Voir le détail et l'historique du score global",
+            "openSection": "Voir le détail du score",
+            "titleGlobal": "Détail du score global",
+            "titleSection": "Détail du score : {{name}}",
+            "description": "Modifiez les scores des questions, puis enregistrez l'ensemble avec un commentaire. Le score d'une section se recalcule à partir de ses questions.",
+            "locked": "Dossier validé : les scores ne sont plus modifiables.",
+            "globalScore": "Score global : {{score}}",
+            "sectionScore": "Score de la section : {{score}}",
+            "fieldHint": "{{value}} · score de {{min}} à {{max}}",
+            "commentHint": "Obligatoire. Il vaut pour tous les scores modifiés et il est conservé dans le détail des commentaires et dans le journal de conformité.",
+            "invalid": "Un score sort de sa plage autorisée.",
+            "noChange": "Aucun score n'a été modifié.",
+            "cancel": "Annuler",
+            "saveMany": "Enregistrer les {{count}} scores",
+            "openQuestion": "Voir le détail de la question",
+            "descriptionQuestion": "Modifiez le score de la question, puis enregistrez avec un commentaire. Le score de sa section se recalcule."
+          },
+          "history": {
+            "title": "Historique du score",
+            "empty": "Aucune modification, validation ou réouverture du score.",
+            "validated": "Score validé",
+            "reopened": "Score rouvert",
+            "globalScore": "Score global : {{score}} · {{tier}}",
+            "current": "Score actuel",
+            "change": "{{previous}} → {{next}}",
+            "answer": "Réponse : {{value}}",
+            "notEvaluated": "non évalué",
+            "answerChange": "Réponse : {{previous}} → {{value}}"
+          },
+          "screening": {
+            "party": "{{name}} : {{matches}}",
+            "problematicZero": "aucune correspondance problématique",
+            "problematicOne": "{{count}} correspondance problématique",
+            "problematicMany": "{{count}} correspondances problématiques",
+            "none": "Aucun tiers contrôlé",
+            "short": "{{who}} · {{alerts}}",
+            "parties": "{{count}} tiers",
+            "alertsZero": "aucune alerte",
+            "alertsOne": "{{count}} alerte",
+            "alertsMany": "{{count}} alertes"
           }
         },
         "screening": {
@@ -1503,8 +1492,8 @@
           "complianceReopenedDesc": "Score, correspondances et catégorisation sont de nouveau modifiables.",
           "scoreInvalidated": "Score rouvert",
           "scoreReset": "Score calculé rétabli",
-          "commentSaved": "Commentaire enregistré",
-          "riskAnswerSaved": "Réponse enregistrée"
+          "scoresSavedOne": "{{count}} score modifié",
+          "scoresSavedMany": "{{count}} scores modifiés"
         },
         "chain": {
           "ariaLabel": "Circuit de validation",
@@ -5600,6 +5589,7 @@
       "downloadReport": "Télécharger le rapport",
       "downloadAuditTrail": "Télécharger la piste d'audit",
       "reportUnavailable": "Le rapport n'est pas disponible chez le fournisseur pour cette entité.",
+      "rerunClosed": "Entité clôturée : le screening ne peut plus être relancé.",
       "csv": {
         "columns": {
           "date": "Date de l'événement",
@@ -6706,7 +6696,14 @@
         "externalId": "Identifiant externe",
         "createdAt": "Créé le",
         "updatedAt": "Modifié le",
-        "actions": "Actions"
+        "actions": "Actions",
+        "payment": "Paiement",
+        "paymentsToValidate": "Paiements à valider",
+        "remainingDue": "Restant dû",
+        "directDebits": "Prélèvements",
+        "calledShares": "Parts appelées",
+        "feesAndPremiums": "Frais et primes",
+        "restriction": "Restriction"
       },
       "empty": {
         "title": "Aucun appel de fonds",
@@ -7315,6 +7312,17 @@
         "prepared": "Appel préparé pour {{investor}}",
         "preparedHint": "Fonds, part et souscription sont déjà choisis : saisissez la date et le montant à appeler.",
         "replaced": "La préparation en attente a été remplacée par cet appel ciblé."
+      },
+      "progress": {
+        "payment": {
+          "none": "Pas payé",
+          "partial": "Paiement partiel ({{done}} sur {{total}})",
+          "full": "Totalement payé"
+        },
+        "directDebitsStarted": "Lancés",
+        "fees": "Frais",
+        "premiums": "Primes",
+        "restricted": "Restreint ({{count}})"
       }
     },
     "distributions": {
@@ -7485,6 +7493,7 @@
             "netResult": "Résultat net",
             "status": "Statut",
             "notifiedOn": "Notifiée le",
+            "remindedOn": "Relancée le",
             "createdAt": "Créée le",
             "updatedAt": "Modifiée le"
           },
@@ -7555,7 +7564,6 @@
         "lines": {
           "yes": "Oui",
           "no": "Non",
-          "openLetter": "Ouvrir le courrier",
           "columns": {
             "investor": "Investisseur",
             "share": "Part",
@@ -7565,18 +7573,7 @@
             "iban": "IBAN",
             "bic": "BIC",
             "notified": "Notifiée",
-            "notifiedOn": "Notifiée le",
-            "letter": "Courrier"
-          },
-          "letter": {
-            "title": "Courrier de déblocage - {{name}}",
-            "fund": "Fonds : {{fund}}",
-            "date": "Date du déblocage : {{date}}",
-            "investor": "Investisseur : {{investor}}",
-            "subscription": "Souscription : {{subscription}}",
-            "amount": "Montant débloqué : {{amount}}",
-            "iban": "IBAN : {{iban}}",
-            "demo": "Document de démonstration généré par la maquette."
+            "notifiedOn": "Notifiée le"
           },
           "empty": {
             "title": "Aucune ligne investisseur",
@@ -7585,6 +7582,289 @@
             "reset": "Réinitialiser les filtres"
           }
         }
+      }
+    },
+    "notices": {
+      "common": {
+        "columns": {
+          "actions": "Actions"
+        },
+        "actions": {
+          "notify": "Notifier",
+          "previewNotification": "Prévisualiser la notification",
+          "exportTarget": "Exporter la cible",
+          "upload": "Charger un document",
+          "validatePayment": "Valider le paiement",
+          "editPayment": "Modifier la date de paiement",
+          "invalidatePayment": "Invalider le paiement",
+          "delete": "Supprimer",
+          "bulk": "Actions"
+        },
+        "selection": {
+          "linesOne": "{{count}} ligne sélectionnée",
+          "linesMany": "{{count}} lignes sélectionnées",
+          "clear": "Annuler la sélection",
+          "selectAll": "Tout sélectionner (toutes les pages)"
+        },
+        "sources": {
+          "generated": "Généré",
+          "manual": "Manuel",
+          "generatedAndManual": "Généré et manuel"
+        },
+        "dialog": {
+          "summary": "Ce que l'action va produire",
+          "scopeOne": "{{name}} - 1 ligne sélectionnée",
+          "scopeMany": "{{name}} - {{count}} lignes sélectionnées",
+          "receivedOn": "Date de réception des fonds",
+          "dateRequired": "Saisissez la date de réception des fonds.",
+          "noEligibleLine": "Aucune ligne éligible à cette action.",
+          "sendingSuffix": "{{name}} (envoi en cours)"
+        },
+        "effects": {
+          "notifications": "Emails de notification",
+          "reminders": "Emails de relance",
+          "ignoredLines": "Lignes ignorées",
+          "ignoredNote": "Non éligibles à cette action : elles restent inchangées.",
+          "paymentsValidated": "Paiements validés",
+          "confirmationMail": "La ligne passe au statut Payé. Un email de confirmation part à ses destinataires.",
+          "paymentDatesEdited": "Dates de paiement modifiées",
+          "noMail": "Le statut reste Payé. Aucun email n'est envoyé.",
+          "paymentsInvalidated": "Paiements invalidés",
+          "invalidatedNote": "La ligne revient au statut Notifié si elle a été notifiée ou relancée, au statut Créé sinon. Aucun email n'est envoyé.",
+          "exported": "Lignes exportées",
+          "exportNote": "Un seul fichier, une ligne par destinataire. Aucun email n'est envoyé.",
+          "regenerateNote": "Les fichiers complémentaires sont conservés. Le statut de la ligne ne change pas."
+        },
+        "parentNotes": {
+          "notify": "Notifications : {{notifications}}. Relances : {{reminders}}.",
+          "notifyOnly": "Lignes notifiées : {{notifications}}.",
+          "exportTarget": "Lignes exportées : {{count}}.",
+          "delete": "Lignes investisseurs supprimées : {{count}}."
+        },
+        "toast": {
+          "refused": "Action refusée : {{name}}",
+          "sendStarted": "Envoi en cours : {{name}}",
+          "sendDone": "Envoi terminé : {{name}}. Notifications : {{notifications}}. Relances : {{reminders}}.",
+          "sendDoneNotifications": "Envoi terminé : {{name}}. Notifications : {{notifications}}.",
+          "paymentsValidated": "Paiements validés : {{count}}",
+          "paymentDatesEdited": "Dates de paiement modifiées : {{count}}",
+          "paymentsInvalidated": "Paiements invalidés : {{count}}",
+          "targetExported": "Cible exportée. Destinataires : {{count}}",
+          "fileAdded": "Fichier ajouté aux fichiers complémentaires : {{name}}",
+          "fileDownloaded": "Fichier téléchargé : {{name}}",
+          "deleted": "Suppression effectuée : {{names}}"
+        },
+        "upload": {
+          "file": "Document",
+          "dropHint": "Déposez le fichier ici ou cliquez pour le choisir",
+          "dropHintDesc": "Un seul fichier",
+          "fileReady": "Fichier prêt",
+          "preview": "Aperçu",
+          "remove": "Retirer le fichier",
+          "usage": "Usage",
+          "add": "Ajouter en complément",
+          "addHint": "Le fichier rejoint les fichiers complémentaires : téléchargeable depuis la ligne et joint à la notification.",
+          "confirm": "Confirmer",
+          "missing": "Importez un fichier et choisissez son usage."
+        },
+        "documentPanel": {
+          "fund": "Fonds :",
+          "investor": "Investisseur :",
+          "subscription": "Souscription :",
+          "manualFile": "Fichier chargé à la main : {{name}}",
+          "frame": "Aperçu du document",
+          "extraFiles": "Fichiers complémentaires",
+          "noExtraFile": "Aucun fichier complémentaire.",
+          "downloadExtra": "Télécharger le fichier",
+          "close": "Fermer"
+        },
+        "mailPreview": {
+          "description": "{{name}} - aperçu de l'email que recevrait la ligne. Rien n'est envoyé.",
+          "subject": "Objet :",
+          "frame": "Aperçu de l'email"
+        },
+        "target": {
+          "sendPlanned": "Envoi prévu",
+          "name": "Nom",
+          "type": "Type",
+          "parent": "Parent",
+          "lastNotification": "Dernière notification",
+          "lastReception": "Dernière réception",
+          "lastOpening": "Dernière ouverture",
+          "kinds": {
+            "notification": "Notification",
+            "reminder": "Relance"
+          },
+          "roles": {
+            "principal": "Investisseur",
+            "copy": "Contact en copie"
+          }
+        }
+      },
+      "docKind": {
+        "document": {
+          "title": "Document",
+          "preview": "Voir le document",
+          "download": "Télécharger le document",
+          "downloadMany": "Télécharger les documents",
+          "regenerate": "Régénérer le document",
+          "regenerateMany": "Régénérer les documents",
+          "replace": "Remplacer le document",
+          "replaceWarning": "Le document actuel de la ligne sera remplacé.",
+          "overwriteOne": "1 document chargé à la main sera écrasé.",
+          "overwriteMany": "{{count}} documents chargés à la main seront écrasés.",
+          "columns": {
+            "documentSource": "Source du document",
+            "documentAddedAt": "Document ajouté le",
+            "documentGeneratedAt": "Document généré le"
+          },
+          "effects": {
+            "regenerated": "Documents régénérés",
+            "downloaded": "Documents téléchargés",
+            "downloadNote": "Un fichier zip, un document par ligne. Un document manquant est généré avant le téléchargement."
+          },
+          "parentNotes": {
+            "regenerate": "Documents régénérés : {{count}}. Lignes notifiées ignorées : {{ignored}}.",
+            "download": "Documents : {{count}}."
+          },
+          "toast": {
+            "downloaded": "Document téléchargé : {{name}}",
+            "zipDownloaded": "Fichier zip téléchargé. Documents : {{count}}",
+            "regenerated": "Documents régénérés : {{count}}",
+            "replaced": "Document de la ligne remplacé par {{name}}"
+          }
+        },
+        "letter": {
+          "title": "Courrier",
+          "preview": "Voir le courrier",
+          "download": "Télécharger le courrier",
+          "downloadMany": "Télécharger les courriers",
+          "regenerate": "Régénérer le courrier",
+          "regenerateMany": "Régénérer les courriers",
+          "replace": "Remplacer le courrier",
+          "replaceWarning": "Le courrier actuel de la ligne sera remplacé.",
+          "overwriteOne": "1 courrier chargé à la main sera écrasé.",
+          "overwriteMany": "{{count}} courriers chargés à la main seront écrasés.",
+          "columns": {
+            "documentSource": "Source du courrier",
+            "documentAddedAt": "Courrier ajouté le",
+            "documentGeneratedAt": "Courrier généré le"
+          },
+          "effects": {
+            "regenerated": "Courriers régénérés",
+            "downloaded": "Courriers téléchargés",
+            "downloadNote": "Un fichier zip, un courrier par ligne. Un courrier manquant est généré avant le téléchargement."
+          },
+          "parentNotes": {
+            "regenerate": "Courriers régénérés : {{count}}. Lignes notifiées ignorées : {{ignored}}.",
+            "download": "Courriers : {{count}}."
+          },
+          "toast": {
+            "downloaded": "Courrier téléchargé : {{name}}",
+            "zipDownloaded": "Fichier zip téléchargé. Courriers : {{count}}",
+            "regenerated": "Courriers régénérés : {{count}}",
+            "replaced": "Courrier de la ligne remplacé par {{name}}"
+          }
+        }
+      },
+      "families": {
+        "capitalCalls": {
+          "documentTitle": "Avis d'appel de fonds",
+          "sending": "Un envoi est en cours sur cet appel de fonds. Réessayez une fois l'envoi terminé.",
+          "selectionOne": "{{count}} appel de fonds sélectionné",
+          "selectionMany": "{{count}} appels de fonds sélectionnés",
+          "ignored": "Appels de fonds ignorés",
+          "ignoredNote": "Non éligibles à cette action ou envoi en cours : ils restent inchangés.",
+          "noneEligible": "Aucun appel de fonds éligible à cette action.",
+          "deleteWarning": "La suppression est définitive. Elle retire l'appel, ses lignes investisseurs, sa ventilation par part, les documents de ses lignes et ceux déposés dans les documents des souscriptions. Le flux prévisionnel lié à l'appel repasse en attente.",
+          "mail": {
+            "notification": "Email de notification",
+            "reminder": "Email de relance"
+          },
+          "target": {
+            "line": "Ligne d'appel",
+            "parent": "Appel",
+            "fileName": "cible-appels-de-fonds"
+          }
+        },
+        "distributions": {
+          "documentTitle": "Avis de distribution",
+          "sending": "Un envoi est en cours sur cette distribution. Réessayez une fois l'envoi terminé.",
+          "selectionOne": "{{count}} distribution sélectionnée",
+          "selectionMany": "{{count}} distributions sélectionnées",
+          "ignored": "Distributions ignorées",
+          "ignoredNote": "Non éligibles à cette action ou envoi en cours : elles restent inchangées.",
+          "noneEligible": "Aucune distribution éligible à cette action.",
+          "deleteWarning": "La suppression est définitive. Elle retire la distribution, ses lignes investisseurs, les documents de ses lignes et ceux déposés dans les documents des souscriptions. Le flux prévisionnel lié à la distribution repasse en attente.",
+          "mail": {
+            "notification": "Email de notification",
+            "reminder": "Email de relance"
+          },
+          "target": {
+            "line": "Ligne de distribution",
+            "parent": "Distribution",
+            "fileName": "cible-distributions"
+          }
+        },
+        "capitalAccounts": {
+          "documentTitle": "Capital account",
+          "sending": "Un envoi est en cours sur ce capital account. Réessayez une fois l'envoi terminé.",
+          "selectionOne": "{{count}} capital account sélectionné",
+          "selectionMany": "{{count}} capital accounts sélectionnés",
+          "ignored": "Capital accounts ignorés",
+          "ignoredNote": "Non éligibles à cette action ou envoi en cours : ils restent inchangés.",
+          "noneEligible": "Aucun capital account éligible à cette action.",
+          "deleteWarning": "La suppression est définitive. Elle retire le capital account, ses lignes investisseurs, les documents de ses lignes et ceux déposés dans les documents des souscriptions.",
+          "mail": {
+            "notification": "Email de notification",
+            "reminder": "Email de relance"
+          },
+          "target": {
+            "line": "Ligne de capital account",
+            "parent": "Capital account",
+            "fileName": "cible-capital-accounts"
+          }
+        },
+        "releases": {
+          "documentTitle": "Courrier de déblocage",
+          "sending": "Un envoi est en cours sur ce déblocage. Réessayez une fois l'envoi terminé.",
+          "selectionOne": "{{count}} déblocage sélectionné",
+          "selectionMany": "{{count}} déblocages sélectionnés",
+          "ignored": "Déblocages ignorés",
+          "ignoredNote": "Non éligibles à cette action ou envoi en cours : ils restent inchangés.",
+          "noneEligible": "Aucun déblocage éligible à cette action.",
+          "deleteWarning": "La suppression est définitive. Elle retire le déblocage, ses lignes investisseurs et leurs courriers.",
+          "mail": {
+            "notification": "Email de déblocage",
+            "reminder": "Email de relance"
+          },
+          "target": {
+            "line": "Ligne de déblocage",
+            "parent": "Déblocage",
+            "fileName": "cible-deblocages"
+          }
+        }
+      },
+      "progress": {
+        "columns": {
+          "lines": "Lignes",
+          "notification": "Notification",
+          "sending": "Envoi en cours"
+        },
+        "documents": {
+          "capitalCalls": "Avis",
+          "distributions": "Avis",
+          "capitalAccounts": "Documents",
+          "releases": "Courriers"
+        },
+        "ratio": "{{done}} / {{total}}",
+        "notification": {
+          "none": "Pas notifié",
+          "partial": "Notification partielle ({{done}} sur {{total}})",
+          "full": "Totalement notifié",
+          "immediate": "Publication immédiate"
+        },
+        "sending": "Envoi en cours"
       }
     }
   },
@@ -7951,6 +8231,33 @@
         "states": "Ouverte, fermée. Bouton d'ouverture indisponible avec motif quand aucun mail ne part.",
         "exampleLabel": "Aperçu de la notification d'un appel",
         "open": "Aperçu"
+      },
+      "previewFrame": {
+        "title": "Cadre d'aperçu",
+        "description": "Cadre d'aperçu d'un contenu HTML dans un panneau latéral : page blanche sur fond gris, rendue sans script. Sert à l'aperçu d'un mail (MailPreviewDialog) et à celui du document d'une ligne de notice.",
+        "variants": "Hauteur libre (flex-1) dans une colonne, ou hauteur fixe.",
+        "states": "Affichage seul, sans interaction.",
+        "exampleLabel": "Aperçu d'un document"
+      },
+      "warningNote": {
+        "title": "Avertissement avant validation",
+        "description": "Avertissement d'une phrase placé dans une fenêtre ou un formulaire, juste avant la validation : document remplacé, suppression définitive, saisie incohérente. Pour l'état d'une page entière, utilisez PageStateBanner.",
+        "variants": "Une seule variante : icône d'alerte et une phrase.",
+        "states": "Affiché seulement quand la condition est remplie.",
+        "exampleLabel": "Remplacement du document d'une ligne",
+        "example": "Le document actuel de la ligne sera remplacé."
+      },
+      "decisionTimeline": {
+        "title": "Historique de décisions",
+        "description": "Fil vertical des décisions successives sur un objet : décision ou valeur en badge, étiquette de l'entrée en vigueur, auteur, date et commentaire. Sert à l'historique des décisions d'une alerte et à celui des modifications de score d'un profil de risque.",
+        "variants": "Avec ou sans précision à côté du badge (révision, question) et sous l'auteur (réponse retenue). Pastille colorée selon la décision.",
+        "states": "Vide (message), une ou plusieurs entrées, entrée en vigueur marquée.",
+        "exampleLabel": "Modifications de score",
+        "current": "Score actuel",
+        "empty": "Aucune décision.",
+        "question": "Origine des fonds",
+        "answer": "Réponse : Cession de participation",
+        "comment": "Justificatif de cession reçu."
       },
       "richMultiSelect": {
         "title": "Multisélection riche",

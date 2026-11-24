@@ -68,6 +68,17 @@ Référence : « Nouvelle souscription » (`NewSubscriptionDialog`).
 | Confirmation (suppression, archivage…) | `ConfirmDialog` (`ui/confirm-dialog`), même habillage en taille compacte (`BIG_MODAL_COMPACT`) |
 Jamais `AlertDialog` ou `Dialog` nus pour une nouvelle modale.
 
+### Avertissements et aperçus
+| Besoin | Composant | Import |
+|---|---|---|
+| Avertissement d'une phrase avant validation (remplacement, suppression définitive) | `WarningNote` | `ui/warning-note` |
+| Choix exclusif entre deux ou trois usages (ajouter / remplacer) | `SegmentedControl` (`fullWidth`, icônes) | `ui/segmented-control` |
+| Aperçu d'un mail avant envoi | `MailPreviewDialog` | `ui/mail-preview-dialog` |
+| Cadre d'aperçu HTML dans un panneau latéral (document, courrier) | `PreviewFrame` | `ui/preview-frame` |
+| Fichier joint téléchargeable | `AttachmentRow` | `ui/attachment-row` |
+| Historique de décisions ou de modifications (badge, auteur, date, commentaire) | `DecisionTimeline` | `ui/decision-timeline` |
+| Récapitulatif d'une action sur une sélection (traités, ignorés) | `EffectsPanel` (`marker="none"`) dans un `ConfirmDialog` | `ui/effects-panel` |
+
 ### Retour utilisateur
 - Chaque bouton icône a son libellé au survol (`Tooltip`, déjà intégré à `RowActionButton` / `TableRowActions`).
 - Action indisponible : visible, grisée, motif au survol (`DisabledReason` ou `disabledReason`).

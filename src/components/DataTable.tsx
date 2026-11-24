@@ -52,6 +52,22 @@ interface DataTableProps<T extends { id: number }> {
   footer?: Partial<Record<string, ReactNode>>;
   /** Lignes affichées grisées (souscription transférée, élément inactif...). */
   isRowMuted?: (row: T) => boolean;
+  /**
+   * Sélection pilotée par l'écran : cases à cocher, bandeau de sélection et actions groupées.
+   * `allFilteredData` donne la portée de "tout sélectionner" (toutes les pages).
+   */
+  selection?: DataTableSelection;
+}
+
+export interface DataTableSelection {
+  selectedIds: Set<number>;
+  onChange: (ids: Set<number>) => void;
+  /** Libellé du bandeau, par exemple "3 lignes sélectionnées". */
+  label: string;
+  clearLabel: string;
+  selectAllLabel: string;
+  /** Bouton d'action global, à droite du bandeau. */
+  actions?: ReactNode;
 }
 
 export function DataTable<T extends { id: number }>({
@@ -69,15 +85,18 @@ export function DataTable<T extends { id: number }>({
   entityName = 'item',
   hideSelection = false,
   footer,
-  isRowMuted
+  isRowMuted,
+  selection
 }: DataTableProps<T>) {
   // Safety check
   if (!columns || columns.length === 0) {
     return null;
   }
 
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [internalSelectedIds, setInternalSelectedIds] = useState<Set<number>>(new Set());
   const [selectAll, setSelectAll] = useState(false);
+  const selectedIds = selection ? selection.selectedIds : internalSelectedIds;
+  const setSelectedIds = selection ? selection.onChange : setInternalSelectedIds;
   
   const totalFilteredData = allFilteredData || data;
   
@@ -88,6 +107,10 @@ export function DataTable<T extends { id: number }>({
   }, [selectedIds, totalFilteredData]);
 
   const handleSelectAll = () => {
+    if (selection) {
+      setSelectedIds(selectAll ? new Set() : new Set(totalFilteredData.map(item => item.id)));
+      return;
+    }
     if (selectAll) {
       setSelectedIds(new Set());
       toast.info('Sélection annulée', {
@@ -115,6 +138,7 @@ export function DataTable<T extends { id: number }>({
 
   const handleClearSelection = () => {
     setSelectedIds(new Set());
+    if (selection) return;
     toast.info('Sélection annulée');
   };
 
@@ -141,13 +165,17 @@ export function DataTable<T extends { id: number }>({
             <div className="px-6 py-3 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Badge className="bg-primary text-primary-foreground px-3 py-1 shadow-sm">
-                  {selectedIds.size} {selectedIds.size === 1 ? `${entityName} sélectionné` : `${entityName}s sélectionnés`}
+                  {selection
+                    ? selection.label
+                    : `${selectedIds.size} ${selectedIds.size === 1 ? `${entityName} sélectionné` : `${entityName}s sélectionnés`}`}
                 </Badge>
-                <span className="text-sm text-muted-foreground font-medium">
-                  {selectedIds.size === totalFilteredData.length 
-                    ? '(Toutes les pages sont sélectionnées)'
-                    : '(Sélection partielle sur toutes les pages)'}
-                </span>
+                {!selection && (
+                  <span className="text-sm text-muted-foreground font-medium">
+                    {selectedIds.size === totalFilteredData.length 
+                      ? '(Toutes les pages sont sélectionnées)'
+                      : '(Sélection partielle sur toutes les pages)'}
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <Button
@@ -157,8 +185,9 @@ export function DataTable<T extends { id: number }>({
                   className="text-muted-foreground hover:text-foreground hover:bg-muted"
                 >
                   <X className="w-4 h-4 mr-1" />
-                  Annuler la sélection
+                  {selection ? selection.clearLabel : 'Annuler la sélection'}
                 </Button>
+                {selection?.actions}
               </div>
             </div>
           </motion.div>
@@ -171,18 +200,21 @@ export function DataTable<T extends { id: number }>({
             <tr className="border-b border-border bg-muted/40 backdrop-blur-sm">
               {/* Checkbox column */}
               {!hideSelection && (
-                <th className="px-6 py-4 text-left">
+                <th className={cn('px-6 py-4 text-left', density === 'compact' && 'px-3 py-3')}>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <input
                         type="checkbox"
                         checked={selectAll}
                         onChange={handleSelectAll}
+                        aria-label={selection?.selectAllLabel}
                         className="w-4 h-4 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all cursor-pointer hover:scale-110"
                       />
                     </TooltipTrigger>
                     <TooltipContent>
-                      {selectAll
+                      {selection
+                        ? selectAll ? selection.clearLabel : selection.selectAllLabel
+                        : selectAll
                         ? `Désélectionner tous les ${totalFilteredData.length} ${entityName}s (toutes pages)`
                         : `Sélectionner tous les ${totalFilteredData.length} ${entityName}s (toutes pages)`}
                     </TooltipContent>
@@ -248,7 +280,7 @@ export function DataTable<T extends { id: number }>({
                 >
                   {/* Checkbox */}
                   {!hideSelection && (
-                    <td className="px-6 py-4">
+                    <td className={cn('px-6 py-4', density === 'compact' && 'px-3 py-3')}>
                       <motion.input
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}

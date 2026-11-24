@@ -42,3 +42,15 @@ export function openDemoPdf(lines: string[]) {
   window.open(url, '_blank', 'noopener');
   window.setTimeout(() => URL.revokeObjectURL(url), 60000);
 }
+
+/** Télécharge un document de démonstration en PDF. */
+export function downloadDemoPdf(lines: string[], fileName: string) {
+  const url = URL.createObjectURL(buildDemoPdf(lines));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 60000);
+}

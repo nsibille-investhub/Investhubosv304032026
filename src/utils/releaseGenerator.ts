@@ -1,6 +1,7 @@
 import type { Fund } from './fundGenerator';
 import { capitalCallCurrency } from './capitalCallGenerator';
 import { investorDemoId, subscriptionDemoId } from './capitalCallLines';
+import { generatedDocument, type NoticeDocument } from './noticeActions';
 
 /** Déblocage d'un fonds. */
 export interface Release {
@@ -35,6 +36,8 @@ export interface ReleaseLine {
   notifiedAt: Date | null;
   /** Souscription transférée après la date du déblocage : la ligne s'affiche grisée. */
   transferred: boolean;
+  /** Courrier conservé sur la ligne : source, fichiers complémentaires et dates. */
+  document: NoticeDocument;
 }
 
 const INVESTORS = [
@@ -174,6 +177,7 @@ export function generateReleaseLines(release: Release, fundShares: string[]): Re
       notified,
       notifiedAt: notified ? notifiedAt : null,
       transferred: random() < 0.08,
+      document: generatedDocument(release.createdAt),
     };
   });
 }

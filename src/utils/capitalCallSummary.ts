@@ -88,3 +88,19 @@ export function summarizeCall(call: CapitalCall, lines: CapitalCallLine[]): Call
     state,
   };
 }
+
+/** Paiement d'un appel tel que le listing l'affiche : une ligne au statut Initié reste non payée tant qu'elle n'est pas validée. */
+export interface CallPaymentProgress {
+  paid: number;
+  toValidate: number;
+  remainingDue: number;
+}
+
+export function paymentProgress(lines: CapitalCallLine[]): CallPaymentProgress {
+  const paidLines = lines.filter(line => line.state === 'paid');
+  return {
+    paid: paidLines.length,
+    toValidate: lines.filter(line => line.state === 'paymentDeclared').length,
+    remainingDue: cents(lines.filter(line => line.state !== 'paid').reduce((sum, line) => sum + line.total, 0)),
+  };
+}

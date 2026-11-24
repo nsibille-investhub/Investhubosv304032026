@@ -16,6 +16,17 @@ import { ListingCard, ListingColumnsMenu, ListingNameCell } from '../ui/listing'
 import { StatusBadge, type StatusVariant } from '../StatusBadge';
 import { Button } from '../ui/button';
 import { DataPagination } from '../ui/data-pagination';
+import { TableRowActions } from '../ui/row-actions';
+import type { NoticeContext } from '../../utils/noticeActions';
+import { CAPITAL_ACCOUNT_RULES } from '../../utils/noticeFamilies';
+import {
+  NOTICE_DOCUMENT_COLUMNS,
+  NOTICE_DOCUMENT_HIDDEN,
+  isNoticeDocumentColumn,
+  useNoticeDocumentColumns,
+  useNoticeSelection,
+} from '../notices/noticeListing';
+import { useNoticeLineActions } from '../notices/useNoticeLineActions';
 
 const K = 'funds.capitalAccounts.detail.lines';
 
@@ -28,14 +39,24 @@ const COLUMN_KEYS = [
   'netResult',
   'status',
   'notifiedOn',
+  'remindedOn',
   'createdAt',
   'updatedAt',
+  ...NOTICE_DOCUMENT_COLUMNS,
 ] as const;
 type ColumnKey = (typeof COLUMN_KEYS)[number];
 
-const HIDDEN_BY_DEFAULT: ColumnKey[] = ['capitalGains', 'unrealizedGains', 'netResult', 'createdAt', 'updatedAt'];
+const HIDDEN_BY_DEFAULT: ColumnKey[] = [
+  'capitalGains',
+  'unrealizedGains',
+  'netResult',
+  'remindedOn',
+  'createdAt',
+  'updatedAt',
+  ...NOTICE_DOCUMENT_HIDDEN,
+];
 const DEFAULT_COLUMNS: ColumnKey[] = COLUMN_KEYS.filter(key => !HIDDEN_BY_DEFAULT.includes(key));
-const COLUMNS_STORAGE_KEY = 'investhub-columns-capital-account-lines';
+const COLUMNS_STORAGE_KEY = 'investhub-columns-capital-account-lines-v2';
 const LISTING_STORAGE_KEY = 'investhub-listing-capital-account-lines';
 
 const STATE_VARIANT: Record<CapitalAccountLineState, StatusVariant> = {
@@ -43,6 +64,7 @@ const STATE_VARIANT: Record<CapitalAccountLineState, StatusVariant> = {
   notified: 'info',
 };
 
+type NoticeDocumentColumnKey = (typeof NOTICE_DOCUMENT_COLUMNS)[number];
 type SortConfig = { key: string; direction: 'asc' | 'desc' };
 type ActiveFilters = Record<string, string | string[]>;
 
@@ -96,6 +118,8 @@ function sortValue(line: CapitalAccountLine, key: string): string | number {
       return CAPITAL_ACCOUNT_LINE_STATES.indexOf(line.state);
     case 'notifiedOn':
       return line.notifiedAt?.getTime() ?? 0;
+    case 'remindedOn':
+      return line.remindedAt?.getTime() ?? 0;
     case 'createdAt':
       return line.createdAt.getTime();
     case 'updatedAt':
@@ -110,10 +134,33 @@ interface CapitalAccountLinesTabProps {
   lines: CapitalAccountLine[];
   /** Parts du fonds, proposées par le filtre Part. */
   fundShares: string[];
+  /** Réglages de l'objet et droits de l'utilisateur, pour la disponibilité des actions. */
+  context: NoticeContext;
+  onLinesChange: (update: (lines: CapitalAccountLine[]) => CapitalAccountLine[]) => void;
+  onSend: (apply: (lines: CapitalAccountLine[]) => CapitalAccountLine[], onDone: () => void) => void;
 }
 
-export function CapitalAccountLinesTab({ account, lines, fundShares }: CapitalAccountLinesTabProps) {
+export function CapitalAccountLinesTab({ account, lines, fundShares, context, onLinesChange, onSend }: CapitalAccountLinesTabProps) {
   const { t, lang } = useTranslation();
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(() => new Set());
+  const documentColumns = useNoticeDocumentColumns<CapitalAccountLine>(CAPITAL_ACCOUNT_RULES.documentKind);
+  const lineActions = useNoticeLineActions({
+    rules: CAPITAL_ACCOUNT_RULES,
+    context,
+    parentName: account.name,
+    fundName: account.fundName,
+    lines,
+    onLinesChange,
+    onSend,
+    onCompleted: () => setSelectedIds(new Set()),
+  });
+  const selection = useNoticeSelection(
+    'lines',
+    selectedIds,
+    setSelectedIds,
+    lineActions.bulkActions(lines.filter(line => selectedIds.has(line.id))),
+  );
+  const columnLabel = (key: ColumnKey) => (isNoticeDocumentColumn(key) ? documentColumns.label(key) : t(`${K}.columns.${key}`));
   const [stored] = useState(() => readListingState(account.id));
   const [activeFilters, setActiveFilters] = useState<ActiveFilters>(stored.activeFilters ?? {});
   const [sortConfig, setSortConfig] = useState<SortConfig>(stored.sortConfig ?? DEFAULT_SORT);
@@ -167,6 +214,7 @@ export function CapitalAccountLinesTab({ account, lines, fundShares }: CapitalAc
         isPrimary: true,
         options: CAPITAL_ACCOUNT_LINE_STATES.map(value => ({ value, label: t(`${K}.states.${value}`) })),
       },
+      documentColumns.filter,
     ];
   }, [lines, fundShares, lang, t]);
 
@@ -176,7 +224,9 @@ export function CapitalAccountLinesTab({ account, lines, fundShares }: CapitalAc
     const subscriptions = pick('subscription');
     const shares = pick('share');
     const statuses = pick('status');
+    const sources = pick('documentSource');
     return lines.filter(line => {
+      if (!documentColumns.matches(line, sources)) return false;
       if (investors.length > 0 && !investors.includes(line.investor)) return false;
       if (subscriptions.length > 0 && !subscriptions.includes(line.subscription)) return false;
       if (shares.length > 0 && !shares.includes(line.share)) return false;
@@ -188,8 +238,10 @@ export function CapitalAccountLinesTab({ account, lines, fundShares }: CapitalAc
   const sorted = useMemo(() => {
     const factor = sortConfig.direction === 'asc' ? 1 : -1;
     return [...filtered].sort((a, b) => {
-      const left = sortValue(a, sortConfig.key);
-      const right = sortValue(b, sortConfig.key);
+      const value = (line: CapitalAccountLine) =>
+        isNoticeDocumentColumn(sortConfig.key) ? documentColumns.sortValue(line, sortConfig.key) : sortValue(line, sortConfig.key);
+      const left = value(a);
+      const right = value(b);
       if (left < right) return -factor;
       if (left > right) return factor;
       return a.investor.localeCompare(b.investor, lang) || a.id - b.id;
@@ -242,7 +294,7 @@ export function CapitalAccountLinesTab({ account, lines, fundShares }: CapitalAc
   const amount = (value: number | null) => (value !== null ? <span className="text-sm">{moneyFormat.format(value)}</span> : empty);
   const notInMockup = (name: string) => toast.info(t('funds.capitalAccounts.detail.toast.notInMockup', { name }));
 
-  const renderers: Record<ColumnKey, ColumnConfig<CapitalAccountLine>['render']> = {
+  const renderers: Record<Exclude<ColumnKey, NoticeDocumentColumnKey>, ColumnConfig<CapitalAccountLine>['render']> = {
     investor: line => <ListingNameCell name={line.investor} id={line.investorId} />,
     subscription: line => (
       <div
@@ -261,17 +313,32 @@ export function CapitalAccountLinesTab({ account, lines, fundShares }: CapitalAc
     status: line => <StatusBadge label={t(`${K}.states.${line.state}`)} variant={STATE_VARIANT[line.state]} />,
     notifiedOn: line =>
       line.notifiedAt ? <span className="text-sm tabular-nums">{dateFormat.format(line.notifiedAt)}</span> : empty,
+    remindedOn: line =>
+      line.remindedAt ? <span className="text-sm tabular-nums">{dateFormat.format(line.remindedAt)}</span> : empty,
     createdAt: line => dateTime(line.createdAt),
     updatedAt: line => dateTime(line.updatedAt),
   };
   const RIGHT_ALIGNED: ColumnKey[] = ['capitalGains', 'unrealizedGains', 'netResult'];
-  const columns: ColumnConfig<CapitalAccountLine>[] = visibleColumns.map(key => ({
-    key,
-    label: t(`${K}.columns.${key}`),
-    sortable: true,
-    align: RIGHT_ALIGNED.includes(key) ? 'right' : undefined,
-    render: renderers[key],
-  }));
+  const actionsColumn: ColumnConfig<CapitalAccountLine> = {
+    key: 'actions',
+    label: t('funds.notices.common.columns.actions'),
+    align: 'right',
+    render: line => <TableRowActions actions={lineActions.rowActions(line)} />,
+  };
+  const columns: ColumnConfig<CapitalAccountLine>[] = [
+    ...visibleColumns.map(key =>
+      isNoticeDocumentColumn(key)
+        ? documentColumns.columns[key]
+        : {
+            key,
+            label: t(`${K}.columns.${key}`),
+            sortable: true,
+            align: RIGHT_ALIGNED.includes(key) ? 'right' : undefined,
+            render: renderers[key],
+          },
+    ),
+    actionsColumn,
+  ];
 
   if (lines.length === 0) {
     return (
@@ -282,6 +349,8 @@ export function CapitalAccountLinesTab({ account, lines, fundShares }: CapitalAc
   }
 
   return (
+    <>
+    {lineActions.dialogs}
     <ListingCard
       toolbar={
         <div className="flex items-start justify-between gap-3">
@@ -296,7 +365,7 @@ export function CapitalAccountLinesTab({ account, lines, fundShares }: CapitalAc
             onClearAll={resetFilters}
           />
           <ListingColumnsMenu
-            columns={COLUMN_KEYS.map(key => ({ key, label: t(`${K}.columns.${key}`) }))}
+            columns={COLUMN_KEYS.map(key => ({ key, label: columnLabel(key) }))}
             visible={visibleColumns}
             onToggle={key => toggleColumn(key as ColumnKey)}
             onReset={() => setVisibleColumns(DEFAULT_COLUMNS)}
@@ -337,6 +406,8 @@ export function CapitalAccountLinesTab({ account, lines, fundShares }: CapitalAc
         <DataTable
           data={pageRows}
           columns={columns}
+          allFilteredData={sorted}
+          selection={selection}
           hoveredRow={hoveredRow}
           setHoveredRow={setHoveredRow}
           onRowClick={line => notInMockup(line.investor)}
@@ -347,10 +418,10 @@ export function CapitalAccountLinesTab({ account, lines, fundShares }: CapitalAc
             )
           }
           compactMode
-          hideSelection
           density="compact"
         />
       )}
     </ListingCard>
+    </>
   );
 }

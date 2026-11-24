@@ -59,6 +59,9 @@ import { FormField, SuffixInput } from '../ui/form-field';
 import { ListingColumnsMenu, ListingIndicator, ListingNameCell, ListingTruncatedText } from '../ui/listing';
 import { ProcessStepsBar, WizardPageFooter, WizardSteps, WizardStepsBar } from '../ui/wizard-steps';
 import { MailPreviewDialog } from '../ui/mail-preview-dialog';
+import { DecisionTimeline } from '../ui/decision-timeline';
+import { PreviewFrame } from '../ui/preview-frame';
+import { WarningNote } from '../ui/warning-note';
 import { RichMultiSelect } from '../ui/rich-multiselect';
 import { ColorPicker } from '../ui/color-picker';
 import { ComputedSummary } from '../ui/computed-summary';
@@ -1405,6 +1408,69 @@ export function FundDetailComponentsSection() {
       >
         <Example label={t(`${K}.mailPreview.exampleLabel`)}>
           <MailPreviewDemo />
+        </Example>
+      </DocBlock>
+
+      <DocBlock
+        id="previewFrame"
+        name="PreviewFrame"
+        importLine="import { PreviewFrame } from '@/components/ui/preview-frame'"
+        usage={`<PreviewFrame title={t('...')} html={html} className="h-96" />`}
+      >
+        <Example label={t(`${K}.previewFrame.exampleLabel`)}>
+          <PreviewFrame
+            title={t(`${K}.previewFrame.exampleLabel`)}
+            html={`<!doctype html><html><body style="font-family:sans-serif;padding:24px"><p>${t(`${K}.previewFrame.description`)}</p></body></html>`}
+            className="h-48"
+          />
+        </Example>
+      </DocBlock>
+
+      <DocBlock
+        id="warningNote"
+        name="WarningNote"
+        importLine="import { WarningNote } from '@/components/ui/warning-note'"
+        usage={`{usage === 'replace' && <WarningNote>{t('...')}</WarningNote>}`}
+      >
+        <Example label={t(`${K}.warningNote.exampleLabel`)}>
+          <WarningNote>{t(`${K}.warningNote.example`)}</WarningNote>
+        </Example>
+      </DocBlock>
+
+      <DocBlock
+        id="decisionTimeline"
+        name="DecisionTimeline"
+        importLine="import { DecisionTimeline } from '@/components/ui/decision-timeline'"
+        usage={`<DecisionTimeline currentLabel={t('...')} emptyLabel={t('...')}
+  entries={history.map((entry, index) => ({ id: entry.id, badge: <StatusBadge label={...} variant={...} />,
+    current: index === 0, meta: ..., date: ..., author: entry.analyst, comment: entry.comment }))} />`}
+      >
+        <Example label={t(`${K}.decisionTimeline.exampleLabel`)}>
+          <DecisionTimeline
+            currentLabel={t(`${K}.decisionTimeline.current`)}
+            emptyLabel={t(`${K}.decisionTimeline.empty`)}
+            entries={[
+              {
+                id: 'demo-2',
+                badge: <StatusBadge label="5 → 6" variant="warning" />,
+                dotClassName: 'bg-amber-500',
+                current: true,
+                meta: t(`${K}.decisionTimeline.question`),
+                date: '19/05/2026 16:31',
+                author: 'Marie Dubois',
+                detail: t(`${K}.decisionTimeline.answer`),
+                comment: t(`${K}.decisionTimeline.comment`),
+              },
+              {
+                id: 'demo-1',
+                badge: <StatusBadge label="6 → 5" variant="success" />,
+                dotClassName: 'bg-emerald-500',
+                meta: t(`${K}.decisionTimeline.question`),
+                date: '02/04/2026 09:12',
+                author: 'Hugo Lefèvre',
+              },
+            ]}
+          />
         </Example>
       </DocBlock>
 

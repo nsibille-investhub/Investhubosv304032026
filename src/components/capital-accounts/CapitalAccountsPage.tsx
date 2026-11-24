@@ -18,6 +18,18 @@ import { ListingCard, ListingColumnsMenu, ListingNameCell } from '../ui/listing'
 import { DemoScenarioBar } from '../ui/demo-scenario-bar';
 import { PageHeader } from '../ui/page-header';
 import { DataPagination } from '../ui/data-pagination';
+import { TableRowActions } from '../ui/row-actions';
+import type { NoticeContext } from '../../utils/noticeActions';
+import { CAPITAL_ACCOUNT_RULES } from '../../utils/noticeFamilies';
+import {
+  NOTICE_PROGRESS_COLUMNS,
+  isNoticeProgressColumn,
+  useNoticeProgressColumns,
+  useNoticeSelection,
+  type NoticeProgressColumn,
+} from '../notices/noticeListing';
+import { useNoticeLineStore } from '../notices/useNoticeLineStore';
+import { useNoticeParentActions } from '../notices/useNoticeParentActions';
 import { Button } from '../ui/button';
 import { CapitalAccountDetailPage } from './CapitalAccountDetailPage';
 
@@ -32,14 +44,16 @@ const COLUMN_KEYS = [
   'capitalGains',
   'unrealizedGains',
   'netResult',
+  ...NOTICE_PROGRESS_COLUMNS,
   'createdAt',
   'updatedAt',
 ] as const;
 type ColumnKey = (typeof COLUMN_KEYS)[number];
+type OwnColumnKey = Exclude<ColumnKey, NoticeProgressColumn>;
 
-const DEFAULT_COLUMNS: ColumnKey[] = ['name', 'fund', 'date', 'shares'];
+const DEFAULT_COLUMNS: ColumnKey[] = ['name', 'fund', 'date', 'shares', ...NOTICE_PROGRESS_COLUMNS];
 const UNSORTABLE: ColumnKey[] = ['shares'];
-const COLUMNS_STORAGE_KEY = 'investhub-columns-capital-accounts';
+const COLUMNS_STORAGE_KEY = 'investhub-columns-capital-accounts-v2';
 const LISTING_STORAGE_KEY = 'investhub-listing-capital-accounts';
 
 type Scenario = 'default' | 'limitedScope' | 'noRight';
@@ -132,7 +146,7 @@ export function CapitalAccountsPage({ funds, onOpenFund, onSelectedAccountChange
   const [pageSize, setPageSize] = useState(stored.pageSize ?? 20);
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
   const [visibleColumns, setVisibleColumns] = useState<ColumnKey[]>(readStoredColumns);
-  const [allAccounts] = useState<CapitalAccount[]>(() => generateCapitalAccounts(funds));
+  const [allAccounts, setAllAccounts] = useState<CapitalAccount[]>(() => generateCapitalAccounts(funds));
   const [selectedId, setSelectedId] = useState<string | null>(getDetailIdFromHash);
 
   useEffect(() => onHashChange(() => setSelectedId(getDetailIdFromHash())), []);
@@ -203,21 +217,49 @@ export function CapitalAccountsPage({ funds, onOpenFund, onSelectedAccountChange
     () => funds.find(fund => fund.id === selected?.fundId)?.shareClasses.map(item => item.name) ?? [],
     [funds, selected?.fundId],
   );
-  const selectedLines = useMemo(
-    () => (selected ? generateCapitalAccountLines(selected, selectedShares) : []),
-    [selected, selectedShares],
+  const sharesOf = (fundId: number) => funds.find(fund => fund.id === fundId)?.shareClasses.map(item => item.name) ?? [];
+  const store = useNoticeLineStore((item: CapitalAccount) => generateCapitalAccountLines(item, sharesOf(item.fundId)));
+  const selectedLines = selected ? store.linesOf(selected) : [];
+  const contextOf = (item: CapitalAccount): NoticeContext => ({
+    notify: item.notify,
+    noticesShown: true,
+    sending: store.isSending(item.id),
+    canNotify: true,
+    canDownload: true,
+  });
+  const progress = useNoticeProgressColumns({ rules: CAPITAL_ACCOUNT_RULES, contextOf, linesOf: store.linesOf });
+  const sortValueOf = (item: CapitalAccount, key: string) =>
+    isNoticeProgressColumn(key) ? progress.sortValue(item, key) : sortValue(item, key);
+  const [checkedIds, setCheckedIds] = useState<Set<number>>(() => new Set());
+  const parentActions = useNoticeParentActions({
+    rules: CAPITAL_ACCOUNT_RULES,
+    contextOf,
+    linesOf: store.linesOf,
+    updateLines: store.updateLines,
+    send: store.send,
+    remove: items => {
+      const ids = new Set(items.map(item => item.id));
+      setAllAccounts(prev => prev.filter(item => !ids.has(item.id)));
+    },
+    onCompleted: () => setCheckedIds(new Set()),
+  });
+  const selection = useNoticeSelection(
+    'capitalAccounts',
+    checkedIds,
+    setCheckedIds,
+    parentActions.bulkActions(scoped.filter(item => checkedIds.has(item.id))),
   );
 
   const sorted = useMemo(() => {
     const factor = sortConfig.direction === 'asc' ? 1 : -1;
     return [...filtered].sort((a, b) => {
-      const left = sortValue(a, sortConfig.key);
-      const right = sortValue(b, sortConfig.key);
+      const left = sortValueOf(a, sortConfig.key);
+      const right = sortValueOf(b, sortConfig.key);
       if (left < right) return -factor;
       if (left > right) return factor;
       return defaultCompare(a, b);
     });
-  }, [filtered, sortConfig]);
+  }, [filtered, sortConfig, store.overrides]);
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
   const currentPage = Math.min(page, totalPages);
@@ -271,7 +313,7 @@ export function CapitalAccountsPage({ funds, onOpenFund, onSelectedAccountChange
     });
   };
 
-  const renderers: Record<ColumnKey, ColumnConfig<CapitalAccount>['render']> = {
+  const renderers: Record<OwnColumnKey, ColumnConfig<CapitalAccount>['render']> = {
     name: (item, term) => <ListingNameCell name={item.name} searchTerm={term} id={item.id} />,
     fund: item => (
       <button
@@ -303,14 +345,26 @@ export function CapitalAccountsPage({ funds, onOpenFund, onSelectedAccountChange
     createdAt: item => dateTime(item.createdAt),
     updatedAt: item => dateTime(item.updatedAt),
   };
-  const RIGHT_ALIGNED: ColumnKey[] = ['capitalGains', 'unrealizedGains', 'netResult'];
-  const columns: ColumnConfig<CapitalAccount>[] = visibleColumns.map(key => ({
-    key,
-    label: t(`${K}.columns.${key}`),
-    sortable: !UNSORTABLE.includes(key),
-    align: RIGHT_ALIGNED.includes(key) ? 'right' : undefined,
-    render: renderers[key],
-  }));
+  const RIGHT_ALIGNED: OwnColumnKey[] = ['capitalGains', 'unrealizedGains', 'netResult'];
+  const columns: ColumnConfig<CapitalAccount>[] = [
+    ...visibleColumns.map(key =>
+      isNoticeProgressColumn(key)
+        ? progress.columns[key]
+        : {
+            key,
+            label: t(`${K}.columns.${key}`),
+            sortable: !UNSORTABLE.includes(key),
+            align: RIGHT_ALIGNED.includes(key) ? 'right' : undefined,
+            render: renderers[key],
+          },
+    ),
+    {
+      key: 'actions',
+      label: t('funds.notices.common.columns.actions'),
+      align: 'right' as const,
+      render: (item: CapitalAccount) => <TableRowActions actions={parentActions.rowActions(item)} />,
+    },
+  ];
 
   const scenarioBar = (
     <DemoScenarioBar
@@ -344,6 +398,11 @@ export function CapitalAccountsPage({ funds, onOpenFund, onSelectedAccountChange
           key={selected.id}
           account={selected}
           lines={selectedLines}
+          lineBindings={{
+            context: contextOf(selected),
+            onLinesChange: update => store.updateLines(selected, update),
+            onSend: (apply, onDone) => store.send(selected, apply, onDone),
+          }}
           fundShares={selectedShares}
           onOpenFund={onOpenFund}
           onBack={openListing}
@@ -357,6 +416,8 @@ export function CapitalAccountsPage({ funds, onOpenFund, onSelectedAccountChange
       {scenarioBar}
 
       <PageHeader hideBackButton title={t(`${K}.title`)} subtitle={t(`${K}.subtitle`)} />
+
+      {parentActions.dialogs}
 
       <div className="flex flex-1 flex-col gap-4 px-6 py-6">
         <ListingCard
@@ -376,7 +437,10 @@ export function CapitalAccountsPage({ funds, onOpenFund, onSelectedAccountChange
                 onClearAll={resetFilters}
               />
               <ListingColumnsMenu
-                columns={COLUMN_KEYS.map(key => ({ key, label: t(`${K}.columns.${key}`) }))}
+                columns={COLUMN_KEYS.map(key => ({
+                  key,
+                  label: isNoticeProgressColumn(key) ? progress.label(key) : t(`${K}.columns.${key}`),
+                }))}
                 visible={visibleColumns}
                 onToggle={key => toggleColumn(key as ColumnKey)}
                 onReset={() => setVisibleColumns(DEFAULT_COLUMNS)}
@@ -417,6 +481,8 @@ export function CapitalAccountsPage({ funds, onOpenFund, onSelectedAccountChange
             <DataTable
               data={pageRows}
               columns={columns}
+              allFilteredData={sorted}
+              selection={selection}
               hoveredRow={hoveredRow}
               setHoveredRow={setHoveredRow}
               onRowClick={item => {
@@ -430,7 +496,6 @@ export function CapitalAccountsPage({ funds, onOpenFund, onSelectedAccountChange
               }
               searchTerm={search}
               compactMode
-              hideSelection
               density="compact"
             />
           )}

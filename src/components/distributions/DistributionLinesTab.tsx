@@ -16,6 +16,18 @@ import { ListingCard, ListingColumnsMenu, ListingNameCell } from '../ui/listing'
 import { StatusBadge, type StatusVariant } from '../StatusBadge';
 import { Button } from '../ui/button';
 import { DataPagination } from '../ui/data-pagination';
+import { TableRowActions } from '../ui/row-actions';
+import type { NoticeContext } from '../../utils/noticeActions';
+import { DISTRIBUTION_RULES } from '../../utils/noticeFamilies';
+import {
+  NOTICE_DOCUMENT_COLUMNS,
+  NOTICE_DOCUMENT_HIDDEN,
+  isNoticeDocumentColumn,
+  useNoticeDocumentColumns,
+  useNoticeSelection,
+  type NoticeDocumentColumn,
+} from '../notices/noticeListing';
+import { useNoticeLineActions } from '../notices/useNoticeLineActions';
 
 const K = 'funds.distributions.detail.lines';
 
@@ -34,7 +46,8 @@ type ColumnKey =
   | 'status'
   | 'notifiedOn'
   | 'createdAt'
-  | 'updatedAt';
+  | 'updatedAt'
+  | NoticeDocumentColumn;
 
 const COLUMN_KEYS: ColumnKey[] = [
   'investor',
@@ -52,11 +65,12 @@ const COLUMN_KEYS: ColumnKey[] = [
   'notifiedOn',
   'createdAt',
   'updatedAt',
+  ...NOTICE_DOCUMENT_COLUMNS,
 ];
-const HIDDEN_BY_DEFAULT: ColumnKey[] = ['fees', 'refund', 'capital', 'interest', 'bic', 'createdAt', 'updatedAt'];
+const HIDDEN_BY_DEFAULT: ColumnKey[] = ['fees', 'refund', 'capital', 'interest', 'bic', 'createdAt', 'updatedAt', ...NOTICE_DOCUMENT_HIDDEN];
 const DEFAULT_COLUMNS = COLUMN_KEYS.filter(key => !HIDDEN_BY_DEFAULT.includes(key));
 const UNSORTABLE: ColumnKey[] = ['iban', 'bic'];
-const COLUMNS_STORAGE_KEY = 'investhub-columns-distribution-lines';
+const COLUMNS_STORAGE_KEY = 'investhub-columns-distribution-lines-v2';
 const LISTING_STORAGE_KEY = 'investhub-listing-distribution-lines';
 
 const STATE_VARIANT: Record<DistributionLineState, StatusVariant> = {
@@ -66,6 +80,7 @@ const STATE_VARIANT: Record<DistributionLineState, StatusVariant> = {
   paid: 'success',
 };
 
+type NoticeDocumentColumnKey = (typeof NOTICE_DOCUMENT_COLUMNS)[number];
 type SortConfig = { key: string; direction: 'asc' | 'desc' };
 type ActiveFilters = Record<string, string | string[]>;
 
@@ -139,10 +154,33 @@ interface DistributionLinesTabProps {
   lines: DistributionLine[];
   /** Parts du fonds, proposées par le filtre Part. */
   fundShares: string[];
+  /** Réglages de l'objet et droits de l'utilisateur, pour la disponibilité des actions. */
+  context: NoticeContext;
+  onLinesChange: (update: (lines: DistributionLine[]) => DistributionLine[]) => void;
+  onSend: (apply: (lines: DistributionLine[]) => DistributionLine[], onDone: () => void) => void;
 }
 
-export function DistributionLinesTab({ distribution, lines, fundShares }: DistributionLinesTabProps) {
+export function DistributionLinesTab({ distribution, lines, fundShares, context, onLinesChange, onSend }: DistributionLinesTabProps) {
   const { t, lang } = useTranslation();
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(() => new Set());
+  const documentColumns = useNoticeDocumentColumns<DistributionLine>(DISTRIBUTION_RULES.documentKind);
+  const lineActions = useNoticeLineActions({
+    rules: DISTRIBUTION_RULES,
+    context,
+    parentName: distribution.name,
+    fundName: distribution.fundName,
+    lines,
+    onLinesChange,
+    onSend,
+    onCompleted: () => setSelectedIds(new Set()),
+  });
+  const selection = useNoticeSelection(
+    'lines',
+    selectedIds,
+    setSelectedIds,
+    lineActions.bulkActions(lines.filter(line => selectedIds.has(line.id))),
+  );
+  const columnLabel = (key: ColumnKey) => (isNoticeDocumentColumn(key) ? documentColumns.label(key) : t(`${K}.columns.${key}`));
   const [stored] = useState(() => readListingState(distribution.id));
   const [activeFilters, setActiveFilters] = useState<ActiveFilters>(stored.activeFilters ?? {});
   const [sortConfig, setSortConfig] = useState<SortConfig>(stored.sortConfig ?? DEFAULT_SORT);
@@ -196,6 +234,7 @@ export function DistributionLinesTab({ distribution, lines, fundShares }: Distri
         isPrimary: true,
         options: DISTRIBUTION_LINE_STATES.map(value => ({ value, label: t(`${K}.states.${value}`) })),
       },
+      documentColumns.filter,
     ];
   }, [lines, fundShares, lang, t]);
 
@@ -205,7 +244,9 @@ export function DistributionLinesTab({ distribution, lines, fundShares }: Distri
     const subscriptions = pick('subscription');
     const shares = pick('share');
     const statuses = pick('status');
+    const sources = pick('documentSource');
     return lines.filter(line => {
+      if (!documentColumns.matches(line, sources)) return false;
       if (investors.length > 0 && !investors.includes(line.investor)) return false;
       if (subscriptions.length > 0 && !subscriptions.includes(line.subscription)) return false;
       if (shares.length > 0 && !shares.includes(line.share)) return false;
@@ -217,8 +258,10 @@ export function DistributionLinesTab({ distribution, lines, fundShares }: Distri
   const sorted = useMemo(() => {
     const factor = sortConfig.direction === 'asc' ? 1 : -1;
     return [...filtered].sort((a, b) => {
-      const left = sortValue(a, sortConfig.key);
-      const right = sortValue(b, sortConfig.key);
+      const value = (line: DistributionLine) =>
+        isNoticeDocumentColumn(sortConfig.key) ? documentColumns.sortValue(line, sortConfig.key) : sortValue(line, sortConfig.key);
+      const left = value(a);
+      const right = value(b);
       if (left < right) return -factor;
       if (left > right) return factor;
       return a.investor.localeCompare(b.investor, lang) || a.id - b.id;
@@ -271,7 +314,7 @@ export function DistributionLinesTab({ distribution, lines, fundShares }: Distri
   const amount = (value: number) => (value > 0 ? <span className="text-sm">{moneyFormat.format(value)}</span> : empty);
   const notInMockup = (name: string) => toast.info(t('funds.distributions.detail.toast.notInMockup', { name }));
 
-  const renderers: Record<ColumnKey, ColumnConfig<DistributionLine>['render']> = {
+  const renderers: Record<Exclude<ColumnKey, NoticeDocumentColumnKey>, ColumnConfig<DistributionLine>['render']> = {
     investor: line => <ListingNameCell name={line.investor} id={line.investorId} />,
     subscription: line => (
       <div
@@ -299,13 +342,26 @@ export function DistributionLinesTab({ distribution, lines, fundShares }: Distri
     updatedAt: line => dateTime(line.updatedAt),
   };
   const RIGHT_ALIGNED: ColumnKey[] = ['amount', 'provisional', 'fees', 'refund', 'capital', 'interest'];
-  const columns: ColumnConfig<DistributionLine>[] = visibleColumns.map(key => ({
-    key,
-    label: t(`${K}.columns.${key}`),
-    sortable: !UNSORTABLE.includes(key),
-    align: RIGHT_ALIGNED.includes(key) ? 'right' : undefined,
-    render: renderers[key],
-  }));
+  const actionsColumn: ColumnConfig<DistributionLine> = {
+    key: 'actions',
+    label: t('funds.notices.common.columns.actions'),
+    align: 'right',
+    render: line => <TableRowActions actions={lineActions.rowActions(line)} />,
+  };
+  const columns: ColumnConfig<DistributionLine>[] = [
+    ...visibleColumns.map(key =>
+      isNoticeDocumentColumn(key)
+        ? documentColumns.columns[key]
+        : {
+            key,
+            label: t(`${K}.columns.${key}`),
+            sortable: !UNSORTABLE.includes(key),
+            align: RIGHT_ALIGNED.includes(key) ? 'right' : undefined,
+            render: renderers[key],
+          },
+    ),
+    actionsColumn,
+  ];
 
   if (lines.length === 0) {
     return (
@@ -316,6 +372,8 @@ export function DistributionLinesTab({ distribution, lines, fundShares }: Distri
   }
 
   return (
+    <>
+    {lineActions.dialogs}
     <ListingCard
       toolbar={
         <div className="flex items-start justify-between gap-3">
@@ -330,7 +388,7 @@ export function DistributionLinesTab({ distribution, lines, fundShares }: Distri
             onClearAll={resetFilters}
           />
           <ListingColumnsMenu
-            columns={COLUMN_KEYS.map(key => ({ key, label: t(`${K}.columns.${key}`) }))}
+            columns={COLUMN_KEYS.map(key => ({ key, label: columnLabel(key) }))}
             visible={visibleColumns}
             onToggle={key => toggleColumn(key as ColumnKey)}
             onReset={() => setVisibleColumns(DEFAULT_COLUMNS)}
@@ -371,6 +429,8 @@ export function DistributionLinesTab({ distribution, lines, fundShares }: Distri
         <DataTable
           data={pageRows}
           columns={columns}
+          allFilteredData={sorted}
+          selection={selection}
           hoveredRow={hoveredRow}
           setHoveredRow={setHoveredRow}
           onRowClick={line => notInMockup(line.investor)}
@@ -381,10 +441,10 @@ export function DistributionLinesTab({ distribution, lines, fundShares }: Distri
             )
           }
           compactMode
-          hideSelection
           density="compact"
         />
       )}
     </ListingCard>
+    </>
   );
 }
