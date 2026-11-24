@@ -31,6 +31,8 @@ export interface RiskComponent {
   manualAt?: string;
   /** Commentaire obligatoire qui motive la saisie manuelle. */
   manualComment?: string;
+  /** Valeurs proposees quand la reponse est une liste. */
+  answerOptions?: string[];
 }
 
 export interface RiskClass {
@@ -169,6 +171,7 @@ export const mockRiskProfile: RiskProfile = {
           labelKey: 'subscriptions.detail.compliance.components.investorCategory',
           source: 'onboardingAnswer',
           value: 'Professionnel par nature',
+          answerOptions: ['Non professionnel', 'Professionnel par nature', 'Professionnel sur option', 'Contrepartie éligible'],
           score: 2,
           min: 0,
           max: 10,
@@ -178,6 +181,7 @@ export const mockRiskProfile: RiskProfile = {
           labelKey: 'subscriptions.detail.compliance.components.relationOrigin',
           source: 'onboardingAnswer',
           value: 'Apport distributeur',
+          answerOptions: ['Relation directe', 'Apport distributeur', 'Recommandation', 'Sollicitation entrante'],
           score: 3,
           min: 0,
           max: 10,
