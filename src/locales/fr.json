@@ -1321,7 +1321,12 @@
             "problematicZero": "aucune correspondance problématique",
             "problematicOne": "{{count}} correspondance problématique",
             "problematicMany": "{{count}} correspondances problématiques",
-            "none": "Aucun tiers contrôlé"
+            "none": "Aucun tiers contrôlé",
+            "short": "{{who}} · {{alerts}}",
+            "parties": "{{count}} tiers",
+            "alertsZero": "aucune alerte",
+            "alertsOne": "{{count}} alerte",
+            "alertsMany": "{{count}} alertes"
           }
         },
         "screening": {

@@ -1321,7 +1321,12 @@
             "problematicZero": "no problematic match",
             "problematicOne": "{{count}} problematic match",
             "problematicMany": "{{count}} problematic matches",
-            "none": "No screened party"
+            "none": "No screened party",
+            "short": "{{who}} · {{alerts}}",
+            "parties": "{{count}} parties",
+            "alertsZero": "no alert",
+            "alertsOne": "{{count}} alert",
+            "alertsMany": "{{count}} alerts"
           }
         },
         "screening": {

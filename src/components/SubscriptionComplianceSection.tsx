@@ -208,13 +208,22 @@ function screeningParties(componentId: string, screening: SubscriptionScreening)
 function useAnswerLabel(screening: SubscriptionScreening) {
   const { t } = useTranslation();
   const S = 'subscriptions.detail.compliance.profile.screening';
-  return (component: RiskComponent): string => {
+  const problematic = (party: SubscriptionScreening['parties'][number]) =>
+    party.matches.filter(match => matchOpenStatus(match) !== 'rejected').length;
+  return (component: RiskComponent, short = false): string => {
     const parties = screeningParties(component.id, screening);
     if (parties === null) return component.value;
     if (parties.length === 0) return t(`${S}.none`);
+    if (short) {
+      // Résumé du widget : un nom ou un nombre de tiers, puis le total des alertes.
+      const count = parties.reduce((sum, party) => sum + problematic(party), 0);
+      const alerts = t(`${S}.${count === 0 ? 'alertsZero' : count === 1 ? 'alertsOne' : 'alertsMany'}`, { count });
+      const who = parties.length === 1 ? parties[0].entity.name : t(`${S}.parties`, { count: parties.length });
+      return t(`${S}.short`, { who, alerts });
+    }
     return parties
       .map(party => {
-        const count = party.matches.filter(match => matchOpenStatus(match) !== 'rejected').length;
+        const count = problematic(party);
         const key = count === 0 ? 'problematicZero' : count === 1 ? 'problematicOne' : 'problematicMany';
         return t(`${S}.party`, { name: party.entity.name, matches: t(`${S}.${key}`, { count }) });
       })
@@ -429,7 +438,7 @@ function ScoreDetailPanel({
   onSave,
 }: {
   /** Réponse affichée sous chaque question. */
-  answerLabel: (component: RiskComponent) => string;
+  answerLabel: (component: RiskComponent, short?: boolean) => string;
   scope: ScoreDetailScope | null;
   manualScores: Record<string, number>;
   /** Toutes les modifications de score ; le panneau garde celles de sa portée. */
@@ -884,7 +893,7 @@ export function RiskProfileWidget({
                       <SourceIcon className="w-3 h-3 shrink-0 text-muted-foreground" />
                       <span className="shrink-0 text-foreground">{t(component.labelKey)}</span>
                       <span className="truncate text-muted-foreground" title={answerLabel(component)}>
-                        {answerLabel(component)}
+                        {answerLabel(component, true)}
                       </span>
                     </span>
 
