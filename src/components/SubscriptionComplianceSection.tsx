@@ -64,14 +64,17 @@ import {
   PROFILE_SCORE_ID,
   type InvestorCategory,
   type RiskClass,
+  type RiskComponent,
   type RiskComponentSource,
   type RiskTone,
 } from '../utils/subscriptionRiskMockData';
 import {
   SubscriptionScreeningWidget,
   useSubscriptionScreening,
+  type SubscriptionScreening,
 } from './SubscriptionScreeningWidget';
 import type { LiveAuditInput } from '../utils/subscriptionAuditMock';
+import { matchOpenStatus } from '../utils/screeningMock';
 
 export type ComplianceStatus = 'pending' | 'awaitingValidation' | 'validated';
 
@@ -191,6 +194,32 @@ function ScoreDonut({
       </div>
     </div>
   );
+}
+
+/** Tiers contrôlés par chaque question de screening : souscripteur, représentant, puis bénéficiaires effectifs. */
+function screeningParties(componentId: string, screening: SubscriptionScreening) {
+  if (componentId === 'screening-subscriber') return screening.parties.slice(0, 1);
+  if (componentId === 'screening-representative') return screening.parties.slice(1, 2);
+  if (componentId === 'screening-bo') return screening.parties.slice(2);
+  return null;
+}
+
+/** Nom de chaque tiers contrôlé et nombre de correspondances problématiques : en attente ou confirmées. */
+function useAnswerLabel(screening: SubscriptionScreening) {
+  const { t } = useTranslation();
+  const S = 'subscriptions.detail.compliance.profile.screening';
+  return (component: RiskComponent): string => {
+    const parties = screeningParties(component.id, screening);
+    if (parties === null) return component.value;
+    if (parties.length === 0) return t(`${S}.none`);
+    return parties
+      .map(party => {
+        const count = party.matches.filter(match => matchOpenStatus(match) !== 'rejected').length;
+        const key = count === 0 ? 'problematicZero' : count === 1 ? 'problematicOne' : 'problematicMany';
+        return t(`${S}.party`, { name: party.entity.name, matches: t(`${S}.${key}`, { count }) });
+      })
+      .join(' · ');
+  };
 }
 
 export interface ScoreComment {
@@ -391,10 +420,13 @@ function ScoreDetailPanel({
   scope,
   manualScores,
   comments,
+  answerLabel,
   readOnlyReason,
   onClose,
   onSave,
 }: {
+  /** Réponse affichée sous chaque question. */
+  answerLabel: (component: RiskComponent) => string;
   scope: ScoreDetailScope | null;
   manualScores: Record<string, number>;
   /** Toutes les modifications de score ; le panneau garde celles de sa portée. */
@@ -502,7 +534,7 @@ function ScoreDetailPanel({
               description={t(`${D}.sectionScore`, { score: format(aggregateClassScore(riskClass, liveScores)) })}
             >
               <SidePanelCard>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-4">
                   {riskClass.components.map(component => {
                     const entry = byId.get(component.id)!;
                     const fieldId = `risk-detail-${component.id}`;
@@ -511,7 +543,7 @@ function ScoreDetailPanel({
                         key={component.id}
                         id={fieldId}
                         label={t(component.labelKey)}
-                        hint={t(`${D}.fieldHint`, { value: component.value, min: component.min, max: component.max })}
+                        hint={t(`${D}.fieldHint`, { value: answerLabel(component), min: component.min, max: component.max })}
                         error={
                           entry.valid
                             ? undefined
@@ -589,6 +621,8 @@ function ScoreDetailPanel({
 }
 
 interface RiskProfileWidgetProps {
+  /** Tiers contrôlés de la souscription, pour le détail des questions de screening. */
+  screening: SubscriptionScreening;
   /** Dossier valide : les decisions ne sont plus modifiables. */
   locked: boolean;
   /** Scores saisis à la main, par question ou pour le score global forcé. Une section ne se saisit jamais. */
@@ -612,6 +646,7 @@ interface RiskProfileWidgetProps {
 
 /** Widget Risque : score global, dates de calcul et de validation, scores par section. */
 export function RiskProfileWidget({
+  screening,
   locked,
   manualScores,
   onScoreChange,
@@ -628,6 +663,7 @@ export function RiskProfileWidget({
   const { t } = useTranslation();
   const [editTarget, setEditTarget] = useState<ScoreEditTarget | null>(null);
   const [detailScope, setDetailScope] = useState<ScoreDetailScope | null>(null);
+  const answerLabel = useAnswerLabel(screening);
 
   const tc = (key: string, count: number) => t(`${key}${count === 1 ? 'One' : 'Many'}`, { count });
 
@@ -827,8 +863,10 @@ export function RiskProfileWidget({
                   <li key={component.id} className="flex items-center justify-between gap-2">
                     <span className="flex min-w-0 items-center gap-1.5 text-xs">
                       <SourceIcon className="w-3 h-3 shrink-0 text-muted-foreground" />
-                      <span className="truncate text-foreground">{t(component.labelKey)}</span>
-                      <span className="truncate text-muted-foreground">{component.value}</span>
+                      <span className="shrink-0 text-foreground">{t(component.labelKey)}</span>
+                      <span className="truncate text-muted-foreground" title={answerLabel(component)}>
+                        {answerLabel(component)}
+                      </span>
                     </span>
 
                     <span className="flex items-center gap-1.5 shrink-0">
@@ -857,6 +895,7 @@ export function RiskProfileWidget({
         scope={detailScope}
         manualScores={manualScores}
         comments={comments}
+        answerLabel={answerLabel}
         readOnlyReason={locked ? t('subscriptions.detail.compliance.profile.detail.locked') : editLockedReason}
         onClose={() => setDetailScope(null)}
         onSave={(changes, comment) => {
@@ -1471,6 +1510,7 @@ export function SubscriptionComplianceSection({
           manualScores={manualScores}
           onScoreChange={handleScoreChange}
           onScoresSave={handleScoresSave}
+          screening={screening}
           comments={scoreComments}
           computedAt={computedAt}
           onRecompute={handleRecompute}

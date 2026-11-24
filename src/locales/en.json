@@ -1313,6 +1313,13 @@
             "answer": "Answer: {{value}}",
             "notEvaluated": "not evaluated",
             "answerChange": "Answer: {{previous}} → {{value}}"
+          },
+          "screening": {
+            "party": "{{name}}: {{matches}}",
+            "problematicZero": "no problematic match",
+            "problematicOne": "{{count}} problematic match",
+            "problematicMany": "{{count}} problematic matches",
+            "none": "No screened party"
           }
         },
         "screening": {
