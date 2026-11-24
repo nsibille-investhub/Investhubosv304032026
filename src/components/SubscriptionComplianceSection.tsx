@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertCircle,
   AlertTriangle,
@@ -6,10 +6,10 @@ import {
   CheckCircle2,
   ChevronRight,
   Clock,
+  Eye,
   FileCheck,
   Globe,
   History,
-  Eye,
   ListChecks,
   MessageSquare,
   Pencil,
@@ -18,7 +18,6 @@ import {
   RotateCcw,
   ShieldAlert,
   ShieldCheck,
-  SlidersHorizontal,
   UserCheck,
   Users,
 } from 'lucide-react';
@@ -27,16 +26,21 @@ import { useTranslation } from '../utils/languageContext';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
-import {
-  BIG_MODAL_COMPACT,
-  BigModal,
-  BigModalBody,
-  BigModalContent,
-  BigModalPanelFooter,
-  BigModalPanelHeader,
-} from './ui/big-modal';
 import { DisabledReason } from './ui/disabled-reason';
+import { FormField } from './ui/form-field';
+import { Input } from './ui/input';
 import { RowActionButton } from './ui/row-actions';
+import { Textarea } from './ui/textarea';
+import { DecisionTimeline, type DecisionTimelineEntry } from './ui/decision-timeline';
+import { StatusBadge } from './StatusBadge';
+import { Sheet, SheetContent } from './ui/sheet';
+import {
+  SIDE_PANEL_WIDE_STYLE,
+  SidePanelCard,
+  SidePanelFooter,
+  SidePanelHeader,
+  SidePanelSection,
+} from './ui/side-panel';
 import {
   Select,
   SelectContent,
@@ -55,24 +59,19 @@ import {
   findRiskTier,
   mockCategorisation,
   mockRiskProfile,
-  mockRiskScales,
-  PROFILE_SCORE_ID,
   type InvestorCategory,
+  type RiskClass,
+  type RiskComponent,
   type RiskComponentSource,
   type RiskTone,
 } from '../utils/subscriptionRiskMockData';
 import {
   SubscriptionScreeningWidget,
   useSubscriptionScreening,
+  type SubscriptionScreening,
 } from './SubscriptionScreeningWidget';
 import type { LiveAuditInput } from '../utils/subscriptionAuditMock';
-import {
-  RiskScorePanel,
-  ScoreCommentItem,
-  type RiskScoreSave,
-  type RiskScoreTarget,
-  type ScoreComment,
-} from './RiskScorePanel';
+import { matchOpenStatus } from '../utils/screeningMock';
 
 export type ComplianceStatus = 'pending' | 'awaitingValidation' | 'validated';
 
@@ -138,6 +137,14 @@ const now = () => {
   })}`;
 };
 
+const round1 = (value: number) => Math.round(value * 10) / 10;
+
+/** Valeur triable d'un horodatage "jj/mm/aaaa hh:mm". */
+const stampValue = (stamp: string) => {
+  const [day, month, year, hour = '0', minute = '0'] = stamp.split(/[/ :]/);
+  return new Date(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute)).getTime();
+};
+
 export function ToneBadge({ tone, label, className }: { tone: RiskTone; label: string; className?: string }) {
   return <Badge className={cn(TONE_STYLES[tone].badge, className)}>{label}</Badge>;
 }
@@ -186,63 +193,385 @@ function ScoreDonut({
   );
 }
 
-/** Détail des commentaires saisis à chaque modification de score. */
-function ScoreCommentsDialog({
-  open,
-  onOpenChange,
+/** Tiers contrôlés par chaque question de screening : souscripteur, représentant, puis bénéficiaires effectifs. */
+function screeningParties(componentId: string, screening: SubscriptionScreening) {
+  if (componentId === 'screening-subscriber') return screening.parties.slice(0, 1);
+  if (componentId === 'screening-representative') return screening.parties.slice(1, 2);
+  if (componentId === 'screening-bo') return screening.parties.slice(2);
+  return null;
+}
+
+/** Nom de chaque tiers contrôlé et nombre de correspondances problématiques : en attente ou confirmées. */
+function useAnswerLabel(screening: SubscriptionScreening) {
+  const { t } = useTranslation();
+  const S = 'subscriptions.detail.compliance.profile.screening';
+  const problematic = (party: SubscriptionScreening['parties'][number]) =>
+    party.matches.filter(match => matchOpenStatus(match) !== 'rejected').length;
+  return (component: RiskComponent, short = false): string => {
+    const parties = screeningParties(component.id, screening);
+    if (parties === null) return component.value;
+    if (parties.length === 0) return t(`${S}.none`);
+    if (short) {
+      // Résumé du widget : un nom ou un nombre de tiers, puis le total des alertes.
+      const count = parties.reduce((sum, party) => sum + problematic(party), 0);
+      const alerts = t(`${S}.${count === 0 ? 'alertsZero' : count === 1 ? 'alertsOne' : 'alertsMany'}`, { count });
+      const who = parties.length === 1 ? parties[0].entity.name : t(`${S}.parties`, { count: parties.length });
+      return t(`${S}.short`, { who, alerts });
+    }
+    return parties
+      .map(party => {
+        const count = problematic(party);
+        const key = count === 0 ? 'problematicZero' : count === 1 ? 'problematicOne' : 'problematicMany';
+        return t(`${S}.party`, { name: party.entity.name, matches: t(`${S}.${key}`, { count }) });
+      })
+      .join(' · ');
+  };
+}
+
+export interface ScoreComment {
+  id: string;
+  labelKey: string;
+  previous: number | null;
+  /** null : retour au score calculé. */
+  next: number | null;
+  /** Vide pour un changement de réponse sans commentaire. */
+  comment: string;
+  by: string;
+  at: string;
+  /** Instant exact de l'action, pour l'ordre de l'historique. Absent : `at` fait foi. */
+  ts?: number;
+  /** Réponse retenue au moment de la modification. */
+  answer?: string;
+  /** Réponse précédente, quand c'est le changement de réponse qui a fait bouger le score. */
+  previousAnswer?: string;
+}
+
+/** Validation ou réouverture du score global. */
+export interface ScoreValidationEvent {
+  id: string;
+  type: 'validated' | 'reopened';
+  /** Score global au moment de l'action. */
+  score: number | null;
+  by: string;
+  at: string;
+  /** Instant exact de l'action, pour l'ordre de l'historique. */
+  ts: number;
+}
+
+/** Historique du score, du plus récent au plus ancien : modifications, validations et réouvertures. */
+function ScoreHistory({ comments, events = [] }: { comments: ScoreComment[]; events?: ScoreValidationEvent[] }) {
+  const { t } = useTranslation();
+  const H = 'subscriptions.detail.compliance.profile.history';
+  const format = (value: number | null) =>
+    value === null ? t('subscriptions.detail.compliance.profile.comments.computedValue') : String(value);
+  const answers = new Map(
+    mockRiskProfile.classes.flatMap(item => item.components).map(component => [component.labelKey, component.value]),
+  );
+  const seen = new Set<string>();
+  const timeOf = (item: { ts?: number; at: string }) => item.ts ?? stampValue(item.at);
+  const changeEntries = comments.map(item => {
+    // La modification la plus récente d'une question porte son score en vigueur.
+    const current = !seen.has(item.labelKey);
+    seen.add(item.labelKey);
+    const rising = item.previous !== null && item.next !== null && item.next > item.previous;
+    const falling = item.previous !== null && item.next !== null && item.next < item.previous;
+    const answer = item.answer ?? answers.get(item.labelKey);
+    const entry: DecisionTimelineEntry = {
+      id: item.id,
+      badge: (
+        <StatusBadge
+          label={t(`${H}.change`, {
+            previous: item.previous === null ? t(`${H}.notEvaluated`) : String(item.previous),
+            next: format(item.next),
+          })}
+          variant={rising ? 'warning' : falling ? 'success' : 'neutral'}
+          className="tabular-nums"
+        />
+      ),
+      dotClassName: rising ? 'bg-amber-500' : falling ? 'bg-emerald-500' : 'bg-gray-400',
+      current,
+      meta: t(item.labelKey),
+      date: item.at,
+      author: item.by,
+      detail: !answer
+        ? undefined
+        : item.previousAnswer
+          ? t(`${H}.answerChange`, { previous: item.previousAnswer, value: answer })
+          : t(`${H}.answer`, { value: answer }),
+      comment: item.comment || undefined,
+    };
+    return { entry, time: timeOf(item) };
+  });
+  const eventEntries = events.map(event => {
+    const tier = findRiskTier(mockRiskProfile.scaleId, event.score);
+    const entry: DecisionTimelineEntry = {
+      id: event.id,
+      badge: (
+        <StatusBadge label={t(`${H}.${event.type}`)} variant={event.type === 'validated' ? 'success' : 'info'} />
+      ),
+      dotClassName: event.type === 'validated' ? 'bg-emerald-500' : 'bg-blue-500',
+      meta: t(`${H}.globalScore`, {
+        score: event.score ?? '-',
+        tier: tier ? t(tier.labelKey) : t('subscriptions.detail.compliance.score.unavailable'),
+      }),
+      date: event.at,
+      author: event.by,
+    };
+    return { entry, time: timeOf(event) };
+  });
+  const entries = [...eventEntries, ...changeEntries].sort((a, b) => b.time - a.time).map(item => item.entry);
+  return <DecisionTimeline entries={entries} currentLabel={t(`${H}.current`)} emptyLabel={t(`${H}.empty`)} />;
+}
+
+
+export interface ScoreChange {
+  id: string;
+  labelKey: string;
+  previous: number | null;
+  value: number;
+}
+
+/** Portée du détail : tout le profil, une section, ou une seule question. */
+type ScoreDetailScope =
+  | { kind: 'profile' }
+  | { kind: 'section'; classId: string }
+  | { kind: 'question'; classId: string; componentId: string };
+
+const DETAIL_COMMENT_FIELD_ID = 'risk-detail-comment';
+
+/**
+ * Détail d'un score dans le panneau latéral : les questions qui le composent, modifiables d'une traite.
+ * Le score d'une section n'est jamais saisi, il se recalcule à partir de ses questions.
+ */
+function ScoreDetailPanel({
+  scope,
+  manualScores,
   comments,
+  validationEvents,
+  answerLabel,
+  readOnlyReason,
+  onClose,
+  onSave,
 }: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  /** Réponse affichée sous chaque question. */
+  answerLabel: (component: RiskComponent, short?: boolean) => string;
+  scope: ScoreDetailScope | null;
+  manualScores: Record<string, number>;
+  /** Toutes les modifications de score ; le panneau garde celles de sa portée. */
   comments: ScoreComment[];
+  /** Validations et réouvertures du score global, affichées dans l'historique du profil. */
+  validationEvents: ScoreValidationEvent[];
+  /** Score validé ou dossier verrouillé : consultation seule. */
+  readOnlyReason?: string;
+  onClose: () => void;
+  onSave: (changes: ScoreChange[], comment: string) => void;
 }) {
   const { t } = useTranslation();
+  const [draft, setDraft] = useState<Record<string, string>>({});
+  const [comment, setComment] = useState('');
+  const scopeKey = !scope
+    ? null
+    : scope.kind === 'profile'
+      ? 'profile'
+      : scope.kind === 'section'
+        ? scope.classId
+        : scope.componentId;
+  const [openedFor, setOpenedFor] = useState<string | null>(null);
+
+  if (scopeKey !== openedFor) {
+    setOpenedFor(scopeKey);
+    setDraft({});
+    setComment('');
+  }
+
+  const D = 'subscriptions.detail.compliance.profile.detail';
+  const classes: RiskClass[] = !scope
+    ? []
+    : scope.kind === 'profile'
+      ? mockRiskProfile.classes
+      : mockRiskProfile.classes
+          .filter(item => item.id === scope.classId)
+          .map(item =>
+            scope.kind === 'question'
+              ? { ...item, components: item.components.filter(component => component.id === scope.componentId) }
+              : item,
+          );
+  const components = classes.flatMap(item => item.components);
+  // Le score de la section tient compte de toutes ses questions, même quand une seule est affichée.
+  const fullClass = (riskClass: RiskClass) => mockRiskProfile.classes.find(item => item.id === riskClass.id) ?? riskClass;
+  const scopeLabels = new Set(components.map(component => component.labelKey));
+  const scopeHistory = comments.filter(item => scopeLabels.has(item.labelKey));
+
+  const parse = (text: string) => (text.trim() === '' ? Number.NaN : Number(text.replace(',', '.')));
+  const entries = components.map(component => {
+    const current = componentScore(component, manualScores);
+    const text = draft[component.id] ?? (current === null ? '' : String(current));
+    const parsed = parse(text);
+    // Une question non évaluée peut rester vide.
+    const untouchedEmpty = current === null && text.trim() === '';
+    const valid = untouchedEmpty || (!Number.isNaN(parsed) && parsed >= component.min && parsed <= component.max);
+    const value = untouchedEmpty || !valid ? current : round1(parsed);
+    return { component, current, text, valid, value, changed: valid && value !== current };
+  });
+  const byId = new Map(entries.map(entry => [entry.component.id, entry]));
+
+  const liveScores = { ...manualScores };
+  entries.forEach(entry => {
+    if (typeof entry.value === 'number') liveScores[entry.component.id] = entry.value;
+  });
+  const liveProfile = computeProfileScore(liveScores);
+  const liveTier = findRiskTier(mockRiskProfile.scaleId, liveProfile);
+
+  const changes: ScoreChange[] = entries
+    .filter(entry => entry.changed && typeof entry.value === 'number')
+    .map(entry => ({
+      id: entry.component.id,
+      labelKey: entry.component.labelKey,
+      previous: entry.current,
+      value: entry.value as number,
+    }));
+  const invalid = entries.some(entry => !entry.valid);
+  const saveReason =
+    readOnlyReason ??
+    (invalid
+      ? t(`${D}.invalid`)
+      : changes.length === 0
+        ? t(`${D}.noChange`)
+        : comment.trim() === ''
+          ? t('subscriptions.detail.compliance.profile.edit.commentRequired')
+          : undefined);
+
+  const format = (score: number | null) => (score === null ? '-' : score.toFixed(2));
+
   return (
-    <BigModal open={open} onOpenChange={onOpenChange}>
-      <BigModalContent className={`${BIG_MODAL_COMPACT} p-0 gap-0`}>
-        <div className="flex flex-col overflow-hidden rounded-3xl">
-          <BigModalPanelHeader
-            icon={MessageSquare}
-            title={t('subscriptions.detail.compliance.profile.comments.title')}
-            subtitle={t('subscriptions.detail.compliance.profile.comments.subtitle')}
-            onClose={() => onOpenChange(false)}
-            closeLabel={t('common.confirmDialog.close')}
-          />
-          <BigModalBody>
-            {comments.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                {t('subscriptions.detail.compliance.profile.comments.empty')}
-              </p>
-            ) : (
-              <ul className="divide-y divide-border rounded-lg border bg-card">
-                {comments.map(item => (
-                  <ScoreCommentItem key={item.id} item={item} />
-                ))}
-              </ul>
-            )}
-          </BigModalBody>
-          <BigModalPanelFooter
-            end={
-              <Button variant="outline" size="sm" className="h-9" onClick={() => onOpenChange(false)}>
-                {t('subscriptions.detail.compliance.profile.comments.close')}
-              </Button>
-            }
-          />
+    <Sheet open={Boolean(scope)} onOpenChange={open => !open && onClose()}>
+      <SheetContent side="right" style={SIDE_PANEL_WIDE_STYLE} className="h-full p-0 gap-0">
+        <SidePanelHeader
+          title={
+            scope?.kind === 'question' && components[0]
+              ? t(`${D}.titleSection`, { name: t(components[0].labelKey) })
+              : scope?.kind === 'section' && classes[0]
+                ? t(`${D}.titleSection`, { name: t(classes[0].labelKey) })
+                : t(`${D}.titleGlobal`)
+          }
+          description={readOnlyReason ?? t(scope?.kind === 'question' ? `${D}.descriptionQuestion` : `${D}.description`)}
+        >
+          {scope?.kind === 'profile' && (
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+              <span className="font-semibold text-foreground tabular-nums">
+                {t(`${D}.globalScore`, { score: liveProfile ?? '-' })}
+              </span>
+              {liveTier && <ToneBadge tone={liveTier.tone} label={t(liveTier.labelKey)} />}
+            </div>
+          )}
+        </SidePanelHeader>
+
+        <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-6 py-5">
+          {classes.map(riskClass => (
+            <SidePanelSection
+              key={riskClass.id}
+              icon={ListChecks}
+              title={t(riskClass.labelKey)}
+              description={t(`${D}.sectionScore`, { score: format(aggregateClassScore(fullClass(riskClass), liveScores)) })}
+            >
+              <SidePanelCard>
+                <div className="flex flex-col gap-4">
+                  {riskClass.components.map(component => {
+                    const entry = byId.get(component.id)!;
+                    const fieldId = `risk-detail-${component.id}`;
+                    return (
+                      <FormField
+                        key={component.id}
+                        id={fieldId}
+                        label={t(component.labelKey)}
+                        hint={t(`${D}.fieldHint`, { value: answerLabel(component), min: component.min, max: component.max })}
+                        error={
+                          entry.valid
+                            ? undefined
+                            : t('subscriptions.detail.compliance.profile.edit.scoreHint', {
+                                min: component.min,
+                                max: component.max,
+                              })
+                        }
+                      >
+                        <Input
+                          id={fieldId}
+                          inputMode="decimal"
+                          value={entry.text}
+                          disabled={Boolean(readOnlyReason)}
+                          onChange={event => setDraft(prev => ({ ...prev, [component.id]: event.target.value }))}
+                          className="h-11 tabular-nums"
+                        />
+                      </FormField>
+                    );
+                  })}
+                </div>
+              </SidePanelCard>
+            </SidePanelSection>
+          ))}
+
+          {!readOnlyReason && (
+            <SidePanelSection icon={MessageSquare} title={t('subscriptions.detail.compliance.profile.edit.comment')}>
+              <SidePanelCard>
+                <FormField
+                  id={DETAIL_COMMENT_FIELD_ID}
+                  label={t('subscriptions.detail.compliance.profile.edit.comment')}
+                  required
+                  hint={t(`${D}.commentHint`)}
+                >
+                  <Textarea
+                    id={DETAIL_COMMENT_FIELD_ID}
+                    value={comment}
+                    onChange={event => setComment(event.target.value)}
+                    placeholder={t('subscriptions.detail.compliance.profile.edit.commentPlaceholder')}
+                    rows={3}
+                  />
+                </FormField>
+              </SidePanelCard>
+            </SidePanelSection>
+          )}
+
+          <SidePanelSection icon={History} title={t('subscriptions.detail.compliance.profile.history.title')}>
+            <SidePanelCard>
+              <ScoreHistory comments={scopeHistory} events={scope?.kind === 'profile' ? validationEvents : []} />
+            </SidePanelCard>
+          </SidePanelSection>
         </div>
-      </BigModalContent>
-    </BigModal>
+
+        <SidePanelFooter>
+          <Button variant="ghost" size="sm" className="h-9" onClick={onClose}>
+            {t(`${D}.cancel`)}
+          </Button>
+          <DisabledReason reason={saveReason}>
+            <Button
+              variant="primary"
+              size="sm"
+              className="h-9"
+              disabled={Boolean(saveReason)}
+              onClick={() => onSave(changes, comment.trim())}
+            >
+              {changes.length > 1
+                ? t(`${D}.saveMany`, { count: changes.length })
+                : t('subscriptions.detail.compliance.profile.edit.save')}
+            </Button>
+          </DisabledReason>
+        </SidePanelFooter>
+      </SheetContent>
+    </Sheet>
   );
 }
 
 interface RiskProfileWidgetProps {
+  /** Tiers contrôlés de la souscription, pour le détail des questions de screening. */
+  screening: SubscriptionScreening;
   /** Dossier valide : les decisions ne sont plus modifiables. */
   locked: boolean;
-  /** Scores saisis à la main, par composante, par section ou pour le score global. */
+  /** Scores saisis à la main, par question. Une section ne se saisit jamais. */
   manualScores: Record<string, number>;
-  /** Réponses modifiées depuis le panneau de détail, par composante. */
-  answers: Record<string, string>;
-  onScoreSave: (target: RiskScoreTarget, change: RiskScoreSave) => void;
+  /** Enregistrement groupé depuis le détail d'un score : un seul commentaire pour toutes les questions modifiées. */
+  onScoresSave: (changes: ScoreChange[], comment: string) => void;
   comments: ScoreComment[];
+  validationEvents: ScoreValidationEvent[];
   computedAt: string;
   onRecompute: () => void;
   scoreValidated: boolean;
@@ -254,11 +583,12 @@ interface RiskProfileWidgetProps {
 
 /** Widget Risque : score global, dates de calcul et de validation, scores par section. */
 export function RiskProfileWidget({
+  screening,
   locked,
   manualScores,
-  answers,
-  onScoreSave,
+  onScoresSave,
   comments,
+  validationEvents,
   computedAt,
   onRecompute,
   scoreValidated,
@@ -268,9 +598,8 @@ export function RiskProfileWidget({
   onReopenScore,
 }: RiskProfileWidgetProps) {
   const { t } = useTranslation();
-  const [scaleVisible, setScaleVisible] = useState(false);
-  const [commentsOpen, setCommentsOpen] = useState(false);
-  const [panel, setPanel] = useState<{ target: RiskScoreTarget; context?: string } | null>(null);
+  const [detailScope, setDetailScope] = useState<ScoreDetailScope | null>(null);
+  const answerLabel = useAnswerLabel(screening);
 
   const tc = (key: string, count: number) => t(`${key}${count === 1 ? 'One' : 'Many'}`, { count });
 
@@ -279,7 +608,6 @@ export function RiskProfileWidget({
       mockRiskProfile.classes.map(riskClass => ({
         riskClass,
         score: aggregateClassScore(riskClass, manualScores),
-        manual: typeof manualScores[riskClass.id] === 'number',
         unevaluated: riskClass.components.filter(
           component => componentScore(component, manualScores) === null,
         ).length,
@@ -291,18 +619,15 @@ export function RiskProfileWidget({
   const profileTier = findRiskTier(mockRiskProfile.scaleId, profileScore);
   const tone: RiskTone = profileTier?.tone ?? 'medium';
   const validationRequired = profileTier?.requiresValidation ?? false;
-  const forced = typeof manualScores[PROFILE_SCORE_ID] === 'number';
 
   const editLockedReason = scoreValidated
     ? t('subscriptions.detail.compliance.score.editLockedReason')
     : undefined;
 
-  const readOnlyReason = locked
-    ? t('subscriptions.detail.compliance.score.lockedReason')
-    : editLockedReason;
+  const lastChange = (labelKey: string) => comments.find(item => item.labelKey === labelKey);
 
-  const manualMarker = (targetId: string) => {
-    const change = comments.find(item => item.targetId === targetId && item.scoreChange);
+  const manualMarker = (labelKey: string) => {
+    const change = lastChange(labelKey);
     return (
       <Tooltip>
         <TooltipTrigger asChild>
@@ -336,14 +661,9 @@ export function RiskProfileWidget({
         </div>
         <div className="flex items-center gap-1 shrink-0">
           <RowActionButton
-            icon={ListChecks}
-            tooltip={t('subscriptions.detail.compliance.profile.showScale')}
-            onClick={() => setScaleVisible(prev => !prev)}
-          />
-          <RowActionButton
-            icon={MessageSquare}
-            tooltip={tc('subscriptions.detail.compliance.profile.comments.open', comments.length)}
-            onClick={() => setCommentsOpen(true)}
+            icon={Eye}
+            tooltip={t('subscriptions.detail.compliance.profile.detail.openGlobal')}
+            onClick={() => setDetailScope({ kind: 'profile' })}
           />
           {!locked && (
             <RowActionButton
@@ -382,13 +702,6 @@ export function RiskProfileWidget({
             </div>
           </dl>
 
-          {forced && (
-            <p className="flex items-center gap-1.5 text-xs text-amber-700">
-              {manualMarker(PROFILE_SCORE_ID)}
-              {t('subscriptions.detail.compliance.score.forced')}
-            </p>
-          )}
-
           {validationRequired && !scoreValidated && (
             <p className="flex items-start gap-1.5 text-xs text-amber-700">
               <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
@@ -409,62 +722,13 @@ export function RiskProfileWidget({
                   {t('subscriptions.detail.compliance.score.validate')}
                 </Button>
               )}
-              <DisabledReason reason={editLockedReason}>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8 gap-1.5 text-xs"
-                  disabled={scoreValidated}
-                  onClick={() =>
-                    setPanel({
-                      target: {
-                        id: PROFILE_SCORE_ID,
-                        kind: 'profile',
-                        labelKey: 'subscriptions.detail.compliance.score.global',
-                        min: 0,
-                        max: 100,
-                        score: profileScore,
-                        resettable: forced,
-                      },
-                    })
-                  }
-                >
-                  <SlidersHorizontal className="w-3.5 h-3.5" />
-                  {t('subscriptions.detail.compliance.score.force')}
-                </Button>
-              </DisabledReason>
             </div>
           )}
         </div>
       </div>
 
-      {scaleVisible && (
-        <div className="px-4 py-3 border-b">
-          <div className="grid grid-cols-4 gap-1.5">
-            {mockRiskScales
-              .find(scale => scale.id === mockRiskProfile.scaleId)
-              ?.tiers.map(tier => (
-                <div
-                  key={tier.labelKey}
-                  className={cn('rounded-lg border p-2', TONE_STYLES[tier.tone].soft)}
-                >
-                  <div className={cn('text-xs font-semibold', TONE_STYLES[tier.tone].text)}>
-                    {t(tier.labelKey)}
-                  </div>
-                  <div className="text-[11px] text-muted-foreground tabular-nums">
-                    {tier.min} - {tier.max}
-                  </div>
-                  {tier.requiresValidation && (
-                    <ShieldCheck className="w-3 h-3 mt-1 text-muted-foreground" />
-                  )}
-                </div>
-              ))}
-          </div>
-        </div>
-      )}
-
       <ul className="divide-y">
-        {classScores.map(({ riskClass, score, manual: classManual, unevaluated }) => (
+        {classScores.map(({ riskClass, score, unevaluated }) => (
           <li key={riskClass.id} className="px-4 py-2">
             <div className="flex items-center justify-between gap-2">
               <span className="min-w-0 truncate text-sm font-semibold text-foreground">
@@ -483,26 +747,13 @@ export function RiskProfileWidget({
                     </TooltipContent>
                   </Tooltip>
                 )}
-                {classManual && manualMarker(riskClass.id)}
                 <span className="text-sm font-bold text-foreground tabular-nums">
                   {score === null ? '-' : score.toFixed(2)}
                 </span>
                 <RowActionButton
                   icon={Eye}
-                  tooltip={t('subscriptions.detail.compliance.profile.viewDetail')}
-                  onClick={() =>
-                    setPanel({
-                      target: {
-                        id: riskClass.id,
-                        kind: 'section',
-                        labelKey: riskClass.labelKey,
-                        min: 0,
-                        max: 10,
-                        score,
-                        resettable: classManual,
-                      },
-                    })
-                  }
+                  tooltip={t('subscriptions.detail.compliance.profile.detail.openSection')}
+                  onClick={() => setDetailScope({ kind: 'section', classId: riskClass.id })}
                 />
               </div>
             </div>
@@ -519,35 +770,22 @@ export function RiskProfileWidget({
                   <li key={component.id} className="flex items-center justify-between gap-2">
                     <span className="flex min-w-0 items-center gap-1.5 text-xs">
                       <SourceIcon className="w-3 h-3 shrink-0 text-muted-foreground" />
-                      <span className="truncate text-foreground">{t(component.labelKey)}</span>
-                      <span className="truncate text-muted-foreground">
-                        {answers[component.id] ?? component.value}
+                      <span className="shrink-0 text-foreground">{t(component.labelKey)}</span>
+                      <span className="truncate text-muted-foreground" title={answerLabel(component)}>
+                        {answerLabel(component, true)}
                       </span>
                     </span>
 
                     <span className="flex items-center gap-1.5 shrink-0">
-                      {manual && manualMarker(component.id)}
+                      {manual && manualMarker(component.labelKey)}
                       <span className="text-xs font-semibold text-foreground tabular-nums">
                         {shown === null ? '-' : shown.toFixed(2)}
                       </span>
                       <RowActionButton
                         icon={Eye}
-                        tooltip={t('subscriptions.detail.compliance.profile.viewDetail')}
+                        tooltip={t('subscriptions.detail.compliance.profile.detail.openQuestion')}
                         onClick={() =>
-                          setPanel({
-                            context: t(riskClass.labelKey),
-                            target: {
-                              id: component.id,
-                              kind: component.source,
-                              labelKey: component.labelKey,
-                              answer: answers[component.id] ?? component.value,
-                              answerOptions: component.answerOptions,
-                              min: component.min,
-                              max: component.max,
-                              score: shown,
-                              resettable: false,
-                            },
-                          })
+                          setDetailScope({ kind: 'question', classId: riskClass.id, componentId: component.id })
                         }
                       />
                     </span>
@@ -559,19 +797,19 @@ export function RiskProfileWidget({
         ))}
       </ul>
 
-      <RiskScorePanel
-        target={panel?.target ?? null}
-        context={panel?.context}
+      <ScoreDetailPanel
+        scope={detailScope}
+        manualScores={manualScores}
         comments={comments}
-        readOnlyReason={readOnlyReason}
-        onClose={() => setPanel(null)}
-        onSave={(target, change) => {
-          onScoreSave(target, change);
-          setPanel(null);
+        validationEvents={validationEvents}
+        answerLabel={answerLabel}
+        readOnlyReason={locked ? t('subscriptions.detail.compliance.profile.detail.locked') : editLockedReason}
+        onClose={() => setDetailScope(null)}
+        onSave={(changes, comment) => {
+          onScoresSave(changes, comment);
+          setDetailScope(null);
         }}
-        onOpenAllComments={() => setCommentsOpen(true)}
       />
-      <ScoreCommentsDialog open={commentsOpen} onOpenChange={setCommentsOpen} comments={comments} />
     </Card>
   );
 }
@@ -623,21 +861,35 @@ export function SubscriptionComplianceSection({
 
   const [manualScores, setManualScores] = useState<Record<string, number>>({});
   const [computedAt, setComputedAt] = useState(mockRiskProfile.computedAt);
-  const [riskAnswers, setRiskAnswers] = useState<Record<string, string>>({});
-  const [scoreComments, setScoreComments] = useState<ScoreComment[]>(() =>
-    mockRiskProfile.classes
-      .flatMap(item => item.components)
+  const [scoreComments, setScoreComments] = useState<ScoreComment[]>(() => {
+    const components = mockRiskProfile.classes.flatMap(item => item.components);
+    const manual: ScoreComment[] = components
       .filter(component => typeof component.manualScore === 'number' && component.manualComment)
       .map(component => ({
         id: `seed-${component.id}`,
-        targetId: component.id,
         labelKey: component.labelKey,
-        scoreChange: { previous: component.score, next: component.manualScore ?? null },
+        previous: component.score,
+        next: component.manualScore ?? null,
         comment: component.manualComment ?? '',
         by: component.manualBy ?? CURRENT_OPERATOR,
         at: component.manualAt ?? mockRiskProfile.computedAt,
+        answer: component.value,
+      }));
+    const answers: ScoreComment[] = components.flatMap(component =>
+      (component.answerHistory ?? []).map((change, index) => ({
+        id: `answer-${component.id}-${index}`,
+        labelKey: component.labelKey,
+        previous: change.previousScore,
+        next: change.score,
+        comment: change.comment ?? '',
+        by: change.by,
+        at: change.at,
+        answer: change.value,
+        previousAnswer: change.previousValue,
       })),
-  );
+    );
+    return [...manual, ...answers].sort((a, b) => stampValue(b.at) - stampValue(a.at));
+  });
 
   const [category, setCategory] = useState<InvestorCategory>(mockCategorisation.category);
   const [categoryDecidedBy, setCategoryDecidedBy] = useState(mockCategorisation.decidedBy);
@@ -661,6 +913,27 @@ export function SubscriptionComplianceSection({
   const profileTier = findRiskTier(mockRiskProfile.scaleId, profileScore);
   const validationRequired = profileTier?.requiresValidation ?? false;
 
+  const makeScoreEvent = (type: ScoreValidationEvent['type'], by: string): ScoreValidationEvent => ({
+    id: `score-${type}-${Date.now()}`,
+    type,
+    score: profileScore,
+    by,
+    at: now(),
+    ts: Date.now(),
+  });
+  // Une validation déjà faite avant l'affichage de l'étape ouvre l'historique.
+  const [scoreEvents, setScoreEvents] = useState<ScoreValidationEvent[]>(() =>
+    scoreValidated ? [makeScoreEvent('validated', scoreValidatedBy ?? CURRENT_OPERATOR)] : [],
+  );
+  const scoreState = useRef({ validated: scoreValidated, by: scoreValidatedBy ?? CURRENT_OPERATOR });
+  useEffect(() => {
+    if (scoreValidated === scoreState.current.validated) return;
+    const by = scoreValidated ? scoreValidatedBy ?? CURRENT_OPERATOR : scoreState.current.by;
+    scoreState.current = { validated: scoreValidated, by };
+    setScoreEvents(prev => [makeScoreEvent(scoreValidated ? 'validated' : 'reopened', by), ...prev]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scoreValidated]);
+
   const screening = useSubscriptionScreening(screeningSeed);
 
   const locked = status === 'validated';
@@ -675,70 +948,35 @@ export function SubscriptionComplianceSection({
   ];
   const canValidate = blockers.length === 0 || overrideRequested;
 
-  const handleScoreSave = (target: RiskScoreTarget, change: RiskScoreSave) => {
+  const handleScoresSave = (changes: ScoreChange[], comment: string) => {
     const stamp = now();
-    const subject = t(target.labelKey);
-    const answerChanged = change.answer !== undefined;
-    const scoreChanged = change.score !== undefined;
-
-    if (answerChanged) {
-      logAudit({
-        type: 'answerModified',
-        subject,
-        previousValue: target.answer || undefined,
-        newValue: change.answer,
-        reason: change.comment,
-      });
-      setRiskAnswers(prev => ({ ...prev, [target.id]: change.answer ?? '' }));
-    }
-    if (scoreChanged) {
-      const next = change.score ?? null;
+    changes.forEach(change =>
       logAudit({
         type: 'manualScoreSet',
-        subject,
-        previousValue: target.score === null ? undefined : String(target.score),
-        newValue: next === null ? t('subscriptions.detail.compliance.profile.panel.computedValue') : String(next),
-        reason: change.comment,
-      });
-      setManualScores(prev => {
-        const scores = { ...prev };
-        if (next === null) delete scores[target.id];
-        else scores[target.id] = next;
-        return scores;
-      });
-    }
-    if (!answerChanged && !scoreChanged) {
-      logAudit({ type: 'commentAdded', subject, newValue: change.comment });
-    } else {
-      setComputedAt(stamp);
-    }
-
+        subject: t(change.labelKey),
+        previousValue: change.previous === null ? undefined : String(change.previous),
+        newValue: String(change.value),
+        reason: comment,
+      }),
+    );
+    setManualScores(prev => ({ ...prev, ...Object.fromEntries(changes.map(change => [change.id, change.value])) }));
     setScoreComments(prev => [
-      {
-        id: `${target.id}-${Date.now()}`,
-        targetId: target.id,
-        labelKey: target.labelKey,
-        scoreChange: scoreChanged ? { previous: target.score, next: change.score ?? null } : undefined,
-        answerChange: answerChanged ? { previous: target.answer ?? '', next: change.answer ?? '' } : undefined,
-        comment: change.comment,
+      ...changes.map(change => ({
+        id: `${change.id}-${Date.now()}`,
+        labelKey: change.labelKey,
+        previous: change.previous,
+        next: change.value,
+        comment,
         by: CURRENT_OPERATOR,
         at: stamp,
-      },
+        ts: Date.now(),
+        answer: mockRiskProfile.classes.flatMap(item => item.components).find(item => item.id === change.id)?.value,
+      })),
       ...prev,
     ]);
-
-    const toastKey = !answerChanged && !scoreChanged
-      ? 'commentSaved'
-      : change.score === null
-        ? 'scoreReset'
-        : scoreChanged
-          ? 'manualScoreSaved'
-          : 'riskAnswerSaved';
-    toast.success(t(`subscriptions.detail.compliance.toast.${toastKey}`), {
-      description:
-        answerChanged || scoreChanged
-          ? t('subscriptions.detail.compliance.toast.manualScoreSavedDesc')
-          : undefined,
+    setComputedAt(stamp);
+    toast.success(tc('subscriptions.detail.compliance.toast.scoresSaved', changes.length), {
+      description: t('subscriptions.detail.compliance.toast.manualScoreSavedDesc'),
     });
   };
 
@@ -1160,8 +1398,9 @@ export function SubscriptionComplianceSection({
         <RiskProfileWidget
           locked={locked}
           manualScores={manualScores}
-          answers={riskAnswers}
-          onScoreSave={handleScoreSave}
+          onScoresSave={handleScoresSave}
+          validationEvents={scoreEvents}
+          screening={screening}
           comments={scoreComments}
           computedAt={computedAt}
           onRecompute={handleRecompute}

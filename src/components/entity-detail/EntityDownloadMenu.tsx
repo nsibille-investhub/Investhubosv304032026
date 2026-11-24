@@ -1,12 +1,13 @@
 import { useCallback, type SyntheticEvent } from 'react';
 import { motion } from 'motion/react';
-import { FileDown, FileText, MoreVertical } from 'lucide-react';
+import { FileDown, FileText, MoreVertical, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
 import { useCompliance } from '../../utils/complianceContext';
@@ -54,14 +55,22 @@ interface EntityDownloadMenuProps {
   onReportDownloaded?: (entity: ScreeningEntity) => void;
 }
 
-/** Menu secondaire d'une ligne d'entité : rapport fournisseur puis piste d'audit. */
+/** Menu secondaire d'une ligne d'entité : relance du screening, rapport fournisseur puis piste d'audit. */
 export function EntityDownloadMenu({ entity, onReportDownloaded }: EntityDownloadMenuProps) {
   const { t } = useTranslation();
   const { canViewScreening, downloadReport, downloadEntityTrail } = useScreeningDownloads();
+  const { rerunScreening } = useCompliance();
 
   if (!canViewScreening) return null;
 
   const stop = (event: SyntheticEvent) => event.stopPropagation();
+
+  const handleRerun = () => {
+    const result = rerunScreening(entity.id);
+    toast.success(t('complianceEntities.toast.rerun'), {
+      description: t('complianceEntities.toast.rerunBody', { count: result.matchesFound }),
+    });
+  };
 
   return (
     <DropdownMenu>
@@ -80,6 +89,18 @@ export function EntityDownloadMenu({ entity, onReportDownloaded }: EntityDownloa
         </motion.button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" onClick={stop} onKeyDown={stop}>
+        <DropdownMenuItem onClick={handleRerun} disabled={entity.closed}>
+          <RefreshCw className="w-4 h-4 mr-2" />
+          <span className="flex flex-col">
+            <span>{t('complianceEntities.detail.actions.rerun')}</span>
+            {entity.closed && (
+              <span className="text-xs text-muted-foreground">
+                {t('complianceEntities.downloads.rerunClosed')}
+              </span>
+            )}
+          </span>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
         {entity.controlCompleted && (
           <DropdownMenuItem
             onClick={() => {

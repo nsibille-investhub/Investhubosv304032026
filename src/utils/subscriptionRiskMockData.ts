@@ -15,6 +15,18 @@ export type RiskComponentSource =
   | 'screening'
   | 'externalService';
 
+/** Changement de reponse d'une question, qui a fait recalculer son score. */
+export interface RiskAnswerChange {
+  at: string;
+  /** Auteur du changement : investisseur, operateur, ou traitement automatique. */
+  by: string;
+  previousValue: string;
+  value: string;
+  previousScore: number | null;
+  score: number | null;
+  comment?: string;
+}
+
 export interface RiskComponent {
   id: string;
   labelKey: string;
@@ -31,8 +43,8 @@ export interface RiskComponent {
   manualAt?: string;
   /** Commentaire obligatoire qui motive la saisie manuelle. */
   manualComment?: string;
-  /** Valeurs proposees quand la reponse est une liste. */
-  answerOptions?: string[];
+  /** Reponses successives, de la plus ancienne a la plus recente. */
+  answerHistory?: RiskAnswerChange[];
 }
 
 export interface RiskClass {
@@ -122,6 +134,16 @@ export const mockRiskProfile: RiskProfile = {
           score: 4.8,
           min: 0,
           max: 10,
+          answerHistory: [
+            {
+              at: '02/04/2026 09:12',
+              by: 'Jean-Pierre Durand',
+              previousValue: 'France',
+              value: 'Suisse',
+              previousScore: 1,
+              score: 4.8,
+            },
+          ],
         },
       ],
     },
@@ -139,6 +161,24 @@ export const mockRiskProfile: RiskProfile = {
           score: 8,
           min: 0,
           max: 10,
+          answerHistory: [
+            {
+              at: '02/04/2026 09:12',
+              by: 'Marie Dubois',
+              previousValue: '0 correspondance',
+              value: '1 correspondance',
+              previousScore: 0,
+              score: 6,
+            },
+            {
+              at: '19/05/2026 16:10',
+              by: 'Automatique',
+              previousValue: '1 correspondance',
+              value: '2 correspondances',
+              previousScore: 6,
+              score: 8,
+            },
+          ],
         },
         {
           id: 'screening-representative',
@@ -171,7 +211,6 @@ export const mockRiskProfile: RiskProfile = {
           labelKey: 'subscriptions.detail.compliance.components.investorCategory',
           source: 'onboardingAnswer',
           value: 'Professionnel par nature',
-          answerOptions: ['Non professionnel', 'Professionnel par nature', 'Professionnel sur option', 'Contrepartie éligible'],
           score: 2,
           min: 0,
           max: 10,
@@ -181,10 +220,20 @@ export const mockRiskProfile: RiskProfile = {
           labelKey: 'subscriptions.detail.compliance.components.relationOrigin',
           source: 'onboardingAnswer',
           value: 'Apport distributeur',
-          answerOptions: ['Relation directe', 'Apport distributeur', 'Recommandation', 'Sollicitation entrante'],
           score: 3,
           min: 0,
           max: 10,
+          answerHistory: [
+            {
+              at: '12/03/2026 10:05',
+              by: 'Marie Dubois',
+              previousValue: 'Relation directe',
+              value: 'Apport distributeur',
+              previousScore: 1,
+              score: 3,
+              comment: 'Correction après vérification de la convention de distribution.',
+            },
+          ],
         },
         {
           id: 'client-funds',
@@ -215,6 +264,16 @@ export const mockRiskProfile: RiskProfile = {
           score: 4,
           min: 0,
           max: 10,
+          answerHistory: [
+            {
+              at: '28/04/2026 14:40',
+              by: 'Jean-Pierre Durand',
+              previousValue: '150 000 €',
+              value: '250 000 €',
+              previousScore: 3,
+              score: 4,
+            },
+          ],
         },
         {
           id: 'operation-payment',
@@ -463,12 +522,11 @@ export function componentScore(
 /** Cle de la saisie manuelle qui force le score global du profil. */
 export const PROFILE_SCORE_ID = 'profile';
 
-/** Score d'une classe : la saisie manuelle prime, sinon calcul depuis les composantes evaluables. */
+/** Score d'une classe : toujours calcule depuis ses composantes evaluables, jamais saisi a la main. */
 export function aggregateClassScore(
   riskClass: RiskClass,
   overrides: Record<string, number> = {},
 ): number | null {
-  if (typeof overrides[riskClass.id] === 'number') return overrides[riskClass.id];
   const scores = riskClass.components
     .map(component => componentScore(component, overrides))
     .filter((value): value is number => typeof value === 'number');

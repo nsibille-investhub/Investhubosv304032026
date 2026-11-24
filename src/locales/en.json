@@ -1198,11 +1198,8 @@
           "validationDate": "Validated on",
           "validatedByAt": "{{date}} by {{name}}",
           "notValidated": "Not validated",
-          "force": "Force score",
-          "forced": "Overall score forced",
           "global": "Overall score",
-          "editLockedReason": "Reopen the score to edit it.",
-          "lockedReason": "The compliance file is validated: the score can no longer be edited."
+          "editLockedReason": "Reopen the score to edit it."
         },
         "status": {
           "pending": "Pending",
@@ -1265,9 +1262,6 @@
         "profile": {
           "title": "Risk profile and calculation detail",
           "subtitle": "Profile, classes and components. The calculation runs bottom-up.",
-          "showScale": "Scale and tiers",
-          "scaleTitle": "Scale tiers",
-          "tierRequiresValidation": "Compliance validation required",
           "component": "Component",
           "source": "Source",
           "value": "Value used",
@@ -1280,59 +1274,60 @@
           "unevaluatedMany": "{{count}} components not evaluated",
           "widgetTitle": "Risk profile",
           "widgetSubtitle": "{{name}} · profile from {{onboarding}}",
-          "comments": {
-            "title": "Score comments",
-            "subtitle": "A comment is entered each time a score is edited.",
-            "openOne": "Comment details ({{count}})",
-            "openMany": "Comment details ({{count}})",
-            "empty": "No score has been edited.",
-            "close": "Close"
-          },
-          "viewDetail": "View details",
-          "panel": {
-            "answerTitle": "Answer",
-            "scoreTitle": "Score",
-            "currentValue": "Current value",
-            "newValue": "New value",
-            "noAnswer": "No answer",
-            "selectPlaceholder": "Select a value",
-            "currentScore": "Current score",
-            "newScore": "New score",
-            "notEvaluated": "Not evaluated",
-            "scoreHint": "Value between {{min}} and {{max}}.",
-            "backToComputed": "Back to computed score",
-            "backToComputedDesc": "The entered score is removed and the score is computed again from the level below.",
-            "commentTitle": "Comment",
-            "commentDesc": "Required for any change to the answer or the score. It can also be added on its own.",
-            "comment": "Comment",
-            "commentPlaceholder": "Explain the change or add a remark",
-            "commentRequired": "A comment is required to save a change.",
-            "nothingToSave": "Change the answer or the score, or enter a comment.",
-            "historyTitle": "Previous comments",
-            "historyDesc": "Changes and comments already saved on this score.",
-            "historyEmpty": "No comment on this score.",
-            "allComments": "View all profile comments ({{count}})",
-            "answerChange": "Answer: {{previous}} → {{next}}",
-            "scoreChange": "Score: {{previous}} → {{next}}",
-            "computedValue": "computed",
-            "afterSave": "After saving, the risk profile is recomputed. The investor receives no notification.",
-            "cancel": "Cancel",
-            "close": "Close",
+          "editScore": "Edit score",
+          "edit": {
             "save": "Save",
-            "kind": {
-              "onboardingAnswer": "Onboarding question",
-              "manualQuestion": "Manual question",
-              "countryList": "Country list",
-              "screening": "Screening",
-              "externalService": "External service",
-              "section": "Section score",
-              "profile": "Overall score"
-            },
-            "answerLocked": {
-              "countryList": "The value comes from the country list. Only the score can be edited here.",
-              "screening": "The value comes from screening. Only the score can be edited here.",
-              "externalService": "The value comes from an external service. Only the score can be edited here."
-            }
+            "scoreHint": "Value between {{min}} and {{max}}.",
+            "comment": "Comment",
+            "commentHint": "The comment is kept in the comment details and in the compliance log.",
+            "commentPlaceholder": "Explain why the score is changed",
+            "commentRequired": "A comment is required.",
+            "backToComputed": "Back to computed score"
+          },
+          "comments": {
+            "computedValue": "computed"
+          },
+          "detail": {
+            "openGlobal": "View overall score detail and history",
+            "openSection": "View score detail",
+            "titleGlobal": "Global score detail",
+            "titleSection": "Score detail: {{name}}",
+            "description": "Edit the question scores, then save them all with one comment. A section score is recalculated from its questions.",
+            "locked": "File validated: scores can no longer be edited.",
+            "globalScore": "Global score: {{score}}",
+            "sectionScore": "Section score: {{score}}",
+            "fieldHint": "{{value}} · score from {{min}} to {{max}}",
+            "commentHint": "Required. It applies to every edited score and is kept in the comment detail and in the compliance log.",
+            "invalid": "A score is outside its allowed range.",
+            "noChange": "No score was edited.",
+            "cancel": "Cancel",
+            "saveMany": "Save the {{count}} scores",
+            "openQuestion": "View question detail",
+            "descriptionQuestion": "Edit the question score, then save with a comment. Its section score is recalculated."
+          },
+          "history": {
+            "title": "Score history",
+            "empty": "No score change, validation or reopening.",
+            "validated": "Score validated",
+            "reopened": "Score reopened",
+            "globalScore": "Overall score: {{score}} · {{tier}}",
+            "current": "Current score",
+            "change": "{{previous}} → {{next}}",
+            "answer": "Answer: {{value}}",
+            "notEvaluated": "not evaluated",
+            "answerChange": "Answer: {{previous}} → {{value}}"
+          },
+          "screening": {
+            "party": "{{name}}: {{matches}}",
+            "problematicZero": "no problematic match",
+            "problematicOne": "{{count}} problematic match",
+            "problematicMany": "{{count}} problematic matches",
+            "none": "No screened party",
+            "short": "{{who}} · {{alerts}}",
+            "parties": "{{count}} parties",
+            "alertsZero": "no alert",
+            "alertsOne": "{{count}} alert",
+            "alertsMany": "{{count}} alerts"
           }
         },
         "screening": {
@@ -1497,8 +1492,8 @@
           "complianceReopenedDesc": "Score, matches and categorisation can be changed again.",
           "scoreInvalidated": "Score reopened",
           "scoreReset": "Computed score restored",
-          "commentSaved": "Comment saved",
-          "riskAnswerSaved": "Answer saved"
+          "scoresSavedOne": "{{count}} score edited",
+          "scoresSavedMany": "{{count}} scores edited"
         },
         "chain": {
           "ariaLabel": "Validation circuit",
@@ -5594,6 +5589,7 @@
       "downloadReport": "Download report",
       "downloadAuditTrail": "Download audit trail",
       "reportUnavailable": "The report is not available from the provider for this entity.",
+      "rerunClosed": "Entity closed: screening can no longer be re-run.",
       "csv": {
         "columns": {
           "date": "Event date",
@@ -8211,6 +8207,18 @@
         "states": "Shown only when the condition is met.",
         "exampleLabel": "Replacing a line's document",
         "example": "The line's current document will be replaced."
+      },
+      "decisionTimeline": {
+        "title": "Decision history",
+        "description": "Vertical thread of successive decisions on an object: decision or value as a badge, label of the entry in force, author, date and comment. Used for the decision history of an alert and for the score change history of a risk profile.",
+        "variants": "With or without a detail next to the badge (revision, question) and under the author (retained answer). Dot coloured by decision.",
+        "states": "Empty (message), one or several entries, entry in force marked.",
+        "exampleLabel": "Score changes",
+        "current": "Current score",
+        "empty": "No decision.",
+        "question": "Origin of funds",
+        "answer": "Answer: Sale of a holding",
+        "comment": "Proof of sale received."
       },
       "richMultiSelect": {
         "title": "Rich multi-select",

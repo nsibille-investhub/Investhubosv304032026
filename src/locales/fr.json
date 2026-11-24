@@ -1198,11 +1198,8 @@
           "validationDate": "Date de validation",
           "validatedByAt": "{{date}} par {{name}}",
           "notValidated": "Non validé",
-          "force": "Forcer le score",
-          "forced": "Score global forcé",
           "global": "Score global",
-          "editLockedReason": "Rouvrez le score pour le modifier.",
-          "lockedReason": "Le dossier de conformité est validé : le score ne se modifie plus."
+          "editLockedReason": "Rouvrez le score pour le modifier."
         },
         "status": {
           "pending": "En attente",
@@ -1265,9 +1262,6 @@
         "profile": {
           "title": "Profil de risque et détail du calcul",
           "subtitle": "Profil, classes et composantes. Le calcul remonte des composantes vers le profil.",
-          "showScale": "Échelle et paliers",
-          "scaleTitle": "Paliers de l'échelle",
-          "tierRequiresValidation": "Validation conformité requise",
           "component": "Composante",
           "source": "Source",
           "value": "Valeur retenue",
@@ -1280,59 +1274,60 @@
           "unevaluatedMany": "{{count}} composantes non évaluées",
           "widgetTitle": "Profil de risque",
           "widgetSubtitle": "{{name}} · profil issu de {{onboarding}}",
-          "comments": {
-            "title": "Commentaires du score",
-            "subtitle": "Un commentaire est saisi à chaque modification de score.",
-            "openOne": "Détail des commentaires ({{count}})",
-            "openMany": "Détail des commentaires ({{count}})",
-            "empty": "Aucun score n'a été modifié.",
-            "close": "Fermer"
-          },
-          "viewDetail": "Voir le détail",
-          "panel": {
-            "answerTitle": "Réponse",
-            "scoreTitle": "Score",
-            "currentValue": "Valeur actuelle",
-            "newValue": "Nouvelle valeur",
-            "noAnswer": "Aucune réponse",
-            "selectPlaceholder": "Choisissez une valeur",
-            "currentScore": "Score actuel",
-            "newScore": "Nouveau score",
-            "notEvaluated": "Non évalué",
-            "scoreHint": "Valeur comprise entre {{min}} et {{max}}.",
-            "backToComputed": "Revenir au score calculé",
-            "backToComputedDesc": "Le score saisi est retiré, le calcul reprend à partir du niveau inférieur.",
-            "commentTitle": "Commentaire",
-            "commentDesc": "Obligatoire pour toute modification de la réponse ou du score. Il peut aussi être ajouté seul.",
-            "comment": "Commentaire",
-            "commentPlaceholder": "Motivez la modification ou ajoutez une remarque",
-            "commentRequired": "Le commentaire est obligatoire pour enregistrer une modification.",
-            "nothingToSave": "Modifiez la réponse ou le score, ou saisissez un commentaire.",
-            "historyTitle": "Commentaires précédents",
-            "historyDesc": "Modifications et commentaires déjà enregistrés sur ce score.",
-            "historyEmpty": "Aucun commentaire sur ce score.",
-            "allComments": "Voir tous les commentaires du profil ({{count}})",
-            "answerChange": "Réponse : {{previous}} → {{next}}",
-            "scoreChange": "Score : {{previous}} → {{next}}",
-            "computedValue": "calculé",
-            "afterSave": "Après enregistrement, le profil de risque est recalculé. L'investisseur ne reçoit aucune notification.",
-            "cancel": "Annuler",
-            "close": "Fermer",
+          "editScore": "Modifier le score",
+          "edit": {
             "save": "Enregistrer",
-            "kind": {
-              "onboardingAnswer": "Question d'onboarding",
-              "manualQuestion": "Question manuelle",
-              "countryList": "Liste des pays",
-              "screening": "Screening",
-              "externalService": "Service externe",
-              "section": "Score de section",
-              "profile": "Score global"
-            },
-            "answerLocked": {
-              "countryList": "La valeur vient de la liste des pays. Seul le score se modifie ici.",
-              "screening": "La valeur vient du screening. Seul le score se modifie ici.",
-              "externalService": "La valeur vient d'un service externe. Seul le score se modifie ici."
-            }
+            "scoreHint": "Valeur comprise entre {{min}} et {{max}}.",
+            "comment": "Commentaire",
+            "commentHint": "Le commentaire est conservé dans le détail des commentaires et dans le journal de conformité.",
+            "commentPlaceholder": "Motivez la modification du score",
+            "commentRequired": "Le commentaire est obligatoire.",
+            "backToComputed": "Revenir au score calculé"
+          },
+          "comments": {
+            "computedValue": "calculé"
+          },
+          "detail": {
+            "openGlobal": "Voir le détail et l'historique du score global",
+            "openSection": "Voir le détail du score",
+            "titleGlobal": "Détail du score global",
+            "titleSection": "Détail du score : {{name}}",
+            "description": "Modifiez les scores des questions, puis enregistrez l'ensemble avec un commentaire. Le score d'une section se recalcule à partir de ses questions.",
+            "locked": "Dossier validé : les scores ne sont plus modifiables.",
+            "globalScore": "Score global : {{score}}",
+            "sectionScore": "Score de la section : {{score}}",
+            "fieldHint": "{{value}} · score de {{min}} à {{max}}",
+            "commentHint": "Obligatoire. Il vaut pour tous les scores modifiés et il est conservé dans le détail des commentaires et dans le journal de conformité.",
+            "invalid": "Un score sort de sa plage autorisée.",
+            "noChange": "Aucun score n'a été modifié.",
+            "cancel": "Annuler",
+            "saveMany": "Enregistrer les {{count}} scores",
+            "openQuestion": "Voir le détail de la question",
+            "descriptionQuestion": "Modifiez le score de la question, puis enregistrez avec un commentaire. Le score de sa section se recalcule."
+          },
+          "history": {
+            "title": "Historique du score",
+            "empty": "Aucune modification, validation ou réouverture du score.",
+            "validated": "Score validé",
+            "reopened": "Score rouvert",
+            "globalScore": "Score global : {{score}} · {{tier}}",
+            "current": "Score actuel",
+            "change": "{{previous}} → {{next}}",
+            "answer": "Réponse : {{value}}",
+            "notEvaluated": "non évalué",
+            "answerChange": "Réponse : {{previous}} → {{value}}"
+          },
+          "screening": {
+            "party": "{{name}} : {{matches}}",
+            "problematicZero": "aucune correspondance problématique",
+            "problematicOne": "{{count}} correspondance problématique",
+            "problematicMany": "{{count}} correspondances problématiques",
+            "none": "Aucun tiers contrôlé",
+            "short": "{{who}} · {{alerts}}",
+            "parties": "{{count}} tiers",
+            "alertsZero": "aucune alerte",
+            "alertsOne": "{{count}} alerte",
+            "alertsMany": "{{count}} alertes"
           }
         },
         "screening": {
@@ -1497,8 +1492,8 @@
           "complianceReopenedDesc": "Score, correspondances et catégorisation sont de nouveau modifiables.",
           "scoreInvalidated": "Score rouvert",
           "scoreReset": "Score calculé rétabli",
-          "commentSaved": "Commentaire enregistré",
-          "riskAnswerSaved": "Réponse enregistrée"
+          "scoresSavedOne": "{{count}} score modifié",
+          "scoresSavedMany": "{{count}} scores modifiés"
         },
         "chain": {
           "ariaLabel": "Circuit de validation",
@@ -5594,6 +5589,7 @@
       "downloadReport": "Télécharger le rapport",
       "downloadAuditTrail": "Télécharger la piste d'audit",
       "reportUnavailable": "Le rapport n'est pas disponible chez le fournisseur pour cette entité.",
+      "rerunClosed": "Entité clôturée : le screening ne peut plus être relancé.",
       "csv": {
         "columns": {
           "date": "Date de l'événement",
@@ -8211,6 +8207,18 @@
         "states": "Affiché seulement quand la condition est remplie.",
         "exampleLabel": "Remplacement du document d'une ligne",
         "example": "Le document actuel de la ligne sera remplacé."
+      },
+      "decisionTimeline": {
+        "title": "Historique de décisions",
+        "description": "Fil vertical des décisions successives sur un objet : décision ou valeur en badge, étiquette de l'entrée en vigueur, auteur, date et commentaire. Sert à l'historique des décisions d'une alerte et à celui des modifications de score d'un profil de risque.",
+        "variants": "Avec ou sans précision à côté du badge (révision, question) et sous l'auteur (réponse retenue). Pastille colorée selon la décision.",
+        "states": "Vide (message), une ou plusieurs entrées, entrée en vigueur marquée.",
+        "exampleLabel": "Modifications de score",
+        "current": "Score actuel",
+        "empty": "Aucune décision.",
+        "question": "Origine des fonds",
+        "answer": "Réponse : Cession de participation",
+        "comment": "Justificatif de cession reçu."
       },
       "richMultiSelect": {
         "title": "Multisélection riche",
