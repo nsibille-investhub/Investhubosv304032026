@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { toast } from 'sonner@2.0.3';
 import { CalendarX, FileSpreadsheet, List, Pencil, Plus, Send, ShieldX, Wallet, type LucideIcon } from 'lucide-react';
 
@@ -18,7 +18,8 @@ import {
   writeWizardSession,
 } from '../../utils/capitalCallWizardSession';
 import { expireStaleNotices, generateCapitalCallLines } from '../../utils/capitalCallLines';
-import { summarizeCall } from '../../utils/capitalCallSummary';
+import { paymentProgress, summarizeCall } from '../../utils/capitalCallSummary';
+import { progressRank, progressState } from '../../utils/noticeProgress';
 import { emptyShareInput, fundCallSettings, fundSubscriptions } from '../../utils/capitalCallWizard';
 import {
   CapitalCallAction,
@@ -42,7 +43,14 @@ import { Button } from '../ui/button';
 import { ConfirmDialog } from '../ui/confirm-dialog';
 import type { NoticeContext } from '../../utils/noticeActions';
 import { CAPITAL_CALL_RULES } from '../../utils/noticeFamilies';
-import { useNoticeSelection } from '../notices/noticeListing';
+import {
+  NoticeProgressBadge,
+  isNoticeProgressColumn,
+  noticeCount,
+  useNoticeProgressColumns,
+  useNoticeSelection,
+} from '../notices/noticeListing';
+import { Tag } from '../Tag';
 import { useNoticeLineStore } from '../notices/useNoticeLineStore';
 import { useNoticeParentActions } from '../notices/useNoticeParentActions';
 import { CapitalCallDetailPage } from './CapitalCallDetailPage';
@@ -50,11 +58,56 @@ import { CapitalCallDraft, CapitalCallWizard, WIZARD_STEPS } from './wizard/Capi
 
 const K = 'funds.capitalCalls';
 
-type ColumnKey = 'name' | 'fund' | 'dueDate' | 'noticeDate' | 'amount' | 'externalId' | 'createdAt' | 'updatedAt';
+const COLUMN_KEYS = [
+  'name',
+  'fund',
+  'dueDate',
+  'noticeDate',
+  'amount',
+  'lines',
+  'documents',
+  'notification',
+  'payment',
+  'paymentsToValidate',
+  'remainingDue',
+  'directDebits',
+  'calledShares',
+  'feesAndPremiums',
+  'restriction',
+  'sending',
+  'externalId',
+  'createdAt',
+  'updatedAt',
+] as const;
+type ColumnKey = (typeof COLUMN_KEYS)[number];
+/** Colonnes calculées propres aux appels, en plus du socle d'avancement des notices. */
+const CALL_PROGRESS_COLUMNS = [
+  'payment',
+  'paymentsToValidate',
+  'remainingDue',
+  'directDebits',
+  'calledShares',
+  'feesAndPremiums',
+  'restriction',
+] as const;
+type CallProgressColumn = (typeof CALL_PROGRESS_COLUMNS)[number];
+const isCallProgressColumn = (key: string): key is CallProgressColumn =>
+  (CALL_PROGRESS_COLUMNS as readonly string[]).includes(key);
 
-const COLUMN_KEYS: ColumnKey[] = ['name', 'fund', 'dueDate', 'noticeDate', 'amount', 'externalId', 'createdAt', 'updatedAt'];
-const DEFAULT_COLUMNS: ColumnKey[] = ['name', 'fund', 'dueDate', 'amount'];
-const COLUMNS_STORAGE_KEY = 'investhub-columns-capital-calls-v4';
+const DEFAULT_COLUMNS: ColumnKey[] = [
+  'name',
+  'fund',
+  'dueDate',
+  'amount',
+  'lines',
+  'documents',
+  'notification',
+  'payment',
+  'paymentsToValidate',
+  'remainingDue',
+  'sending',
+];
+const COLUMNS_STORAGE_KEY = 'investhub-columns-capital-calls-v5';
 const LISTING_STORAGE_KEY = 'investhub-listing-capital-calls';
 
 type Queue = 'all' | 'toNotify' | 'overdue';
@@ -277,6 +330,47 @@ export function CapitalCallsPage({
     [allCalls, linesByCall],
   );
   const summaryOf = (call: CapitalCall) => summaries.get(call.id)!;
+  const progress = useNoticeProgressColumns({ rules: CAPITAL_CALL_RULES, contextOf, linesOf: store.linesOf });
+  const payments = useMemo(
+    () => new Map(allCalls.map(call => [call.id, paymentProgress(linesByCall.get(call.id) ?? [])])),
+    [allCalls, linesByCall],
+  );
+  const paymentOf = (call: CapitalCall) => payments.get(call.id)!;
+  const fundShareCount = (fundId: number) => funds.find(fund => fund.id === fundId)?.shareClasses.length ?? 0;
+  const usesDirectDebit = (call: CapitalCall) => fundCallSettings({ id: call.fundId }).directDebit;
+  /** Une demande de prélèvement part avec la notification de la ligne. */
+  const directDebitsStarted = (call: CapitalCall) => usesDirectDebit(call) && progress.progressOf(call).notified > 0;
+  const restrictedInvestors = (call: CapitalCall) => call.shares.reduce((sum, share) => sum + (share.restrictedTo ?? 0), 0);
+  const feeTags = (call: CapitalCall) => [
+    ...(call.shares.some(share => share.entryFeesCalled) ? ['fees'] : []),
+    ...(call.shares.some(share => share.premiumCalled) ? ['premiums'] : []),
+  ];
+  /** Prélèvements : proposée seulement si un fonds du périmètre utilise le prélèvement. */
+  const offeredColumns = COLUMN_KEYS.filter(key => key !== 'directDebits' || scopedCalls.some(usesDirectDebit));
+  const progressSortValue = (call: CapitalCall, key: CallProgressColumn): string | number => {
+    const payment = paymentOf(call);
+    switch (key) {
+      case 'payment':
+        return progressRank(progressState(payment.paid, summaryOf(call).lines), payment.paid, summaryOf(call).lines);
+      case 'paymentsToValidate':
+        return payment.toValidate;
+      case 'remainingDue':
+        return payment.remainingDue;
+      case 'directDebits':
+        return directDebitsStarted(call) ? 1 : 0;
+      case 'calledShares':
+        return call.shares.length;
+      case 'feesAndPremiums':
+        return feeTags(call).join();
+      case 'restriction':
+        return restrictedInvestors(call);
+    }
+  };
+  const sortValueOf = (call: CapitalCall, key: string) => {
+    if (isNoticeProgressColumn(key)) return progress.sortValue(call, key);
+    if (isCallProgressColumn(key)) return progressSortValue(call, key);
+    return sortValue(call, key);
+  };
   const today = new Date();
   const inQueue = (call: CapitalCall, id: Queue) => {
     const summary = summaryOf(call);
@@ -325,13 +419,13 @@ export function CapitalCallsPage({
   const sortedCalls = useMemo(() => {
     const factor = sortConfig.direction === 'asc' ? 1 : -1;
     return [...filteredCalls].sort((a, b) => {
-      const left = sortValue(a, sortConfig.key);
-      const right = sortValue(b, sortConfig.key);
+      const left = sortValueOf(a, sortConfig.key);
+      const right = sortValueOf(b, sortConfig.key);
       if (left < right) return -factor;
       if (left > right) return factor;
       return defaultCompare(a, b);
     });
-  }, [filteredCalls, sortConfig]);
+  }, [filteredCalls, sortConfig, payments, store.overrides]);
 
   const totalPages = Math.max(1, Math.ceil(sortedCalls.length / pageSize));
   const pageRows = sortedCalls.slice((page - 1) * pageSize, page * pageSize);
@@ -344,10 +438,8 @@ export function CapitalCallsPage({
     () => new Intl.DateTimeFormat(lang, { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
     [lang],
   );
-  const money = (call: CapitalCall) =>
-    new Intl.NumberFormat(lang, { style: 'currency', currency: call.currency, maximumFractionDigits: 0 }).format(
-      call.calledAmount,
-    );
+  const money = (call: CapitalCall, value = call.calledAmount) =>
+    new Intl.NumberFormat(lang, { style: 'currency', currency: call.currency, maximumFractionDigits: 0 }).format(value);
   const empty = <span className="text-muted-foreground">-</span>;
 
   const hasFiltering = Object.keys(activeFilters).length > 0 || search.trim().length > 0 || queue !== 'all';
@@ -499,7 +591,55 @@ export function CapitalCallsPage({
     });
   };
 
+  const callColumn = (
+    key: CallProgressColumn,
+    render: (call: CapitalCall) => ReactNode,
+    align?: 'right',
+  ): ColumnConfig<CapitalCall> => ({ key, label: t(`${K}.columns.${key}`), sortable: true, align, render });
+  const tags = (labels: string[]) =>
+    labels.length > 0 ? (
+      <div className="flex items-center gap-1">
+        {labels.map(label => (
+          <Tag key={label} label={label} />
+        ))}
+      </div>
+    ) : (
+      empty
+    );
+  const callProgressColumns: Record<CallProgressColumn, ColumnConfig<CapitalCall>> = {
+    payment: callColumn('payment', call => {
+      const { paid } = paymentOf(call);
+      const total = summaryOf(call).lines;
+      const state = progressState(paid, total);
+      return <NoticeProgressBadge state={state} label={t(`${K}.progress.payment.${state}`, { done: paid, total })} />;
+    }),
+    paymentsToValidate: callColumn(
+      'paymentsToValidate',
+      call => (paymentOf(call).toValidate > 0 ? noticeCount(paymentOf(call).toValidate) : empty),
+      'right',
+    ),
+    remainingDue: callColumn(
+      'remainingDue',
+      call => <span className="text-sm">{money(call, paymentOf(call).remainingDue)}</span>,
+      'right',
+    ),
+    directDebits: callColumn('directDebits', call => tags(directDebitsStarted(call) ? [t(`${K}.progress.directDebitsStarted`)] : [])),
+    calledShares: callColumn('calledShares', call =>
+      noticeCount(t('funds.notices.progress.ratio', { done: call.shares.length, total: fundShareCount(call.fundId) })),
+    ),
+    feesAndPremiums: callColumn('feesAndPremiums', call => tags(feeTags(call).map(item => t(`${K}.progress.${item}`)))),
+    restriction: callColumn('restriction', call =>
+      tags(
+        call.shares.some(share => share.restrictedTo !== null)
+          ? [t(`${K}.progress.restricted`, { count: restrictedInvestors(call) })]
+          : [],
+      ),
+    ),
+  };
+
   const columnDefinitions: Record<ColumnKey, ColumnConfig<CapitalCall>> = {
+    ...progress.columns,
+    ...callProgressColumns,
     fund: {
       key: 'fund',
       label: t(`${K}.columns.fund`),
@@ -584,7 +724,10 @@ export function CapitalCallsPage({
     },
   };
 
-  const columns = [...visibleColumns.map(key => columnDefinitions[key]), actionsColumn];
+  const columns = [
+    ...visibleColumns.filter(key => offeredColumns.includes(key)).map(key => columnDefinitions[key]),
+    actionsColumn,
+  ];
 
   const queueCard = (id: Queue, icon: typeof List, calls: CapitalCall[]) => {
     const fundCount = new Set(calls.map(call => call.fundId)).size;
@@ -611,7 +754,7 @@ export function CapitalCallsPage({
 
   const columnsMenu = (
     <ListingColumnsMenu
-      columns={COLUMN_KEYS.map(key => ({ key, label: t(`${K}.columns.${key}`) }))}
+      columns={offeredColumns.map(key => ({ key, label: columnDefinitions[key].label }))}
       visible={visibleColumns}
       onToggle={key => toggleColumn(key as ColumnKey)}
       onReset={() => setVisibleColumns(DEFAULT_COLUMNS)}

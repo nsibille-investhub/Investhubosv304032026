@@ -10,6 +10,8 @@ export interface FundCallSettings {
   netFlow: boolean;
   capAt100: boolean;
   allocation: 'subscribedAmount' | 'units';
+  /** Le fonds encaisse ses appels par prélèvement. */
+  directDebit: boolean;
 }
 
 export interface WizardSubscription {
@@ -75,6 +77,7 @@ export function fundCallSettings(fund: Pick<Fund, 'id'>): FundCallSettings {
     netFlow: fund.id % 3 === 0,
     capAt100: fund.id % 2 === 0,
     allocation: fund.id % 4 === 1 ? 'units' : 'subscribedAmount',
+    directDebit: fund.id % 3 !== 1,
   };
 }
 

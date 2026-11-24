@@ -22,7 +22,13 @@ import { DataPagination } from '../ui/data-pagination';
 import { TableRowActions } from '../ui/row-actions';
 import type { NoticeContext } from '../../utils/noticeActions';
 import { DISTRIBUTION_RULES } from '../../utils/noticeFamilies';
-import { useNoticeSelection } from '../notices/noticeListing';
+import {
+  NOTICE_PROGRESS_COLUMNS,
+  isNoticeProgressColumn,
+  useNoticeProgressColumns,
+  useNoticeSelection,
+  type NoticeProgressColumn,
+} from '../notices/noticeListing';
 import { useNoticeLineStore } from '../notices/useNoticeLineStore';
 import { useNoticeParentActions } from '../notices/useNoticeParentActions';
 import { Button } from '../ui/button';
@@ -30,22 +36,7 @@ import { DistributionDetailPage } from './DistributionDetailPage';
 
 const K = 'funds.distributions';
 
-type ColumnKey =
-  | 'name'
-  | 'fund'
-  | 'date'
-  | 'noticeDate'
-  | 'amount'
-  | 'provisional'
-  | 'fees'
-  | 'refund'
-  | 'capital'
-  | 'interest'
-  | 'externalId'
-  | 'createdAt'
-  | 'updatedAt';
-
-const COLUMN_KEYS: ColumnKey[] = [
+const COLUMN_KEYS = [
   'name',
   'fund',
   'date',
@@ -56,12 +47,15 @@ const COLUMN_KEYS: ColumnKey[] = [
   'refund',
   'capital',
   'interest',
+  ...NOTICE_PROGRESS_COLUMNS,
   'externalId',
   'createdAt',
   'updatedAt',
-];
-const DEFAULT_COLUMNS: ColumnKey[] = ['name', 'fund', 'date', 'amount', 'provisional', 'fees'];
-const COLUMNS_STORAGE_KEY = 'investhub-columns-distributions';
+] as const;
+type ColumnKey = (typeof COLUMN_KEYS)[number];
+type OwnColumnKey = Exclude<ColumnKey, NoticeProgressColumn>;
+const DEFAULT_COLUMNS: ColumnKey[] = ['name', 'fund', 'date', 'amount', 'provisional', 'fees', ...NOTICE_PROGRESS_COLUMNS];
+const COLUMNS_STORAGE_KEY = 'investhub-columns-distributions-v2';
 const LISTING_STORAGE_KEY = 'investhub-listing-distributions';
 
 type Scenario = 'default' | 'limitedScope' | 'noRight';
@@ -243,6 +237,9 @@ export function DistributionsPage({ funds, onOpenFund, onSelectedDistributionCha
     canNotify: true,
     canDownload: true,
   });
+  const progress = useNoticeProgressColumns({ rules: DISTRIBUTION_RULES, contextOf, linesOf: store.linesOf });
+  const sortValueOf = (item: Distribution, key: string) =>
+    isNoticeProgressColumn(key) ? progress.sortValue(item, key) : sortValue(item, key);
   const [checkedIds, setCheckedIds] = useState<Set<number>>(() => new Set());
   const parentActions = useNoticeParentActions({
     rules: DISTRIBUTION_RULES,
@@ -266,13 +263,13 @@ export function DistributionsPage({ funds, onOpenFund, onSelectedDistributionCha
   const sorted = useMemo(() => {
     const factor = sortConfig.direction === 'asc' ? 1 : -1;
     return [...filtered].sort((a, b) => {
-      const left = sortValue(a, sortConfig.key);
-      const right = sortValue(b, sortConfig.key);
+      const left = sortValueOf(a, sortConfig.key);
+      const right = sortValueOf(b, sortConfig.key);
       if (left < right) return -factor;
       if (left > right) return factor;
       return defaultCompare(a, b);
     });
-  }, [filtered, sortConfig]);
+  }, [filtered, sortConfig, store.overrides]);
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
   const currentPage = Math.min(page, totalPages);
@@ -326,7 +323,7 @@ export function DistributionsPage({ funds, onOpenFund, onSelectedDistributionCha
     });
   };
 
-  const renderers: Record<ColumnKey, ColumnConfig<Distribution>['render']> = {
+  const renderers: Record<OwnColumnKey, ColumnConfig<Distribution>['render']> = {
     name: (item, term) => <ListingNameCell name={item.name} searchTerm={term} id={item.id} />,
     fund: item => (
       <button
@@ -355,15 +352,19 @@ export function DistributionsPage({ funds, onOpenFund, onSelectedDistributionCha
     createdAt: item => dateTime(item.createdAt),
     updatedAt: item => dateTime(item.updatedAt),
   };
-  const RIGHT_ALIGNED: ColumnKey[] = ['amount', 'provisional', 'fees', 'refund', 'capital', 'interest'];
+  const RIGHT_ALIGNED: OwnColumnKey[] = ['amount', 'provisional', 'fees', 'refund', 'capital', 'interest'];
   const columns: ColumnConfig<Distribution>[] = [
-    ...visibleColumns.map(key => ({
-      key,
-      label: t(`${K}.columns.${key}`),
-      sortable: true,
-      align: RIGHT_ALIGNED.includes(key) ? 'right' : undefined,
-      render: renderers[key],
-    })),
+    ...visibleColumns.map(key =>
+      isNoticeProgressColumn(key)
+        ? progress.columns[key]
+        : {
+            key,
+            label: t(`${K}.columns.${key}`),
+            sortable: true,
+            align: RIGHT_ALIGNED.includes(key) ? 'right' : undefined,
+            render: renderers[key],
+          },
+    ),
     {
       key: 'actions',
       label: t('funds.notices.common.columns.actions'),
@@ -446,7 +447,10 @@ export function DistributionsPage({ funds, onOpenFund, onSelectedDistributionCha
                 onClearAll={resetFilters}
               />
               <ListingColumnsMenu
-                columns={COLUMN_KEYS.map(key => ({ key, label: t(`${K}.columns.${key}`) }))}
+                columns={COLUMN_KEYS.map(key => ({
+                  key,
+                  label: isNoticeProgressColumn(key) ? progress.label(key) : t(`${K}.columns.${key}`),
+                }))}
                 visible={visibleColumns}
                 onToggle={key => toggleColumn(key as ColumnKey)}
                 onReset={() => setVisibleColumns(DEFAULT_COLUMNS)}

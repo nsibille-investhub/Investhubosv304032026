@@ -6696,7 +6696,14 @@
         "externalId": "External ID",
         "createdAt": "Created on",
         "updatedAt": "Updated on",
-        "actions": "Actions"
+        "actions": "Actions",
+        "payment": "Payment",
+        "paymentsToValidate": "Payments to validate",
+        "remainingDue": "Remaining due",
+        "directDebits": "Direct debits",
+        "calledShares": "Called shares",
+        "feesAndPremiums": "Fees and premiums",
+        "restriction": "Restriction"
       },
       "empty": {
         "title": "No capital calls",
@@ -7305,6 +7312,17 @@
         "prepared": "Call prepared for {{investor}}",
         "preparedHint": "Fund, share and subscription are already selected: enter the date and the amount to call.",
         "replaced": "The pending preparation was replaced by this targeted call."
+      },
+      "progress": {
+        "payment": {
+          "none": "Not paid",
+          "partial": "Partially paid ({{done}} of {{total}})",
+          "full": "Fully paid"
+        },
+        "directDebitsStarted": "Started",
+        "fees": "Fees",
+        "premiums": "Premiums",
+        "restricted": "Restricted ({{count}})"
       }
     },
     "distributions": {
@@ -7826,6 +7844,27 @@
             "fileName": "target-releases"
           }
         }
+      },
+      "progress": {
+        "columns": {
+          "lines": "Lines",
+          "notification": "Notification",
+          "sending": "Sending in progress"
+        },
+        "documents": {
+          "capitalCalls": "Notices",
+          "distributions": "Notices",
+          "capitalAccounts": "Documents",
+          "releases": "Letters"
+        },
+        "ratio": "{{done}} / {{total}}",
+        "notification": {
+          "none": "Not notified",
+          "partial": "Partially notified ({{done}} of {{total}})",
+          "full": "Fully notified",
+          "immediate": "Immediate publication"
+        },
+        "sending": "Sending in progress"
       }
     }
   },

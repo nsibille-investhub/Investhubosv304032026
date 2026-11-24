@@ -1,4 +1,4 @@
-import { Layers } from 'lucide-react';
+import { Layers, Loader2 } from 'lucide-react';
 
 import { useTranslation } from '../../utils/languageContext';
 import {
@@ -7,9 +7,17 @@ import {
   type NoticeContext,
   type NoticeFamily,
   type NoticeLine,
+  type NoticeRules,
 } from '../../utils/noticeActions';
+import {
+  noticeProgress,
+  progressRank,
+  type NoticeNotificationState,
+  type NoticeProgress,
+} from '../../utils/noticeProgress';
 import type { ColumnConfig, DataTableSelection } from '../DataTable';
 import type { FilterConfig } from '../FilterBar';
+import { StatusBadge, type StatusVariant } from '../StatusBadge';
 import { Tag } from '../Tag';
 import { ActionsMenu, type TableRowAction } from '../ui/row-actions';
 
@@ -73,6 +81,105 @@ export function useNoticeDocumentColumns<L extends NoticeLine>(documentKind: 'do
   const sortValue = (line: NoticeLine, key: NoticeDocumentColumn) => noticeDocumentSortValue(line, key, sourceLabel);
 
   return { label, columns, filter, matches, sortValue };
+}
+
+export const NOTICE_PROGRESS_COLUMNS = ['lines', 'documents', 'notification', 'sending'] as const;
+export type NoticeProgressColumn = (typeof NOTICE_PROGRESS_COLUMNS)[number];
+
+export const isNoticeProgressColumn = (key: string): key is NoticeProgressColumn =>
+  (NOTICE_PROGRESS_COLUMNS as readonly string[]).includes(key);
+
+const PROGRESS_VARIANT: Record<NoticeNotificationState, StatusVariant> = {
+  immediate: 'info',
+  none: 'neutral',
+  partial: 'warning',
+  full: 'success',
+};
+
+/** État d'avancement d'une opération (notification, paiement), avec la date du dernier événement dessous. */
+export function NoticeProgressBadge({ state, label, date }: { state: NoticeNotificationState; label: string; date?: string | null }) {
+  return (
+    <div className="flex flex-col items-start gap-1">
+      <StatusBadge label={label} variant={PROGRESS_VARIANT[state]} />
+      {date && <span className="text-xs tabular-nums text-muted-foreground">{date}</span>}
+    </div>
+  );
+}
+
+/** Texte d'une cellule calculée : compteur, ratio "11 / 12". */
+export const noticeCount = (value: string | number) => <span className="whitespace-nowrap text-sm tabular-nums">{value}</span>;
+
+/** Colonnes d'avancement d'un listing d'opérations, calculées sur les lignes et communes aux quatre familles. */
+export function useNoticeProgressColumns<G extends { id: number }, L extends NoticeLine>({
+  rules,
+  contextOf,
+  linesOf,
+}: {
+  rules: NoticeRules<L>;
+  contextOf: (parent: G) => NoticeContext;
+  linesOf: (parent: G) => L[];
+}) {
+  const { t, lang } = useTranslation();
+  const P = `${K}.progress`;
+  const dateFormat = new Intl.DateTimeFormat(lang, { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const progressOf = (parent: G): NoticeProgress => noticeProgress(rules, contextOf(parent), linesOf(parent));
+  const label = (key: NoticeProgressColumn) =>
+    key === 'documents' ? t(`${P}.documents.${rules.family}`) : t(`${P}.columns.${key}`);
+
+  const columns: Record<NoticeProgressColumn, ColumnConfig<G>> = {
+    lines: {
+      key: 'lines',
+      label: label('lines'),
+      sortable: true,
+      align: 'right',
+      render: parent => noticeCount(progressOf(parent).lines),
+    },
+    documents: {
+      key: 'documents',
+      label: label('documents'),
+      sortable: true,
+      render: parent => {
+        const progress = progressOf(parent);
+        return noticeCount(t(`${P}.ratio`, { done: progress.documents, total: progress.lines }));
+      },
+    },
+    notification: {
+      key: 'notification',
+      label: label('notification'),
+      sortable: true,
+      render: parent => {
+        const progress = progressOf(parent);
+        return (
+          <NoticeProgressBadge
+            state={progress.notification}
+            label={t(`${P}.notification.${progress.notification}`, { done: progress.notified, total: progress.lines })}
+            date={progress.lastNotifiedAt ? dateFormat.format(progress.lastNotifiedAt) : null}
+          />
+        );
+      },
+    },
+    sending: {
+      key: 'sending',
+      label: label('sending'),
+      sortable: true,
+      render: parent =>
+        contextOf(parent).sending ? (
+          <StatusBadge label={t(`${P}.sending`)} variant="info" icon={Loader2} />
+        ) : (
+          <span className="text-muted-foreground">-</span>
+        ),
+    },
+  };
+
+  const sortValue = (parent: G, key: NoticeProgressColumn): number => {
+    if (key === 'sending') return contextOf(parent).sending ? 1 : 0;
+    const progress = progressOf(parent);
+    if (key === 'lines') return progress.lines;
+    if (key === 'documents') return progress.documents;
+    return progressRank(progress.notification, progress.notified, progress.lines);
+  };
+
+  return { label, columns, sortValue, progressOf };
 }
 
 /** Sélection d'un tableau de notices : libellé du bandeau et bouton d'action global. */
