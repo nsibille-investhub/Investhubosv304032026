@@ -341,6 +341,7 @@ export function useNoticeLineActions<L extends NoticeLine>({
         html={mail?.html ?? ''}
         subjectLabel={t(`${C}.mailPreview.subject`)}
         frameLabel={t(`${C}.mailPreview.frame`)}
+        templateSlug={mail?.slug}
       />
     </>
   );

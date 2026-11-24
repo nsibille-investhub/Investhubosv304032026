@@ -980,6 +980,7 @@ function MailPreviewDemo() {
         html={`<!doctype html><html><body style="font-family:sans-serif;padding:24px"><p>${t(`${K}.mailPreview.description`)}</p></body></html>`}
         subjectLabel={t('funds.capitalCalls.wizard.info.communication.subject')}
         frameLabel={t('funds.capitalCalls.wizard.info.communication.frameLabel')}
+        templateSlug="new_call"
       />
     </>
   );
@@ -1404,7 +1405,7 @@ export function FundDetailComponentsSection() {
         name="MailPreviewDialog"
         importLine="import { MailPreviewDialog } from '@/components/ui/mail-preview-dialog'"
         usage={`<MailPreviewDialog open={open} onOpenChange={setOpen} title={...} subject={subject} html={html}
-  subjectLabel={t('...')} frameLabel={t('...')} details={<p>...</p>} />`}
+  subjectLabel={t('...')} frameLabel={t('...')} details={<p>...</p>} templateSlug={template.slug} />`}
       >
         <Example label={t(`${K}.mailPreview.exampleLabel`)}>
           <MailPreviewDemo />

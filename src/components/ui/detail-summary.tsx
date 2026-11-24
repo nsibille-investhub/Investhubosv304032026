@@ -44,7 +44,7 @@ export function DetailLink({ href, onClick, icon: Icon, title, className, childr
 
   if (onClick) {
     return (
-      <button type="button" onClick={onClick} className={cn(LINK_CLASS, className)}>
+      <button type="button" onClick={onClick} title={title} className={cn(LINK_CLASS, className)}>
         {content}
       </button>
     );

@@ -378,6 +378,7 @@ export function WizardInfoStep({
         html={preview?.html ?? ''}
         subjectLabel={t(`${K}.communication.subject`)}
         frameLabel={t(`${K}.communication.frameLabel`)}
+        templateSlug={template?.slug}
         details={
           <div className="space-y-2 rounded-md border border-border px-3 py-2 text-sm">
             <p>
