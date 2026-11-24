@@ -27,6 +27,12 @@ export interface RiskAnswerChange {
   comment?: string;
 }
 
+/** Reponse proposee pour une question manuelle, avec le score qu'elle porte. */
+export interface RiskAnswerOption {
+  label: string;
+  score: number;
+}
+
 export interface RiskComponent {
   id: string;
   labelKey: string;
@@ -45,6 +51,14 @@ export interface RiskComponent {
   manualComment?: string;
   /** Reponses successives, de la plus ancienne a la plus recente. */
   answerHistory?: RiskAnswerChange[];
+  /** Parametre "Score modifiable" de la composante. Sans effet sur une question manuelle. */
+  scoreModifiable: boolean;
+  /** Question manuelle : reponses parametrees et leur score. */
+  answerOptions?: RiskAnswerOption[];
+  /** Question manuelle sans saisie : la reponse par defaut s'applique. */
+  defaultAnswer?: boolean;
+  /** Screening : scores proposes a la correction, entre le minimum et le maximum, valeurs exclues retirees. */
+  scoreValues?: number[];
 }
 
 export interface RiskClass {
@@ -110,6 +124,7 @@ export const mockRiskProfile: RiskProfile = {
       components: [
         {
           id: 'country-residence',
+          scoreModifiable: true,
           labelKey: 'subscriptions.detail.compliance.components.taxResidence',
           source: 'countryList',
           value: 'France',
@@ -119,6 +134,7 @@ export const mockRiskProfile: RiskProfile = {
         },
         {
           id: 'country-nationality',
+          scoreModifiable: false,
           labelKey: 'subscriptions.detail.compliance.components.nationality',
           source: 'countryList',
           value: 'France',
@@ -128,6 +144,7 @@ export const mockRiskProfile: RiskProfile = {
         },
         {
           id: 'country-bank',
+          scoreModifiable: true,
           labelKey: 'subscriptions.detail.compliance.components.bankDomiciliation',
           source: 'countryList',
           value: 'Suisse',
@@ -155,6 +172,8 @@ export const mockRiskProfile: RiskProfile = {
       components: [
         {
           id: 'screening-subscriber',
+          scoreModifiable: true,
+          scoreValues: [0, 2, 3, 4, 5, 6, 7, 8, 10],
           labelKey: 'subscriptions.detail.compliance.components.screeningSubscriber',
           source: 'screening',
           value: '2 correspondances',
@@ -182,6 +201,8 @@ export const mockRiskProfile: RiskProfile = {
         },
         {
           id: 'screening-representative',
+          scoreModifiable: true,
+          scoreValues: [0, 2, 3, 4, 5, 6, 7, 8, 10],
           labelKey: 'subscriptions.detail.compliance.components.screeningRepresentative',
           source: 'screening',
           value: '1 correspondance',
@@ -191,6 +212,7 @@ export const mockRiskProfile: RiskProfile = {
         },
         {
           id: 'screening-bo',
+          scoreModifiable: false,
           labelKey: 'subscriptions.detail.compliance.components.screeningBeneficialOwners',
           source: 'screening',
           value: '0 correspondance',
@@ -208,15 +230,21 @@ export const mockRiskProfile: RiskProfile = {
       components: [
         {
           id: 'client-category',
+          scoreModifiable: true,
           labelKey: 'subscriptions.detail.compliance.components.investorCategory',
           source: 'onboardingAnswer',
           value: 'Professionnel par nature',
           score: 2,
           min: 0,
           max: 10,
+          manualScore: 3,
+          manualBy: 'Marie Dubois',
+          manualAt: '19/05/2026 16:31',
+          manualComment: "Catégorisation obtenue sur option : vigilance relevée d'un point.",
         },
         {
           id: 'client-relation',
+          scoreModifiable: false,
           labelKey: 'subscriptions.detail.compliance.components.relationOrigin',
           source: 'onboardingAnswer',
           value: 'Apport distributeur',
@@ -237,16 +265,21 @@ export const mockRiskProfile: RiskProfile = {
         },
         {
           id: 'client-funds',
+          scoreModifiable: false,
           labelKey: 'subscriptions.detail.compliance.components.fundsOrigin',
           source: 'manualQuestion',
-          value: 'Cession de participation',
-          score: 5,
+          value: 'Épargne',
+          score: 1,
           min: 0,
           max: 10,
-          manualScore: 6,
-          manualBy: 'Marie Dubois',
-          manualAt: '19/05/2026 16:31',
-          manualComment: "Justificatif de cession reçu, montant supérieur au seuil de vigilance.",
+          defaultAnswer: true,
+          answerOptions: [
+            { label: 'Épargne', score: 1 },
+            { label: 'Revenus professionnels', score: 2 },
+            { label: 'Héritage', score: 3 },
+            { label: 'Cession de participation', score: 5 },
+            { label: 'Autre', score: 8 },
+          ],
         },
       ],
     },
@@ -258,6 +291,7 @@ export const mockRiskProfile: RiskProfile = {
       components: [
         {
           id: 'operation-amount',
+          scoreModifiable: false,
           labelKey: 'subscriptions.detail.compliance.components.subscribedAmount',
           source: 'onboardingAnswer',
           value: '250 000 €',
@@ -277,6 +311,7 @@ export const mockRiskProfile: RiskProfile = {
         },
         {
           id: 'operation-payment',
+          scoreModifiable: true,
           labelKey: 'subscriptions.detail.compliance.components.paymentMode',
           source: 'externalService',
           value: 'Virement - compte tiers',
@@ -519,8 +554,17 @@ export function componentScore(
   return component.score;
 }
 
-/** Cle de la saisie manuelle qui force le score global du profil. */
-export const PROFILE_SCORE_ID = 'profile';
+/** Scores des reponses choisies aux questions manuelles, a fusionner avec les scores corriges. */
+export function answerScores(answers: Record<string, string>): Record<string, number> {
+  const scores: Record<string, number> = {};
+  mockRiskProfile.classes
+    .flatMap(item => item.components)
+    .forEach(component => {
+      const option = component.answerOptions?.find(item => item.label === answers[component.id]);
+      if (option) scores[component.id] = option.score;
+    });
+  return scores;
+}
 
 /** Score d'une classe : toujours calcule depuis ses composantes evaluables, jamais saisi a la main. */
 export function aggregateClassScore(
@@ -535,9 +579,8 @@ export function aggregateClassScore(
   return round1(scores.reduce((sum, value) => sum + value, 0) / scores.length);
 }
 
-/** Score du profil : le score force prime, sinon moyenne ponderee des classes ramenee sur 100. */
+/** Score du profil : moyenne ponderee des classes ramenee sur 100. */
 export function computeProfileScore(overrides: Record<string, number> = {}): number | null {
-  if (typeof overrides[PROFILE_SCORE_ID] === 'number') return overrides[PROFILE_SCORE_ID];
   const weighted = mockRiskProfile.classes.reduce(
     (acc, riskClass) => {
       const score = aggregateClassScore(riskClass, overrides);
