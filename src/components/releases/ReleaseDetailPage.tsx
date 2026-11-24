@@ -12,6 +12,7 @@ import { useTranslation } from '../../utils/languageContext';
 import type { Release, ReleaseLine } from '../../utils/releaseGenerator';
 import { getHashParams } from '../../utils/routing';
 import { ReleaseLinesTab } from './ReleaseLinesTab';
+import type { NoticeLineBindings } from '../notices/noticeListing';
 import { DetailLink } from '../ui/detail-summary';
 import { DetailTabsList } from '../ui/detail-tabs';
 import { PageHeader, PageHeaderSubtitle, PageHeaderSubtitleItem, PageHeaderSubtitleSeparator } from '../ui/page-header';
@@ -30,6 +31,8 @@ function tabFromHash(): TabId {
 interface ReleaseDetailPageProps {
   release: Release;
   lines: ReleaseLine[];
+  /** Actions sur les lignes : réglages, droits et mise à jour des lignes. */
+  lineBindings: NoticeLineBindings<ReleaseLine>;
   /** Parts du fonds, pour le filtre des lignes. */
   fundShares: string[];
   onOpenFund: (fundId: number) => void;
@@ -39,6 +42,7 @@ interface ReleaseDetailPageProps {
 export function ReleaseDetailPage({
   release,
   lines,
+  lineBindings,
   fundShares,
   onOpenFund,
   onBack,
@@ -94,7 +98,7 @@ export function ReleaseDetailPage({
         </div>
         <div className="px-8 py-6">
           <TabsContent value="lines">
-            <ReleaseLinesTab release={release} lines={lines} fundShares={fundShares} />
+            <ReleaseLinesTab release={release} lines={lines} fundShares={fundShares} {...lineBindings} />
           </TabsContent>
           <TabsContent value="parameters" />
         </div>

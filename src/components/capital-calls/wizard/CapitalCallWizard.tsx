@@ -27,6 +27,7 @@ import {
   simulateCall,
 } from '../../../utils/capitalCallWizard';
 import { Alert, AlertDescription, AlertTitle } from '../../ui/alert';
+import { WarningNote } from '../../ui/warning-note';
 import { Button } from '../../ui/button';
 import { ConfirmDialog } from '../../ui/confirm-dialog';
 import { DisabledReason } from '../../ui/disabled-reason';
@@ -402,9 +403,7 @@ export function CapitalCallWizard({
           {step === 1 && settings && (
             <div className="space-y-4">
               {amountErrors._global && (
-                <Alert variant="destructive">
-                  <AlertDescription>{amountErrors._global}</AlertDescription>
-                </Alert>
+                <WarningNote>{amountErrors._global}</WarningNote>
               )}
               <WizardAmountsStep
                 shares={shares}

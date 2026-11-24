@@ -18,6 +18,7 @@ import { useTranslation } from '../../utils/languageContext';
 import type { Distribution, DistributionLine } from '../../utils/distributionGenerator';
 import { getHashParams } from '../../utils/routing';
 import { DistributionLinesTab } from './DistributionLinesTab';
+import type { NoticeLineBindings } from '../notices/noticeListing';
 import { DetailLink } from '../ui/detail-summary';
 import { DetailTabsList } from '../ui/detail-tabs';
 import { PageHeader, PageHeaderSubtitle, PageHeaderSubtitleItem, PageHeaderSubtitleSeparator } from '../ui/page-header';
@@ -36,6 +37,8 @@ function tabFromHash(): TabId {
 interface DistributionDetailPageProps {
   distribution: Distribution;
   lines: DistributionLine[];
+  /** Actions sur les lignes : réglages, droits et mise à jour des lignes. */
+  lineBindings: NoticeLineBindings<DistributionLine>;
   /** Parts du fonds, pour le filtre des lignes. */
   fundShares: string[];
   onOpenFund: (fundId: number) => void;
@@ -46,6 +49,7 @@ interface DistributionDetailPageProps {
 export function DistributionDetailPage({
   distribution,
   lines,
+  lineBindings,
   fundShares,
   onOpenFund,
   onOpenCall,
@@ -147,7 +151,7 @@ export function DistributionDetailPage({
         </div>
         <div className="px-8 py-6">
           <TabsContent value="lines">
-            <DistributionLinesTab distribution={distribution} lines={lines} fundShares={fundShares} />
+            <DistributionLinesTab distribution={distribution} lines={lines} fundShares={fundShares} {...lineBindings} />
           </TabsContent>
           <TabsContent value="parameters" />
         </div>

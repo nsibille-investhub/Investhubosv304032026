@@ -15,6 +15,7 @@ import { useTranslation } from '../../utils/languageContext';
 import type { CapitalAccount, CapitalAccountLine } from '../../utils/capitalAccountGenerator';
 import { getHashParams } from '../../utils/routing';
 import { CapitalAccountLinesTab } from './CapitalAccountLinesTab';
+import type { NoticeLineBindings } from '../notices/noticeListing';
 import { DetailLink } from '../ui/detail-summary';
 import { DetailTabsList } from '../ui/detail-tabs';
 import { PageHeader, PageHeaderSubtitle, PageHeaderSubtitleItem, PageHeaderSubtitleSeparator } from '../ui/page-header';
@@ -33,6 +34,8 @@ function tabFromHash(): TabId {
 interface CapitalAccountDetailPageProps {
   account: CapitalAccount;
   lines: CapitalAccountLine[];
+  /** Actions sur les lignes : réglages, droits et mise à jour des lignes. */
+  lineBindings: NoticeLineBindings<CapitalAccountLine>;
   /** Parts du fonds, pour le filtre des lignes. */
   fundShares: string[];
   onOpenFund: (fundId: number) => void;
@@ -42,6 +45,7 @@ interface CapitalAccountDetailPageProps {
 export function CapitalAccountDetailPage({
   account,
   lines,
+  lineBindings,
   fundShares,
   onOpenFund,
   onBack,
@@ -115,7 +119,7 @@ export function CapitalAccountDetailPage({
         </div>
         <div className="px-8 py-6">
           <TabsContent value="lines">
-            <CapitalAccountLinesTab account={account} lines={lines} fundShares={fundShares} />
+            <CapitalAccountLinesTab account={account} lines={lines} fundShares={fundShares} {...lineBindings} />
           </TabsContent>
           <TabsContent value="parameters" />
         </div>

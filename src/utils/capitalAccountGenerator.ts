@@ -1,6 +1,7 @@
 import type { Fund } from './fundGenerator';
 import { capitalCallCurrency, sameDay } from './capitalCallGenerator';
 import { investorDemoId, subscriptionDemoId } from './capitalCallLines';
+import { generatedDocument, type NoticeDocument } from './noticeActions';
 
 export interface CapitalAccount {
   id: number;
@@ -42,8 +43,11 @@ export interface CapitalAccountLine {
   netResult: number | null;
   state: CapitalAccountLineState;
   notifiedAt: Date | null;
+  remindedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
+  /** Document de la ligne : source, fichiers complémentaires et dates. */
+  document: NoticeDocument;
 }
 
 const INVESTORS = [
@@ -184,7 +188,9 @@ export function generateCapitalAccountLines(account: CapitalAccount, fundShares:
       state: notified ? 'notified' : 'created',
       notifiedAt: notified ? notifiedAt : null,
       createdAt: account.createdAt,
+      remindedAt: null,
       updatedAt: notified ? notifiedAt : account.createdAt,
+      document: generatedDocument(account.createdAt),
     };
   });
 }

@@ -5,6 +5,8 @@ import { Users } from 'lucide-react';
 import { useTranslation } from '../../utils/languageContext';
 import type { CapitalCall } from '../../utils/capitalCallGenerator';
 import { CALL_LINE_STATES, CapitalCallLine } from '../../utils/capitalCallLines';
+import type { NoticeContext } from '../../utils/noticeActions';
+import { CAPITAL_CALL_RULES } from '../../utils/noticeFamilies';
 import { ColumnConfig, DataTable } from '../DataTable';
 import { EmptyState } from '../EmptyState';
 import { FilterBar, FilterConfig } from '../FilterBar';
@@ -13,6 +15,16 @@ import { StatusBadge } from '../StatusBadge';
 import { Button } from '../ui/button';
 import { LINE_STATE_VARIANT } from './CapitalCallPaymentSheet';
 import { DataPagination } from '../ui/data-pagination';
+import { TableRowActions } from '../ui/row-actions';
+import {
+  NOTICE_DOCUMENT_COLUMNS,
+  NOTICE_DOCUMENT_HIDDEN,
+  isNoticeDocumentColumn,
+  useNoticeDocumentColumns,
+  useNoticeSelection,
+  type NoticeDocumentColumn,
+} from '../notices/noticeListing';
+import { useNoticeLineActions } from '../notices/useNoticeLineActions';
 
 const K = 'funds.capitalCalls.detail.lines';
 
@@ -29,7 +41,8 @@ type ColumnKey =
   | 'remindedOn'
   | 'paidOn'
   | 'createdAt'
-  | 'updatedAt';
+  | 'updatedAt'
+  | NoticeDocumentColumn;
 
 const COLUMN_KEYS: ColumnKey[] = [
   'investor',
@@ -45,10 +58,11 @@ const COLUMN_KEYS: ColumnKey[] = [
   'paidOn',
   'createdAt',
   'updatedAt',
+  ...NOTICE_DOCUMENT_COLUMNS,
 ];
-const HIDDEN_BY_DEFAULT: ColumnKey[] = ['remindedOn', 'createdAt', 'updatedAt'];
+const HIDDEN_BY_DEFAULT: ColumnKey[] = ['remindedOn', 'createdAt', 'updatedAt', ...NOTICE_DOCUMENT_HIDDEN];
 const DEFAULT_COLUMNS = COLUMN_KEYS.filter(key => !HIDDEN_BY_DEFAULT.includes(key));
-const COLUMNS_STORAGE_KEY = 'investhub-columns-capital-call-lines';
+const COLUMNS_STORAGE_KEY = 'investhub-columns-capital-call-lines-v2';
 const LISTING_STORAGE_KEY = 'investhub-listing-capital-call-lines';
 
 type SortConfig = { key: string; direction: 'asc' | 'desc' };
@@ -122,10 +136,33 @@ interface CapitalCallLinesTabProps {
   lines: CapitalCallLine[];
   /** Parts du fonds, proposées par le filtre Part. */
   fundShares: string[];
+  /** Réglages de l'appel et droits de l'utilisateur, pour la disponibilité des actions. */
+  context: NoticeContext;
+  onLinesChange: (update: (lines: CapitalCallLine[]) => CapitalCallLine[]) => void;
+  onSend: (apply: (lines: CapitalCallLine[]) => CapitalCallLine[], onDone: () => void) => void;
 }
 
-export function CapitalCallLinesTab({ call, lines, fundShares }: CapitalCallLinesTabProps) {
+export function CapitalCallLinesTab({ call, lines, fundShares, context, onLinesChange, onSend }: CapitalCallLinesTabProps) {
   const { t, lang } = useTranslation();
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(() => new Set());
+  const documentColumns = useNoticeDocumentColumns<CapitalCallLine>(CAPITAL_CALL_RULES.documentKind);
+  const lineActions = useNoticeLineActions({
+    rules: CAPITAL_CALL_RULES,
+    context,
+    parentName: call.name,
+    fundName: call.fundName,
+    lines,
+    onLinesChange,
+    onSend,
+    onCompleted: () => setSelectedIds(new Set()),
+  });
+  const selection = useNoticeSelection(
+    'lines',
+    selectedIds,
+    setSelectedIds,
+    lineActions.bulkActions(lines.filter(line => selectedIds.has(line.id))),
+  );
+  const columnLabel = (key: ColumnKey) => (isNoticeDocumentColumn(key) ? documentColumns.label(key) : t(`${K}.columns.${key}`));
   const [stored] = useState(() => readListingState(call.id));
   const [activeFilters, setActiveFilters] = useState<ActiveFilters>(stored.activeFilters ?? {});
   const [sortConfig, setSortConfig] = useState<SortConfig>(stored.sortConfig ?? DEFAULT_SORT);
@@ -179,6 +216,7 @@ export function CapitalCallLinesTab({ call, lines, fundShares }: CapitalCallLine
         isPrimary: true,
         options: CALL_LINE_STATES.map(value => ({ value, label: t(`${K}.states.${value}`) })),
       },
+      documentColumns.filter,
     ];
   }, [lines, fundShares, lang, t]);
 
@@ -188,7 +226,9 @@ export function CapitalCallLinesTab({ call, lines, fundShares }: CapitalCallLine
     const subscriptions = pick('subscription');
     const shares = pick('share');
     const statuses = pick('status');
+    const sources = pick('documentSource');
     return lines.filter(line => {
+      if (!documentColumns.matches(line, sources)) return false;
       if (investors.length > 0 && !investors.includes(line.investor)) return false;
       if (subscriptions.length > 0 && !subscriptions.includes(line.subscription)) return false;
       if (shares.length > 0 && !shares.includes(line.share)) return false;
@@ -200,8 +240,10 @@ export function CapitalCallLinesTab({ call, lines, fundShares }: CapitalCallLine
   const sorted = useMemo(() => {
     const factor = sortConfig.direction === 'asc' ? 1 : -1;
     return [...filtered].sort((a, b) => {
-      const left = sortValue(a, sortConfig.key);
-      const right = sortValue(b, sortConfig.key);
+      const value = (line: CapitalCallLine) =>
+        isNoticeDocumentColumn(sortConfig.key) ? documentColumns.sortValue(line, sortConfig.key) : sortValue(line, sortConfig.key);
+      const left = value(a);
+      const right = value(b);
       if (left < right) return -factor;
       if (left > right) return factor;
       return a.investor.localeCompare(b.investor, lang) || a.id - b.id;
@@ -350,6 +392,13 @@ export function CapitalCallLinesTab({ call, lines, fundShares }: CapitalCallLine
       sortable: true,
       render: line => dateTime(line.updatedAt),
     },
+    ...documentColumns.columns,
+  };
+  const actionsColumn: ColumnConfig<CapitalCallLine> = {
+    key: 'actions',
+    label: t('funds.notices.common.columns.actions'),
+    align: 'right',
+    render: line => <TableRowActions actions={lineActions.rowActions(line)} />,
   };
 
   if (lines.length === 0) {
@@ -361,6 +410,8 @@ export function CapitalCallLinesTab({ call, lines, fundShares }: CapitalCallLine
   }
 
   return (
+    <>
+    {lineActions.dialogs}
     <ListingCard
       toolbar={
         <div className="flex items-start justify-between gap-3">
@@ -375,7 +426,7 @@ export function CapitalCallLinesTab({ call, lines, fundShares }: CapitalCallLine
             onClearAll={resetFilters}
           />
           <ListingColumnsMenu
-            columns={COLUMN_KEYS.map(key => ({ key, label: t(`${K}.columns.${key}`) }))}
+            columns={COLUMN_KEYS.map(key => ({ key, label: columnLabel(key) }))}
             visible={visibleColumns}
             onToggle={key => toggleColumn(key as ColumnKey)}
             onReset={() => setVisibleColumns(DEFAULT_COLUMNS)}
@@ -415,7 +466,9 @@ export function CapitalCallLinesTab({ call, lines, fundShares }: CapitalCallLine
       ) : (
         <DataTable
           data={pageRows}
-          columns={visibleColumns.map(key => columnDefinitions[key])}
+          columns={[...visibleColumns.map(key => columnDefinitions[key]), actionsColumn]}
+          allFilteredData={sorted}
+          selection={selection}
           hoveredRow={hoveredRow}
           setHoveredRow={setHoveredRow}
           onRowClick={line => notInMockup(line.investor)}
@@ -426,10 +479,10 @@ export function CapitalCallLinesTab({ call, lines, fundShares }: CapitalCallLine
             )
           }
           compactMode
-          hideSelection
           density="compact"
         />
       )}
     </ListingCard>
+    </>
   );
 }

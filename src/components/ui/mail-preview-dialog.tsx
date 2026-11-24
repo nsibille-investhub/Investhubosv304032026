@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 
+import { PreviewFrame } from './preview-frame';
 import { Sheet, SheetContent } from './sheet';
 import { SIDE_PANEL_WIDE_STYLE, SidePanelHeader } from './side-panel';
 
@@ -43,9 +44,7 @@ export function MailPreviewDialog({
             <span className="font-medium text-foreground">{subject}</span>
           </div>
           {details}
-          <div className="flex min-h-0 flex-1 flex-col rounded-md border border-border bg-gray-100 p-3">
-            <iframe title={frameLabel} srcDoc={html} sandbox="" className="block w-full flex-1 border-0 bg-white" />
-          </div>
+          <PreviewFrame title={frameLabel} html={html} className="flex-1" />
         </div>
       </SheetContent>
     </Sheet>
