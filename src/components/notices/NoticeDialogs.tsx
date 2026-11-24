@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Download, FileText, Paperclip, TriangleAlert, Upload, type LucideIcon } from 'lucide-react';
+import { Download, FilePlus, FileText, Paperclip, Replace, TriangleAlert, Upload, type LucideIcon } from 'lucide-react';
 
 import { useTranslation } from '../../utils/languageContext';
 import {
@@ -9,15 +9,15 @@ import {
   type NoticeUploadUsage,
 } from '../../utils/noticeActions';
 import { Alert, AlertDescription } from '../ui/alert';
+import { AttachmentRow } from '../ui/attachment-row';
 import { Button } from '../ui/button';
 import { ConfirmDialog } from '../ui/confirm-dialog';
 import { EffectsPanel, type EffectItem } from '../ui/effects-panel';
 import { FormField } from '../ui/form-field';
 import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
-import { RowActionButton } from '../ui/row-actions';
+import { SegmentedControl } from '../ui/segmented-control';
 import { Sheet, SheetContent } from '../ui/sheet';
+import { WidgetMetric } from '../ui/widget-card';
 import {
   SIDE_PANEL_WIDE_STYLE,
   SidePanelCard,
@@ -151,27 +151,22 @@ export function NoticeUploadDialog({ open, onClose, documentKind, lineLabel, onC
             }}
           />
         </FormField>
-        <FormField id="notice-upload-usage" label={t(`${U}.usage`)} required>
-          <RadioGroup
-            id="notice-upload-usage"
+        <FormField
+          id="notice-upload-usage"
+          label={t(`${U}.usage`)}
+          required
+          hint={usage === 'add' ? t(`${U}.addHint`) : undefined}
+        >
+          <SegmentedControl<NoticeUploadUsage | ''>
+            aria-label={t(`${U}.usage`)}
+            fullWidth
             value={usage ?? ''}
-            onValueChange={value => setUsage(value as NoticeUploadUsage)}
-            className="gap-3"
-          >
-            <div className="flex items-start gap-2">
-              <RadioGroupItem value="add" id="notice-upload-add" className="mt-0.5" />
-              <Label htmlFor="notice-upload-add" className="flex flex-col items-start gap-0.5 font-normal">
-                <span className="text-sm text-foreground">{t(`${U}.add`)}</span>
-                <span className="text-xs text-muted-foreground">{t(`${U}.addHint`)}</span>
-              </Label>
-            </div>
-            <div className="flex items-start gap-2">
-              <RadioGroupItem value="replace" id="notice-upload-replace" className="mt-0.5" />
-              <Label htmlFor="notice-upload-replace" className="font-normal">
-                <span className="text-sm text-foreground">{t(`${K}.docKind.${documentKind}.replace`)}</span>
-              </Label>
-            </div>
-          </RadioGroup>
+            onValueChange={value => value && setUsage(value)}
+            options={[
+              { value: 'add', label: t(`${U}.add`), icon: <FilePlus className="h-4 w-4" /> },
+              { value: 'replace', label: t(`${K}.docKind.${documentKind}.replace`), icon: <Replace className="h-4 w-4" /> },
+            ]}
+          />
         </FormField>
         {usage === 'replace' && <NoticeWarning>{t(`${K}.docKind.${documentKind}.replaceWarning`)}</NoticeWarning>}
       </div>
@@ -232,44 +227,40 @@ ${line.document.manualFile ? `<p style="margin-top:24px;color:#475569">${escapeH
           <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-6 py-5">
             <SidePanelSection icon={FileText} title={t(`${K}.docKind.${documentKind}.title`)}>
               <SidePanelCard>
-                <dl className="grid grid-cols-3 gap-3 text-sm">
-                  <div>
-                    <dt className="text-xs text-muted-foreground">{t(`${K}.docKind.${documentKind}.columns.documentSource`)}</dt>
-                    <dd className="font-medium text-foreground">{t(`${K}.common.sources.${documentSource(line.document)}`)}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs text-muted-foreground">
-                      {t(`${K}.docKind.${documentKind}.columns.documentGeneratedAt`)}
-                    </dt>
-                    <dd className="font-medium tabular-nums text-foreground">{date(line.document.generatedAt)}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs text-muted-foreground">{t(`${K}.docKind.${documentKind}.columns.documentAddedAt`)}</dt>
-                    <dd className="font-medium tabular-nums text-foreground">{date(line.document.addedAt)}</dd>
-                  </div>
-                </dl>
+                <div className="grid grid-cols-3 gap-3">
+                  <WidgetMetric
+                    label={t(`${K}.docKind.${documentKind}.columns.documentSource`)}
+                    value={t(`${K}.common.sources.${documentSource(line.document)}`)}
+                  />
+                  <WidgetMetric
+                    label={t(`${K}.docKind.${documentKind}.columns.documentGeneratedAt`)}
+                    value={date(line.document.generatedAt)}
+                  />
+                  <WidgetMetric
+                    label={t(`${K}.docKind.${documentKind}.columns.documentAddedAt`)}
+                    value={date(line.document.addedAt)}
+                  />
+                </div>
               </SidePanelCard>
               <div className="flex h-96 flex-col rounded-md border border-border bg-gray-100 p-3">
                 <iframe title={t(`${P}.frame`)} srcDoc={html} sandbox="" className="block w-full flex-1 border-0 bg-white" />
               </div>
             </SidePanelSection>
             <SidePanelSection icon={Paperclip} title={t(`${P}.extraFiles`)}>
-              <SidePanelCard flush>
+              <SidePanelCard>
                 {line.document.extraFiles.length === 0 ? (
-                  <p className="px-4 py-3 text-sm text-muted-foreground">{t(`${P}.noExtraFile`)}</p>
+                  <p className="text-sm text-muted-foreground">{t(`${P}.noExtraFile`)}</p>
                 ) : (
-                  <ul className="divide-y divide-border">
+                  <div className="divide-y divide-border">
                     {line.document.extraFiles.map((fileName, index) => (
-                      <li key={`${fileName}-${index}`} className="flex items-center justify-between gap-3 px-4 py-2">
-                        <span className="truncate text-sm text-foreground">{fileName}</span>
-                        <RowActionButton
-                          icon={Download}
-                          tooltip={t(`${P}.downloadExtra`)}
-                          onClick={() => onDownloadExtra(fileName)}
-                        />
-                      </li>
+                      <AttachmentRow
+                        key={`${fileName}-${index}`}
+                        name={fileName}
+                        downloadLabel={t(`${P}.downloadExtra`)}
+                        onDownload={() => onDownloadExtra(fileName)}
+                      />
                     ))}
-                  </ul>
+                  </div>
                 )}
               </SidePanelCard>
             </SidePanelSection>
