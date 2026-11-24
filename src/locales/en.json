@@ -1297,6 +1297,22 @@
             "empty": "No score has been edited.",
             "computedValue": "computed",
             "close": "Close"
+          },
+          "detail": {
+            "openGlobal": "View global score detail",
+            "openSection": "View score detail",
+            "titleGlobal": "Global score detail",
+            "titleSection": "Score detail: {{name}}",
+            "description": "Edit the question scores, then save them all with one comment. A section score is recalculated from its questions.",
+            "locked": "File validated: scores can no longer be edited.",
+            "globalScore": "Global score: {{score}}",
+            "sectionScore": "Section score: {{score}}",
+            "fieldHint": "{{value}} · score from {{min}} to {{max}}",
+            "commentHint": "Required. It applies to every edited score and is kept in the comment detail and in the compliance log.",
+            "invalid": "A score is outside its allowed range.",
+            "noChange": "No score was edited.",
+            "cancel": "Cancel",
+            "saveMany": "Save the {{count}} scores"
           }
         },
         "screening": {
@@ -1460,7 +1476,9 @@
           "noteAdded": "Note added to the log",
           "complianceReopenedDesc": "Score, matches and categorisation can be changed again.",
           "scoreInvalidated": "Score reopened",
-          "scoreReset": "Computed score restored"
+          "scoreReset": "Computed score restored",
+          "scoresSavedOne": "{{count}} score edited",
+          "scoresSavedMany": "{{count}} scores edited"
         },
         "chain": {
           "ariaLabel": "Validation circuit",

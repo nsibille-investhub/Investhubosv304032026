@@ -459,12 +459,11 @@ export function componentScore(
 /** Cle de la saisie manuelle qui force le score global du profil. */
 export const PROFILE_SCORE_ID = 'profile';
 
-/** Score d'une classe : la saisie manuelle prime, sinon calcul depuis les composantes evaluables. */
+/** Score d'une classe : toujours calcule depuis ses composantes evaluables, jamais saisi a la main. */
 export function aggregateClassScore(
   riskClass: RiskClass,
   overrides: Record<string, number> = {},
 ): number | null {
-  if (typeof overrides[riskClass.id] === 'number') return overrides[riskClass.id];
   const scores = riskClass.components
     .map(component => componentScore(component, overrides))
     .filter((value): value is number => typeof value === 'number');

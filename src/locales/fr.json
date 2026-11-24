@@ -1297,6 +1297,22 @@
             "empty": "Aucun score n'a été modifié.",
             "computedValue": "calculé",
             "close": "Fermer"
+          },
+          "detail": {
+            "openGlobal": "Voir le détail du score global",
+            "openSection": "Voir le détail du score",
+            "titleGlobal": "Détail du score global",
+            "titleSection": "Détail du score : {{name}}",
+            "description": "Modifiez les scores des questions, puis enregistrez l'ensemble avec un commentaire. Le score d'une section se recalcule à partir de ses questions.",
+            "locked": "Dossier validé : les scores ne sont plus modifiables.",
+            "globalScore": "Score global : {{score}}",
+            "sectionScore": "Score de la section : {{score}}",
+            "fieldHint": "{{value}} · score de {{min}} à {{max}}",
+            "commentHint": "Obligatoire. Il vaut pour tous les scores modifiés et il est conservé dans le détail des commentaires et dans le journal de conformité.",
+            "invalid": "Un score sort de sa plage autorisée.",
+            "noChange": "Aucun score n'a été modifié.",
+            "cancel": "Annuler",
+            "saveMany": "Enregistrer les {{count}} scores"
           }
         },
         "screening": {
@@ -1460,7 +1476,9 @@
           "noteAdded": "Note ajoutée au journal",
           "complianceReopenedDesc": "Score, correspondances et catégorisation sont de nouveau modifiables.",
           "scoreInvalidated": "Score rouvert",
-          "scoreReset": "Score calculé rétabli"
+          "scoreReset": "Score calculé rétabli",
+          "scoresSavedOne": "{{count}} score modifié",
+          "scoresSavedMany": "{{count}} scores modifiés"
         },
         "chain": {
           "ariaLabel": "Circuit de validation",
