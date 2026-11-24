@@ -54,6 +54,7 @@ import { PRIMARY_BUTTON_GRADIENT } from './ui/page-header';
 import { WizardSteps } from './ui/wizard-steps';
 import {
   aggregateClassScore,
+  answerScores,
   componentScore,
   computeProfileScore,
   findRiskTier,
@@ -329,6 +330,9 @@ export interface ScoreChange {
   labelKey: string;
   previous: number | null;
   value: number;
+  /** Question manuelle : réponse choisie, dont le score découle. */
+  answer?: string;
+  previousAnswer?: string;
 }
 
 /** Portée du détail : tout le profil, une section, ou une seule question. */
@@ -346,6 +350,7 @@ const DETAIL_COMMENT_FIELD_ID = 'risk-detail-comment';
 function ScoreDetailPanel({
   scope,
   manualScores,
+  answers,
   comments,
   validationEvents,
   answerLabel,
@@ -357,6 +362,8 @@ function ScoreDetailPanel({
   answerLabel: (component: RiskComponent, short?: boolean) => string;
   scope: ScoreDetailScope | null;
   manualScores: Record<string, number>;
+  /** Réponses choisies aux questions manuelles. */
+  answers: Record<string, string>;
   /** Toutes les modifications de score ; le panneau garde celles de sa portée. */
   comments: ScoreComment[];
   /** Validations et réouvertures du score global, affichées dans l'historique du profil. */
@@ -368,6 +375,7 @@ function ScoreDetailPanel({
 }) {
   const { t } = useTranslation();
   const [draft, setDraft] = useState<Record<string, string>>({});
+  const [answerDraft, setAnswerDraft] = useState<Record<string, string>>({});
   const [comment, setComment] = useState('');
   const scopeKey = !scope
     ? null
@@ -381,6 +389,7 @@ function ScoreDetailPanel({
   if (scopeKey !== openedFor) {
     setOpenedFor(scopeKey);
     setDraft({});
+    setAnswerDraft({});
     setComment('');
   }
 
@@ -405,13 +414,31 @@ function ScoreDetailPanel({
   const parse = (text: string) => (text.trim() === '' ? Number.NaN : Number(text.replace(',', '.')));
   const entries = components.map(component => {
     const current = componentScore(component, manualScores);
+    if (component.source === 'manualQuestion') {
+      // Le score suit la réponse choisie, il ne se saisit jamais.
+      const currentAnswer = answers[component.id] ?? component.value;
+      const answer = answerDraft[component.id] ?? currentAnswer;
+      const option = component.answerOptions?.find(item => item.label === answer);
+      const changed = answer !== currentAnswer && Boolean(option);
+      return {
+        component,
+        current,
+        text: '',
+        valid: true,
+        value: changed && option ? option.score : current,
+        changed,
+        answer,
+        currentAnswer,
+      };
+    }
     const text = draft[component.id] ?? (current === null ? '' : String(current));
     const parsed = parse(text);
     // Une question non évaluée peut rester vide.
-    const untouchedEmpty = current === null && text.trim() === '';
-    const valid = untouchedEmpty || (!Number.isNaN(parsed) && parsed >= component.min && parsed <= component.max);
-    const value = untouchedEmpty || !valid ? current : round1(parsed);
-    return { component, current, text, valid, value, changed: valid && value !== current };
+    const untouched = text.trim() === (current === null ? '' : String(current));
+    const valid = untouched || (!Number.isNaN(parsed) && parsed >= component.min && parsed <= component.max);
+    // Un score corrigé est tronqué à l'entier.
+    const value = untouched || !valid ? current : Math.trunc(parsed);
+    return { component, current, text, valid, value, changed: valid && !untouched && value !== current };
   });
   const byId = new Map(entries.map(entry => [entry.component.id, entry]));
 
@@ -429,7 +456,10 @@ function ScoreDetailPanel({
       labelKey: entry.component.labelKey,
       previous: entry.current,
       value: entry.value as number,
+      answer: 'answer' in entry ? entry.answer : undefined,
+      previousAnswer: 'currentAnswer' in entry ? entry.currentAnswer : undefined,
     }));
+  const corrects = changes.some(change => change.answer === undefined);
   const invalid = entries.some(entry => !entry.valid);
   const saveReason =
     readOnlyReason ??
@@ -479,12 +509,57 @@ function ScoreDetailPanel({
                   {riskClass.components.map(component => {
                     const entry = byId.get(component.id)!;
                     const fieldId = `risk-detail-${component.id}`;
+                    const locked = Boolean(readOnlyReason);
+                    const hint = t(`${D}.fieldHint`, {
+                      value: answerLabel(component),
+                      min: component.min,
+                      max: component.max,
+                    });
+                    if (component.source === 'manualQuestion') {
+                      return (
+                        <FormField
+                          key={component.id}
+                          id={fieldId}
+                          label={t(component.labelKey)}
+                          hint={t(`${D}.answerScore`, { score: entry.value ?? '-' })}
+                        >
+                          <Select
+                            value={'answer' in entry ? entry.answer : undefined}
+                            disabled={locked}
+                            onValueChange={value => setAnswerDraft(prev => ({ ...prev, [component.id]: value }))}
+                          >
+                            <SelectTrigger id={fieldId} className="h-11">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {(component.answerOptions ?? []).map(option => (
+                                <SelectItem key={option.label} value={option.label}>
+                                  {t(`${D}.optionWithScore`, { label: option.label, score: option.score })}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormField>
+                      );
+                    }
+                    if (!component.scoreModifiable) {
+                      return (
+                        <FormField
+                          key={component.id}
+                          id={fieldId}
+                          label={t(component.labelKey)}
+                          hint={t(`${D}.notModifiable`, { value: answerLabel(component) })}
+                        >
+                          <Input id={fieldId} value={entry.text} disabled className="h-11 tabular-nums" />
+                        </FormField>
+                      );
+                    }
                     return (
                       <FormField
                         key={component.id}
                         id={fieldId}
                         label={t(component.labelKey)}
-                        hint={t(`${D}.fieldHint`, { value: answerLabel(component), min: component.min, max: component.max })}
+                        hint={component.scoreValues ? answerLabel(component) : hint}
                         error={
                           entry.valid
                             ? undefined
@@ -494,14 +569,33 @@ function ScoreDetailPanel({
                               })
                         }
                       >
-                        <Input
-                          id={fieldId}
-                          inputMode="decimal"
-                          value={entry.text}
-                          disabled={Boolean(readOnlyReason)}
-                          onChange={event => setDraft(prev => ({ ...prev, [component.id]: event.target.value }))}
-                          className="h-11 tabular-nums"
-                        />
+                        {component.scoreValues ? (
+                          <Select
+                            value={entry.text}
+                            disabled={locked}
+                            onValueChange={value => setDraft(prev => ({ ...prev, [component.id]: value }))}
+                          >
+                            <SelectTrigger id={fieldId} className="h-11 tabular-nums">
+                              <SelectValue placeholder={t(`${D}.selectScore`)} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {component.scoreValues.map(value => (
+                                <SelectItem key={value} value={String(value)}>
+                                  {value}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Input
+                            id={fieldId}
+                            inputMode="decimal"
+                            value={entry.text}
+                            disabled={locked}
+                            onChange={event => setDraft(prev => ({ ...prev, [component.id]: event.target.value }))}
+                            className="h-11 tabular-nums"
+                          />
+                        )}
                       </FormField>
                     );
                   })}
@@ -517,7 +611,7 @@ function ScoreDetailPanel({
                   id={DETAIL_COMMENT_FIELD_ID}
                   label={t('subscriptions.detail.compliance.profile.edit.comment')}
                   required
-                  hint={t(`${D}.commentHint`)}
+                  hint={corrects ? t(`${D}.freezeWarning`) : t(`${D}.commentHint`)}
                 >
                   <Textarea
                     id={DETAIL_COMMENT_FIELD_ID}
@@ -568,6 +662,8 @@ interface RiskProfileWidgetProps {
   locked: boolean;
   /** Scores saisis à la main, par question. Une section ne se saisit jamais. */
   manualScores: Record<string, number>;
+  /** Réponses choisies aux questions manuelles, dont le score découle. */
+  answers: Record<string, string>;
   /** Enregistrement groupé depuis le détail d'un score : un seul commentaire pour toutes les questions modifiées. */
   onScoresSave: (changes: ScoreChange[], comment: string) => void;
   comments: ScoreComment[];
@@ -586,6 +682,7 @@ export function RiskProfileWidget({
   screening,
   locked,
   manualScores,
+  answers,
   onScoresSave,
   comments,
   validationEvents,
@@ -599,7 +696,14 @@ export function RiskProfileWidget({
 }: RiskProfileWidgetProps) {
   const { t } = useTranslation();
   const [detailScope, setDetailScope] = useState<ScoreDetailScope | null>(null);
-  const answerLabel = useAnswerLabel(screening);
+  const screeningAnswerLabel = useAnswerLabel(screening);
+  const answerLabel = (component: RiskComponent, short?: boolean) => {
+    if (component.source !== 'manualQuestion') return screeningAnswerLabel(component, short);
+    const answer = answers[component.id];
+    return answer ?? (component.defaultAnswer ? t('subscriptions.detail.compliance.profile.defaultAnswer', { value: component.value }) : component.value);
+  };
+  // Scores effectifs : réponses des questions manuelles, puis scores corrigés.
+  const scores = useMemo(() => ({ ...answerScores(answers), ...manualScores }), [answers, manualScores]);
 
   const tc = (key: string, count: number) => t(`${key}${count === 1 ? 'One' : 'Many'}`, { count });
 
@@ -607,15 +711,15 @@ export function RiskProfileWidget({
     () =>
       mockRiskProfile.classes.map(riskClass => ({
         riskClass,
-        score: aggregateClassScore(riskClass, manualScores),
+        score: aggregateClassScore(riskClass, scores),
         unevaluated: riskClass.components.filter(
-          component => componentScore(component, manualScores) === null,
+          component => componentScore(component, scores) === null,
         ).length,
       })),
-    [manualScores],
+    [scores],
   );
 
-  const profileScore = useMemo(() => computeProfileScore(manualScores), [manualScores]);
+  const profileScore = useMemo(() => computeProfileScore(scores), [scores]);
   const profileTier = findRiskTier(mockRiskProfile.scaleId, profileScore);
   const tone: RiskTone = profileTier?.tone ?? 'medium';
   const validationRequired = profileTier?.requiresValidation ?? false;
@@ -761,7 +865,7 @@ export function RiskProfileWidget({
             <ul>
               {riskClass.components.map(component => {
                 const SourceIcon = SOURCE_ICONS[component.source];
-                const shown = componentScore(component, manualScores);
+                const shown = componentScore(component, scores);
                 const manual =
                   typeof manualScores[component.id] === 'number' ||
                   typeof component.manualScore === 'number';
@@ -799,7 +903,8 @@ export function RiskProfileWidget({
 
       <ScoreDetailPanel
         scope={detailScope}
-        manualScores={manualScores}
+        manualScores={scores}
+        answers={answers}
         comments={comments}
         validationEvents={validationEvents}
         answerLabel={answerLabel}
@@ -860,6 +965,7 @@ export function SubscriptionComplianceSection({
   const tc = (key: string, count: number) => t(`${key}${count === 1 ? 'One' : 'Many'}`, { count });
 
   const [manualScores, setManualScores] = useState<Record<string, number>>({});
+  const [riskAnswers, setRiskAnswers] = useState<Record<string, string>>({});
   const [computedAt, setComputedAt] = useState(mockRiskProfile.computedAt);
   const [scoreComments, setScoreComments] = useState<ScoreComment[]>(() => {
     const components = mockRiskProfile.classes.flatMap(item => item.components);
@@ -909,7 +1015,7 @@ export function SubscriptionComplianceSection({
   const handleReportDownloaded = (entity: { name: string }) =>
     logAudit({ type: 'providerReportDownloaded', subject: entity.name });
 
-  const profileScore = computeProfileScore(manualScores);
+  const profileScore = computeProfileScore({ ...answerScores(riskAnswers), ...manualScores });
   const profileTier = findRiskTier(mockRiskProfile.scaleId, profileScore);
   const validationRequired = profileTier?.requiresValidation ?? false;
 
@@ -959,7 +1065,10 @@ export function SubscriptionComplianceSection({
         reason: comment,
       }),
     );
-    setManualScores(prev => ({ ...prev, ...Object.fromEntries(changes.map(change => [change.id, change.value])) }));
+    const corrections = changes.filter(change => change.answer === undefined);
+    const answered = changes.filter(change => change.answer !== undefined);
+    setManualScores(prev => ({ ...prev, ...Object.fromEntries(corrections.map(change => [change.id, change.value])) }));
+    setRiskAnswers(prev => ({ ...prev, ...Object.fromEntries(answered.map(change => [change.id, change.answer ?? ''])) }));
     setScoreComments(prev => [
       ...changes.map(change => ({
         id: `${change.id}-${Date.now()}`,
@@ -970,7 +1079,10 @@ export function SubscriptionComplianceSection({
         by: CURRENT_OPERATOR,
         at: stamp,
         ts: Date.now(),
-        answer: mockRiskProfile.classes.flatMap(item => item.components).find(item => item.id === change.id)?.value,
+        answer:
+          change.answer ??
+          mockRiskProfile.classes.flatMap(item => item.components).find(item => item.id === change.id)?.value,
+        previousAnswer: change.previousAnswer,
       })),
       ...prev,
     ]);
@@ -1398,6 +1510,7 @@ export function SubscriptionComplianceSection({
         <RiskProfileWidget
           locked={locked}
           manualScores={manualScores}
+          answers={riskAnswers}
           onScoresSave={handleScoresSave}
           validationEvents={scoreEvents}
           screening={screening}

@@ -1292,18 +1292,23 @@
             "openSection": "View score detail",
             "titleGlobal": "Global score detail",
             "titleSection": "Score detail: {{name}}",
-            "description": "Edit the question scores, then save them all with one comment. A section score is recalculated from its questions.",
+            "description": "Correct the scores or select the answers to manual questions, then save everything with a comment. A section score is recomputed from its questions.",
             "locked": "File validated: scores can no longer be edited.",
             "globalScore": "Global score: {{score}}",
             "sectionScore": "Section score: {{score}}",
-            "fieldHint": "{{value}} · score from {{min}} to {{max}}",
+            "fieldHint": "{{value}} · integer score from {{min}} to {{max}}",
             "commentHint": "Required. It applies to every edited score and is kept in the comment detail and in the compliance log.",
             "invalid": "A score is outside its allowed range.",
             "noChange": "No score was edited.",
             "cancel": "Cancel",
             "saveMany": "Save the {{count}} scores",
             "openQuestion": "View question detail",
-            "descriptionQuestion": "Edit the question score, then save with a comment. Its section score is recalculated."
+            "descriptionQuestion": "Correct the score or select the answer, then save with a comment. Its section score is recomputed.",
+            "answerScore": "Score of the selected answer: {{score}}. It cannot be entered.",
+            "optionWithScore": "{{label}} · score {{score}}",
+            "notModifiable": "{{value}} · \"Editable score\" is not enabled on this question",
+            "selectScore": "Select a score",
+            "freezeWarning": "Required. A corrected score is truncated to an integer and freezes the question: an answer or a match changed afterwards no longer affects it. The correction cannot be removed."
           },
           "history": {
             "title": "Score history",
@@ -1328,7 +1333,8 @@
             "alertsZero": "no alert",
             "alertsOne": "{{count}} alert",
             "alertsMany": "{{count}} alerts"
-          }
+          },
+          "defaultAnswer": "{{value}} [Default answer]"
         },
         "screening": {
           "title": "Screening and ongoing monitoring",

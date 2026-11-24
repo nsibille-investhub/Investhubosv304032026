@@ -1292,18 +1292,23 @@
             "openSection": "Voir le détail du score",
             "titleGlobal": "Détail du score global",
             "titleSection": "Détail du score : {{name}}",
-            "description": "Modifiez les scores des questions, puis enregistrez l'ensemble avec un commentaire. Le score d'une section se recalcule à partir de ses questions.",
+            "description": "Corrigez les scores ou choisissez les réponses des questions manuelles, puis enregistrez l'ensemble avec un commentaire. Le score d'une section se recalcule à partir de ses questions.",
             "locked": "Dossier validé : les scores ne sont plus modifiables.",
             "globalScore": "Score global : {{score}}",
             "sectionScore": "Score de la section : {{score}}",
-            "fieldHint": "{{value}} · score de {{min}} à {{max}}",
+            "fieldHint": "{{value}} · score entier de {{min}} à {{max}}",
             "commentHint": "Obligatoire. Il vaut pour tous les scores modifiés et il est conservé dans le détail des commentaires et dans le journal de conformité.",
             "invalid": "Un score sort de sa plage autorisée.",
             "noChange": "Aucun score n'a été modifié.",
             "cancel": "Annuler",
             "saveMany": "Enregistrer les {{count}} scores",
             "openQuestion": "Voir le détail de la question",
-            "descriptionQuestion": "Modifiez le score de la question, puis enregistrez avec un commentaire. Le score de sa section se recalcule."
+            "descriptionQuestion": "Corrigez le score ou choisissez la réponse, puis enregistrez avec un commentaire. Le score de sa section se recalcule.",
+            "answerScore": "Score de la réponse choisie : {{score}}. Il ne se saisit pas.",
+            "optionWithScore": "{{label}} · score {{score}}",
+            "notModifiable": "{{value}} · \"Score modifiable\" n'est pas coché sur cette question",
+            "selectScore": "Choisissez un score",
+            "freezeWarning": "Obligatoire. Un score corrigé est tronqué à l'entier et fige la question : une réponse ou une correspondance modifiée ensuite ne le change plus. La correction ne se retire pas."
           },
           "history": {
             "title": "Historique du score",
@@ -1328,7 +1333,8 @@
             "alertsZero": "aucune alerte",
             "alertsOne": "{{count}} alerte",
             "alertsMany": "{{count}} alertes"
-          }
+          },
+          "defaultAnswer": "{{value}} [Réponse par défaut]"
         },
         "screening": {
           "title": "Screening et surveillance continue",
