@@ -76,6 +76,7 @@ Jamais `AlertDialog` ou `Dialog` nus pour une nouvelle modale.
 | Aperçu d'un mail avant envoi | `MailPreviewDialog` | `ui/mail-preview-dialog` |
 | Cadre d'aperçu HTML dans un panneau latéral (document, courrier) | `PreviewFrame` | `ui/preview-frame` |
 | Fichier joint téléchargeable | `AttachmentRow` | `ui/attachment-row` |
+| Historique de décisions ou de modifications (badge, auteur, date, commentaire) | `DecisionTimeline` | `ui/decision-timeline` |
 | Récapitulatif d'une action sur une sélection (traités, ignorés) | `EffectsPanel` (`marker="none"`) dans un `ConfirmDialog` | `ui/effects-panel` |
 
 ### Retour utilisateur

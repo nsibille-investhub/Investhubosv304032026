@@ -1313,6 +1313,14 @@
             "noChange": "No score was edited.",
             "cancel": "Cancel",
             "saveMany": "Save the {{count}} scores"
+          },
+          "history": {
+            "title": "Change history",
+            "empty": "No score was edited.",
+            "current": "Current score",
+            "change": "{{previous}} → {{next}}",
+            "answer": "Answer: {{value}}",
+            "notEvaluated": "not evaluated"
           }
         },
         "screening": {
@@ -8191,6 +8199,18 @@
         "states": "Shown only when the condition is met.",
         "exampleLabel": "Replacing a line's document",
         "example": "The line's current document will be replaced."
+      },
+      "decisionTimeline": {
+        "title": "Decision history",
+        "description": "Vertical thread of successive decisions on an object: decision or value as a badge, label of the entry in force, author, date and comment. Used for the decision history of an alert and for the score change history of a risk profile.",
+        "variants": "With or without a detail next to the badge (revision, question) and under the author (retained answer). Dot coloured by decision.",
+        "states": "Empty (message), one or several entries, entry in force marked.",
+        "exampleLabel": "Score changes",
+        "current": "Current score",
+        "empty": "No decision.",
+        "question": "Origin of funds",
+        "answer": "Answer: Sale of a holding",
+        "comment": "Proof of sale received."
       },
       "richMultiSelect": {
         "title": "Rich multi-select",

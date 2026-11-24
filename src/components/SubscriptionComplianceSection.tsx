@@ -41,6 +41,8 @@ import { FormField } from './ui/form-field';
 import { Input } from './ui/input';
 import { RowActionButton } from './ui/row-actions';
 import { Textarea } from './ui/textarea';
+import { DecisionTimeline, type DecisionTimelineEntry } from './ui/decision-timeline';
+import { StatusBadge } from './StatusBadge';
 import { Sheet, SheetContent } from './ui/sheet';
 import {
   SIDE_PANEL_WIDE_STYLE,
@@ -321,6 +323,47 @@ function ScoreEditDialog({
   );
 }
 
+/** Historique des modifications de score, du plus récent au plus ancien, sur le fil des décisions. */
+function ScoreHistory({ comments }: { comments: ScoreComment[] }) {
+  const { t } = useTranslation();
+  const H = 'subscriptions.detail.compliance.profile.history';
+  const format = (value: number | null) =>
+    value === null ? t('subscriptions.detail.compliance.profile.comments.computedValue') : String(value);
+  const answers = new Map(
+    mockRiskProfile.classes.flatMap(item => item.components).map(component => [component.labelKey, component.value]),
+  );
+  const seen = new Set<string>();
+  const entries: DecisionTimelineEntry[] = comments.map(item => {
+    // La modification la plus récente d'une question porte son score en vigueur.
+    const current = !seen.has(item.labelKey);
+    seen.add(item.labelKey);
+    const rising = item.previous !== null && item.next !== null && item.next > item.previous;
+    const falling = item.previous !== null && item.next !== null && item.next < item.previous;
+    const answer = answers.get(item.labelKey);
+    return {
+      id: item.id,
+      badge: (
+        <StatusBadge
+          label={t(`${H}.change`, {
+            previous: item.previous === null ? t(`${H}.notEvaluated`) : String(item.previous),
+            next: format(item.next),
+          })}
+          variant={rising ? 'warning' : falling ? 'success' : 'neutral'}
+          className="tabular-nums"
+        />
+      ),
+      dotClassName: rising ? 'bg-amber-500' : falling ? 'bg-emerald-500' : 'bg-gray-400',
+      current,
+      meta: t(item.labelKey),
+      date: item.at,
+      author: item.by,
+      detail: answer ? t(`${H}.answer`, { value: answer }) : undefined,
+      comment: item.comment,
+    };
+  });
+  return <DecisionTimeline entries={entries} currentLabel={t(`${H}.current`)} emptyLabel={t(`${H}.empty`)} />;
+}
+
 /** Détail des commentaires saisis à chaque modification de score. */
 function ScoreCommentsDialog({
   open,
@@ -332,8 +375,6 @@ function ScoreCommentsDialog({
   comments: ScoreComment[];
 }) {
   const { t } = useTranslation();
-  const format = (value: number | null) =>
-    value === null ? t('subscriptions.detail.compliance.profile.comments.computedValue') : String(value);
 
   return (
     <BigModal open={open} onOpenChange={onOpenChange}>
@@ -347,28 +388,7 @@ function ScoreCommentsDialog({
             closeLabel={t('common.confirmDialog.close')}
           />
           <BigModalBody>
-            {comments.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                {t('subscriptions.detail.compliance.profile.comments.empty')}
-              </p>
-            ) : (
-              <ul className="space-y-3">
-                {comments.map(item => (
-                  <li key={item.id} className="rounded-lg border bg-card p-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <span className="text-sm font-semibold text-foreground">{t(item.labelKey)}</span>
-                      <span className="shrink-0 text-xs font-semibold text-foreground tabular-nums">
-                        {format(item.previous)} → {format(item.next)}
-                      </span>
-                    </div>
-                    <p className="mt-1.5 text-sm text-foreground">{item.comment}</p>
-                    <p className="mt-1.5 text-xs text-muted-foreground">
-                      {item.by} · {item.at}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <ScoreHistory comments={comments} />
           </BigModalBody>
           <BigModalPanelFooter
             end={
@@ -402,12 +422,15 @@ const DETAIL_COMMENT_FIELD_ID = 'risk-detail-comment';
 function ScoreDetailPanel({
   scope,
   manualScores,
+  comments,
   readOnlyReason,
   onClose,
   onSave,
 }: {
   scope: ScoreDetailScope | null;
   manualScores: Record<string, number>;
+  /** Toutes les modifications de score ; le panneau garde celles de sa portée. */
+  comments: ScoreComment[];
   /** Score validé ou dossier verrouillé : consultation seule. */
   readOnlyReason?: string;
   onClose: () => void;
@@ -432,6 +455,9 @@ function ScoreDetailPanel({
       ? mockRiskProfile.classes
       : mockRiskProfile.classes.filter(item => item.id === scope.classId);
   const components = classes.flatMap(item => item.components);
+  const scopeLabels = new Set(components.map(component => component.labelKey));
+  if (scope?.kind === 'profile') scopeLabels.add('subscriptions.detail.compliance.score.global');
+  const scopeHistory = comments.filter(item => scopeLabels.has(item.labelKey));
 
   const parse = (text: string) => (text.trim() === '' ? Number.NaN : Number(text.replace(',', '.')));
   const entries = components.map(component => {
@@ -563,6 +589,12 @@ function ScoreDetailPanel({
               </SidePanelCard>
             </SidePanelSection>
           )}
+
+          <SidePanelSection icon={History} title={t('subscriptions.detail.compliance.profile.history.title')}>
+            <SidePanelCard>
+              <ScoreHistory comments={scopeHistory} />
+            </SidePanelCard>
+          </SidePanelSection>
         </div>
 
         <SidePanelFooter>
@@ -893,6 +925,7 @@ export function RiskProfileWidget({
       <ScoreDetailPanel
         scope={detailScope}
         manualScores={manualScores}
+        comments={comments}
         readOnlyReason={locked ? t('subscriptions.detail.compliance.profile.detail.locked') : editLockedReason}
         onClose={() => setDetailScope(null)}
         onSave={(changes, comment) => {

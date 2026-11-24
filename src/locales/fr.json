@@ -1313,6 +1313,14 @@
             "noChange": "Aucun score n'a été modifié.",
             "cancel": "Annuler",
             "saveMany": "Enregistrer les {{count}} scores"
+          },
+          "history": {
+            "title": "Historique des modifications",
+            "empty": "Aucun score n'a été modifié.",
+            "current": "Score actuel",
+            "change": "{{previous}} → {{next}}",
+            "answer": "Réponse : {{value}}",
+            "notEvaluated": "non évalué"
           }
         },
         "screening": {
@@ -8191,6 +8199,18 @@
         "states": "Affiché seulement quand la condition est remplie.",
         "exampleLabel": "Remplacement du document d'une ligne",
         "example": "Le document actuel de la ligne sera remplacé."
+      },
+      "decisionTimeline": {
+        "title": "Historique de décisions",
+        "description": "Fil vertical des décisions successives sur un objet : décision ou valeur en badge, étiquette de l'entrée en vigueur, auteur, date et commentaire. Sert à l'historique des décisions d'une alerte et à celui des modifications de score d'un profil de risque.",
+        "variants": "Avec ou sans précision à côté du badge (révision, question) et sous l'auteur (réponse retenue). Pastille colorée selon la décision.",
+        "states": "Vide (message), une ou plusieurs entrées, entrée en vigueur marquée.",
+        "exampleLabel": "Modifications de score",
+        "current": "Score actuel",
+        "empty": "Aucune décision.",
+        "question": "Origine des fonds",
+        "answer": "Réponse : Cession de participation",
+        "comment": "Justificatif de cession reçu."
       },
       "richMultiSelect": {
         "title": "Multisélection riche",
