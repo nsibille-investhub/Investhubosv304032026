@@ -8159,6 +8159,21 @@
         "exampleLabel": "Preview of a capital call notification",
         "open": "Preview"
       },
+      "previewFrame": {
+        "title": "Preview frame",
+        "description": "Preview frame for HTML content in a side panel: white page on a grey background, rendered without scripts. Used for the mail preview (MailPreviewDialog) and for the document preview of a notice line.",
+        "variants": "Free height (flex-1) in a column, or fixed height.",
+        "states": "Display only, no interaction.",
+        "exampleLabel": "Document preview"
+      },
+      "warningNote": {
+        "title": "Warning before confirmation",
+        "description": "One-sentence warning placed in a dialog or a form, right before confirmation: replaced document, permanent deletion, inconsistent input. For the state of a whole page, use PageStateBanner.",
+        "variants": "A single variant: alert icon and one sentence.",
+        "states": "Shown only when the condition is met.",
+        "exampleLabel": "Replacing a line's document",
+        "example": "The line's current document will be replaced."
+      },
       "richMultiSelect": {
         "title": "Rich multi-select",
         "description": "Checkbox dropdown to choose items described by several pieces of information (subscription: investor, reference, commitment, units, validation date). Search on the label and the reference. The selection is shown separately, in a list where each item can be removed.",

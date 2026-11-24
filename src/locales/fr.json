@@ -8159,6 +8159,21 @@
         "exampleLabel": "Aperçu de la notification d'un appel",
         "open": "Aperçu"
       },
+      "previewFrame": {
+        "title": "Cadre d'aperçu",
+        "description": "Cadre d'aperçu d'un contenu HTML dans un panneau latéral : page blanche sur fond gris, rendue sans script. Sert à l'aperçu d'un mail (MailPreviewDialog) et à celui du document d'une ligne de notice.",
+        "variants": "Hauteur libre (flex-1) dans une colonne, ou hauteur fixe.",
+        "states": "Affichage seul, sans interaction.",
+        "exampleLabel": "Aperçu d'un document"
+      },
+      "warningNote": {
+        "title": "Avertissement avant validation",
+        "description": "Avertissement d'une phrase placé dans une fenêtre ou un formulaire, juste avant la validation : document remplacé, suppression définitive, saisie incohérente. Pour l'état d'une page entière, utilisez PageStateBanner.",
+        "variants": "Une seule variante : icône d'alerte et une phrase.",
+        "states": "Affiché seulement quand la condition est remplie.",
+        "exampleLabel": "Remplacement du document d'une ligne",
+        "example": "Le document actuel de la ligne sera remplacé."
+      },
       "richMultiSelect": {
         "title": "Multisélection riche",
         "description": "Liste déroulante à cases pour choisir des éléments décrits par plusieurs informations (souscription : investisseur, référence, engagement, titres, date de validation). Recherche sur le libellé et la référence. La sélection s'affiche à part, dans une liste où chaque élément se retire.",

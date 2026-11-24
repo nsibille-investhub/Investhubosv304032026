@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Download, FilePlus, FileText, Paperclip, Replace, TriangleAlert, Upload, type LucideIcon } from 'lucide-react';
+import { Download, FilePlus, FileText, Paperclip, Replace, Upload, type LucideIcon } from 'lucide-react';
 
 import { useTranslation } from '../../utils/languageContext';
 import {
@@ -8,14 +8,15 @@ import {
   type NoticeFamily,
   type NoticeUploadUsage,
 } from '../../utils/noticeActions';
-import { Alert, AlertDescription } from '../ui/alert';
 import { AttachmentRow } from '../ui/attachment-row';
 import { Button } from '../ui/button';
 import { ConfirmDialog } from '../ui/confirm-dialog';
 import { EffectsPanel, type EffectItem } from '../ui/effects-panel';
 import { FormField } from '../ui/form-field';
 import { Input } from '../ui/input';
+import { PreviewFrame } from '../ui/preview-frame';
 import { SegmentedControl } from '../ui/segmented-control';
+import { WarningNote } from '../ui/warning-note';
 import { Sheet, SheetContent } from '../ui/sheet';
 import { WidgetMetric } from '../ui/widget-card';
 import {
@@ -28,16 +29,6 @@ import {
 } from '../ui/side-panel';
 
 const K = 'funds.notices';
-
-/** Avertissement d'une fenêtre d'action : document écrasé, suppression définitive... */
-export function NoticeWarning({ children }: { children: string }) {
-  return (
-    <Alert variant="destructive">
-      <TriangleAlert />
-      <AlertDescription>{children}</AlertDescription>
-    </Alert>
-  );
-}
 
 interface NoticeActionDialogProps {
   open: boolean;
@@ -97,7 +88,7 @@ export function NoticeActionDialog({
           </FormField>
         )}
         <EffectsPanel effects={effects} marker="none" title={t(`${K}.common.dialog.summary`)} />
-        {warning && <NoticeWarning>{warning}</NoticeWarning>}
+        {warning && <WarningNote>{warning}</WarningNote>}
       </div>
     </ConfirmDialog>
   );
@@ -168,7 +159,7 @@ export function NoticeUploadDialog({ open, onClose, documentKind, lineLabel, onC
             ]}
           />
         </FormField>
-        {usage === 'replace' && <NoticeWarning>{t(`${K}.docKind.${documentKind}.replaceWarning`)}</NoticeWarning>}
+        {usage === 'replace' && <WarningNote>{t(`${K}.docKind.${documentKind}.replaceWarning`)}</WarningNote>}
       </div>
     </ConfirmDialog>
   );
@@ -242,9 +233,7 @@ ${line.document.manualFile ? `<p style="margin-top:24px;color:#475569">${escapeH
                   />
                 </div>
               </SidePanelCard>
-              <div className="flex h-96 flex-col rounded-md border border-border bg-gray-100 p-3">
-                <iframe title={t(`${P}.frame`)} srcDoc={html} sandbox="" className="block w-full flex-1 border-0 bg-white" />
-              </div>
+              <PreviewFrame title={t(`${P}.frame`)} html={html} className="h-96" />
             </SidePanelSection>
             <SidePanelSection icon={Paperclip} title={t(`${P}.extraFiles`)}>
               <SidePanelCard>
