@@ -7,16 +7,15 @@ import {
   Clock,
   Download,
   Eye,
+  FileCheck,
   FileText,
   Landmark,
   Lock,
   Mail,
-  Paperclip,
   Pencil,
   PenTool,
   Plus,
   RefreshCw,
-  Save,
   Send,
   ShieldCheck,
   Trash2,
@@ -29,16 +28,10 @@ import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Checkbox } from './ui/checkbox';
 import { ConfirmDialog } from './ui/confirm-dialog';
+import { DisabledReason } from './ui/disabled-reason';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Switch } from './ui/switch';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from './ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { cn, WIDGET_LABEL_CLASS, WIDGET_SUBTITLE_CLASS, WIDGET_TITLE_CLASS } from './ui/utils';
 import { PRIMARY_BUTTON_GRADIENT } from './ui/page-header';
@@ -49,7 +42,6 @@ import {
   mockFundCounterSignatories,
   mockSignaturePack,
   type MockSignaturePackDocument,
-  type SignaturePackDocumentKind,
 } from '../utils/subscriptionDetailMockData';
 import { MAIL_TEMPLATES } from '../utils/mailTemplatesMockData';
 import { downloadCsv } from '../utils/capitalCallRecipients';
@@ -134,8 +126,6 @@ type PackDocument = MockSignaturePackDocument & {
 };
 
 interface PlacementDraft {
-  /** Document existant basculé en « à signer », ou null pour un ajout. */
-  docId: string | null;
   name: string;
   signatureBox: SignatureBox;
   counterSignatureBox: SignatureBox;
@@ -233,7 +223,8 @@ export function SubscriptionSignatureStep({
   const [sentAt, setSentAt] = useState<string | null>(null);
   const [lastReminderAt, setLastReminderAt] = useState<string | null>(null);
   const [lastMailAt, setLastMailAt] = useState<string | null>(null);
-  const [draftSavedAt, setDraftSavedAt] = useState<string | null>(null);
+  const [manualValidatedAt, setManualValidatedAt] = useState<string | null>(null);
+  const [confirmManual, setConfirmManual] = useState(false);
   const [pack, setPack] = useState<PackDocument[]>(mockSignaturePack);
   const [parallel, setParallel] = useState(false);
   const [placement, setPlacement] = useState<PlacementDraft | null>(null);
@@ -247,8 +238,9 @@ export function SubscriptionSignatureStep({
   const locked = stage !== 'draft';
   const complianceValidated = compliance.status === 'validated';
 
-  const toSignDocs = pack.filter(doc => doc.kind === 'toSign');
-  const annexDocs = pack.filter(doc => doc.kind === 'annex');
+  const toSignDocs = pack.filter(doc => !doc.signed);
+  const signedDocs = pack.filter(doc => doc.signed);
+  const manualValidated = manualValidatedAt !== null;
 
   const activeSignatories = signatories.filter(party => party.included);
   const signedSignatories = activeSignatories.filter(party => party.status === 'signed').length;
@@ -264,6 +256,11 @@ export function SubscriptionSignatureStep({
     ...(activeSignatories.length === 0 ? [`${KEY}.blockers.noSignatory`] : []),
   ];
   const canSend = blockers.length === 0;
+  const manualBlocker = !complianceValidated
+    ? t(`${KEY}.manualValidation.blockedCompliance`)
+    : signedDocs.length === 0
+      ? t(`${KEY}.manualValidation.blockedNoSignedDocument`)
+      : undefined;
 
   const finishSignatures = (nextSignatories: SignatureParty[]) => {
     if (!allSigned(nextSignatories)) return;
@@ -302,11 +299,6 @@ export function SubscriptionSignatureStep({
     });
   };
 
-  const handleSaveDraft = () => {
-    setDraftSavedAt(now());
-    toast.success(t(`${KEY}.toast.draftSaved`));
-  };
-
   const handleSend = () => {
     if (!canSend) return;
     const stamp = now();
@@ -321,6 +313,15 @@ export function SubscriptionSignatureStep({
         `${KEY}.pack.documentsCount`,
         toSignDocs.length,
       )}`,
+    });
+  };
+
+  const handleManualValidation = () => {
+    setManualValidatedAt(now());
+    setStage('completed');
+    setConfirmManual(false);
+    toast.success(t(`${KEY}.toast.manuallyValidated`), {
+      description: t(`${KEY}.toast.fullySignedDesc`),
     });
   };
 
@@ -423,34 +424,13 @@ export function SubscriptionSignatureStep({
       .filter(party => party.included && party.status === 'sent')
       .map(party => party.id);
 
-  /** Les encarts des gabarits du bulletin sont déjà placés ; un document ajouté doit les préciser. */
-  const needsPlacement = (doc: PackDocument) => doc.source === 'manual' && !doc.signatureBox;
-
-  const handlePackKind = (id: string, kind: SignaturePackDocumentKind) => {
-    const target = pack.find(doc => doc.id === id);
-    if (kind === 'toSign' && target && needsPlacement(target)) {
-      setPlacement({
-        docId: id,
-        name: target.name,
-        signatureBox: EMPTY_BOX,
-        counterSignatureBox: EMPTY_BOX,
-      });
-      return;
-    }
-    setPack(prev => prev.map(doc => (doc.id === id ? { ...doc, kind } : doc)));
-  };
-
   const nextManualIndex = pack.filter(doc => doc.source === 'manual').length + 1;
 
-  const handlePackAdd = (kind: SignaturePackDocumentKind) => {
+  /** Un document déposé déjà signé n'a pas d'encart à placer ; un document à signer en exige. */
+  const handlePackAdd = (signed: boolean) => {
     const name = t(`${KEY}.pack.newDocumentName`, { index: nextManualIndex });
-    if (kind === 'toSign') {
-      setPlacement({
-        docId: null,
-        name,
-        signatureBox: EMPTY_BOX,
-        counterSignatureBox: EMPTY_BOX,
-      });
+    if (!signed) {
+      setPlacement({ name, signatureBox: EMPTY_BOX, counterSignatureBox: EMPTY_BOX });
       return;
     }
     setPack(prev => [
@@ -459,11 +439,11 @@ export function SubscriptionSignatureStep({
         id: `pack-manual-${Date.now()}`,
         name,
         file: `document-${nextManualIndex}.pdf`,
-        kind,
         source: 'manual',
+        signed,
       },
     ]);
-    toast.success(t(`${KEY}.pack.toast.added`), { description: name });
+    toast.success(t(signed ? `${KEY}.pack.toast.addedSigned` : `${KEY}.pack.toast.added`), { description: name });
   };
 
   const placementNeedsCounter = activeCounter.length > 0;
@@ -480,27 +460,18 @@ export function SubscriptionSignatureStep({
       signatureBox: placement.signatureBox,
       counterSignatureBox: placementNeedsCounter ? placement.counterSignatureBox : undefined,
     };
-    if (placement.docId) {
-      setPack(prev =>
-        prev.map(doc =>
-          doc.id === placement.docId ? { ...doc, name, kind: 'toSign', ...boxes } : doc,
-        ),
-      );
-      toast.success(t(`${KEY}.pack.toast.placed`), { description: name });
-    } else {
-      setPack(prev => [
-        ...prev,
-        {
-          id: `pack-manual-${Date.now()}`,
-          name,
-          file: `document-${nextManualIndex}.pdf`,
-          kind: 'toSign',
-          source: 'manual',
-          ...boxes,
-        },
-      ]);
-      toast.success(t(`${KEY}.pack.toast.added`), { description: name });
-    }
+    setPack(prev => [
+      ...prev,
+      {
+        id: `pack-manual-${Date.now()}`,
+        name,
+        file: `document-${nextManualIndex}.pdf`,
+        source: 'manual',
+        signed: false,
+        ...boxes,
+      },
+    ]);
+    toast.success(t(`${KEY}.pack.toast.added`), { description: name });
     setPlacement(null);
   };
 
@@ -543,13 +514,11 @@ export function SubscriptionSignatureStep({
     });
   };
 
-  const stageBadge: Record<SignatureStage, { className: string; icon: typeof Clock }> = {
-    draft: { className: 'bg-muted text-muted-foreground border-border', icon: Pencil },
+  const stageBadge: Record<Exclude<SignatureStage, 'draft'>, { className: string; icon: typeof Clock }> = {
     signing: { className: 'bg-amber-100 text-amber-700 border-amber-300', icon: Clock },
     counterSigning: { className: 'bg-primary/10 text-primary border-primary/30', icon: Landmark },
     completed: { className: 'bg-emerald-100 text-emerald-700 border-emerald-200', icon: CheckCircle2 },
   };
-  const StageIcon = stageBadge[stage].icon;
 
   const substeps: Array<{
     id: string;
@@ -564,9 +533,11 @@ export function SubscriptionSignatureStep({
       id: 'send',
       icon: Send,
       label: t(`${KEY}.substeps.send`),
-      detail: lastMailAt
-        ? t(`${KEY}.tracking.lastMailOn`, { date: lastMailAt })
-        : t(`${KEY}.stage.draft`),
+      detail: manualValidated
+        ? t(`${KEY}.manualValidation.label`)
+        : lastMailAt
+          ? t(`${KEY}.tracking.lastMailOn`, { date: lastMailAt })
+          : t(`${KEY}.tracking.notSent`),
       state: stage === 'draft' ? 'current' : 'done',
       meta: (
         <span className="flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
@@ -600,10 +571,12 @@ export function SubscriptionSignatureStep({
       id: 'signatures',
       icon: PenTool,
       label: t(`${KEY}.substeps.signatures`),
-      detail: t(`${KEY}.tracking.progress`, {
-        signed: signedSignatories,
-        total: activeSignatories.length,
-      }),
+      detail: manualValidated
+        ? t(`${KEY}.manualValidation.label`)
+        : t(`${KEY}.tracking.progress`, {
+            signed: signedSignatories,
+            total: activeSignatories.length,
+          }),
       state:
         stage === 'signing'
           ? 'current'
@@ -615,8 +588,9 @@ export function SubscriptionSignatureStep({
       id: 'counterSignature',
       icon: Landmark,
       label: t(`${KEY}.substeps.counterSignature`),
-      detail:
-        activeCounter.length === 0
+      detail: manualValidated
+        ? t(`${KEY}.manualValidation.label`)
+        : activeCounter.length === 0
           ? t(`${KEY}.tracking.noCounterSignatory`)
           : t(`${KEY}.tracking.progress`, { signed: signedCounter, total: activeCounter.length }),
       state:
@@ -636,7 +610,11 @@ export function SubscriptionSignatureStep({
           <div className="min-w-0">
             <h3 className={WIDGET_TITLE_CLASS}>{t(`${KEY}.tracking.title`)}</h3>
             <p className={WIDGET_SUBTITLE_CLASS}>
-              {sentAt ? t(`${KEY}.tracking.sentOn`, { date: sentAt }) : t(`${KEY}.tracking.notSent`)}
+              {manualValidatedAt
+                ? t(`${KEY}.manualValidation.validatedOn`, { date: manualValidatedAt })
+                : sentAt
+                  ? t(`${KEY}.tracking.sentOn`, { date: sentAt })
+                  : t(`${KEY}.tracking.notSent`)}
               {lastReminderAt && (
                 <>
                   {' · '}
@@ -645,27 +623,35 @@ export function SubscriptionSignatureStep({
                   {tc(`${KEY}.tracking.reminders`, totalReminders)}
                 </>
               )}
-              {!sentAt && draftSavedAt && (
-                <>
-                  {' · '}
-                  {t(`${KEY}.tracking.draftSavedOn`, { date: draftSavedAt })}
-                </>
-              )}
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 shrink-0">
-            <Badge className={stageBadge[stage].className}>
-              <StageIcon className="w-3.5 h-3.5 mr-1.5" />
-              {t(`${KEY}.stage.${stage}`)}
-            </Badge>
+            {stage !== 'draft' &&
+              (() => {
+                const StageIcon = stageBadge[stage].icon;
+                return (
+                  <Badge className={stageBadge[stage].className}>
+                    <StageIcon className="w-3.5 h-3.5 mr-1.5" />
+                    {t(`${KEY}.stage.${stage}`)}
+                  </Badge>
+                );
+              })()}
 
             {stage === 'draft' && (
               <>
-                <Button variant="outline" size="sm" className="gap-1.5 text-xs h-9" onClick={handleSaveDraft}>
-                  <Save className="w-3.5 h-3.5" />
-                  {t(`${KEY}.actions.saveDraft`)}
-                </Button>
+                <DisabledReason reason={manualBlocker}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 text-xs h-9"
+                    disabled={Boolean(manualBlocker)}
+                    onClick={() => setConfirmManual(true)}
+                  >
+                    <FileCheck className="w-3.5 h-3.5" />
+                    {t(`${KEY}.actions.validateWithoutESignature`)}
+                  </Button>
+                </DisabledReason>
                 <Button
                   size="lg"
                   className="gap-2 px-6 text-white hover:opacity-90"
@@ -793,25 +779,35 @@ export function SubscriptionSignatureStep({
       {/* Pack de signature */}
       <Card className="shadow-sm overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <h3 className={WIDGET_TITLE_CLASS}>{t(`${KEY}.pack.title`)}</h3>
             <p className={WIDGET_SUBTITLE_CLASS}>
               {locked ? t(`${KEY}.pack.locked`) : t(`${KEY}.pack.subtitle`)}
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            {locked ? (
+          <div className="flex flex-wrap items-center gap-2">
+            {locked && (
               <Badge className="bg-muted text-muted-foreground border-border">
                 <Lock className="w-3 h-3 mr-1" />
                 {tc(`${KEY}.pack.documentsCount`, pack.length)}
               </Badge>
-            ) : (
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-xs h-9"
+              onClick={() => toast.success(t(`${KEY}.pack.toast.downloaded`))}
+            >
+              <Download className="w-3.5 h-3.5" />
+              {t(`${KEY}.pack.downloadAll`)}
+            </Button>
+            {!locked && (
               <>
                 <Button
                   variant="outline"
                   size="sm"
                   className="gap-1.5 text-xs h-9"
-                  onClick={() => handlePackAdd('toSign')}
+                  onClick={() => handlePackAdd(false)}
                 >
                   <Plus className="w-3.5 h-3.5" />
                   {t(`${KEY}.pack.addToSign`)}
@@ -820,42 +816,26 @@ export function SubscriptionSignatureStep({
                   variant="outline"
                   size="sm"
                   className="gap-1.5 text-xs h-9"
-                  onClick={() => handlePackAdd('annex')}
+                  onClick={() => handlePackAdd(true)}
                 >
-                  <Paperclip className="w-3.5 h-3.5" />
-                  {t(`${KEY}.pack.addAnnex`)}
+                  <FileCheck className="w-3.5 h-3.5" />
+                  {t(`${KEY}.pack.addSigned`)}
                 </Button>
               </>
             )}
           </div>
         </div>
 
-        <div
-          className="grid gap-4 border-t px-4 py-4"
-          style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))' }}
-        >
+        <div className="border-t px-4 py-4">
           <PackGroup
             icon={PenTool}
             title={t(`${KEY}.pack.toSign`)}
             hint={t(`${KEY}.pack.toSignHint`)}
-            count={toSignDocs.length}
+            count={pack.length}
             emptyLabel={t(`${KEY}.pack.emptyToSign`)}
-            documents={toSignDocs}
+            documents={pack}
             locked={locked}
             signed={stage === 'completed'}
-            onKindChange={handlePackKind}
-            onRemove={handlePackRemove}
-          />
-          <PackGroup
-            icon={Paperclip}
-            title={t(`${KEY}.pack.annexes`)}
-            hint={t(`${KEY}.pack.annexesHint`)}
-            count={annexDocs.length}
-            emptyLabel={t(`${KEY}.pack.emptyAnnexes`)}
-            documents={annexDocs}
-            locked={locked}
-            signed={false}
-            onKindChange={handlePackKind}
             onRemove={handlePackRemove}
           />
         </div>
@@ -879,6 +859,7 @@ export function SubscriptionSignatureStep({
           onRemind={id => handleRemind('signatory', [id])}
           onRegenerate={id => handleRegenerate('signatory', [id])}
           onMarkSigned={id => handleMarkSigned('signatory', id)}
+          manualValidated={manualValidated}
         />
         <PartyCard
           kind="counterSignatory"
@@ -895,6 +876,7 @@ export function SubscriptionSignatureStep({
           onRemind={id => handleRemind('counterSignatory', [id])}
           onRegenerate={id => handleRegenerate('counterSignatory', [id])}
           onMarkSigned={id => handleMarkSigned('counterSignatory', id)}
+          manualValidated={manualValidated}
         />
       </div>
 
@@ -936,6 +918,16 @@ export function SubscriptionSignatureStep({
           </div>
         )}
       </ConfirmDialog>
+
+      <ConfirmDialog
+        open={confirmManual}
+        onOpenChange={setConfirmManual}
+        icon={FileCheck}
+        title={t(`${KEY}.manualValidation.title`)}
+        description={tc(`${KEY}.manualValidation.description`, signedDocs.length)}
+        confirmLabel={t(`${KEY}.actions.validateWithoutESignature`)}
+        onConfirm={handleManualValidation}
+      />
     </div>
   );
 }
@@ -982,7 +974,6 @@ interface PackGroupProps {
   documents: PackDocument[];
   locked: boolean;
   signed: boolean;
-  onKindChange: (id: string, kind: SignaturePackDocumentKind) => void;
   onRemove: (id: string) => void;
 }
 
@@ -995,7 +986,6 @@ function PackGroup({
   documents,
   locked,
   signed,
-  onKindChange,
   onRemove,
 }: PackGroupProps) {
   const { t } = useTranslation();
@@ -1018,11 +1008,11 @@ function PackGroup({
           {emptyLabel}
         </p>
       ) : (
-        <ul className="space-y-2">
+        <ul className="grid gap-2" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))' }}>
           {documents.map(doc => (
             <li
               key={doc.id}
-              className="flex items-center gap-3 rounded-lg border border-border bg-muted p-3"
+              className="flex min-w-0 items-center gap-3 rounded-lg border border-border bg-muted p-3"
             >
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border bg-card">
                 <FileText className="w-4 h-4 text-primary" />
@@ -1044,7 +1034,7 @@ function PackGroup({
                       ? t(`${KEY}.pack.sourceBulletin`)
                       : t(`${KEY}.pack.sourceAdded`)}
                   </Badge>
-                  {locked && doc.kind === 'toSign' && signed && (
+                  {(doc.signed || signed) && (
                     <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-[11px]">
                       <CheckCircle2 className="w-3 h-3 mr-1" />
                       {t(`${KEY}.pack.signed`)}
@@ -1052,7 +1042,7 @@ function PackGroup({
                   )}
                   <span className="truncate text-xs text-foreground/70">
                     {doc.file}
-                    {doc.kind === 'toSign' && doc.signatureBox && (
+                    {doc.signatureBox && (
                       <>
                         {' · '}
                         {t(`${KEY}.pack.placement.summary`, doc.signatureBox)}
@@ -1061,21 +1051,6 @@ function PackGroup({
                   </span>
                 </div>
               </div>
-
-              {!locked && (
-                <Select
-                  value={doc.kind}
-                  onValueChange={value => onKindChange(doc.id, value as SignaturePackDocumentKind)}
-                >
-                  <SelectTrigger className="h-8 w-[120px] text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="toSign">{t(`${KEY}.pack.kind.toSign`)}</SelectItem>
-                    <SelectItem value="annex">{t(`${KEY}.pack.kind.annex`)}</SelectItem>
-                  </SelectContent>
-                </Select>
-              )}
 
               <div className="flex items-center gap-1">
                 <Tooltip>
@@ -1142,6 +1117,8 @@ interface PartyCardProps {
   onRemind: (id: string) => void;
   onRegenerate: (id: string) => void;
   onMarkSigned: (id: string) => void;
+  /** Pack validé sur dépôt de documents signés : aucun lien de signature n'a été envoyé. */
+  manualValidated: boolean;
 }
 
 function PartyCard({
@@ -1157,6 +1134,7 @@ function PartyCard({
   onRemind,
   onRegenerate,
   onMarkSigned,
+  manualValidated,
 }: PartyCardProps) {
   const { t } = useTranslation();
   const locked = stage !== 'draft';
@@ -1270,7 +1248,11 @@ function PartyCard({
           <p className={WIDGET_SUBTITLE_CLASS}>{subtitle}</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          {locked ? (
+          {manualValidated ? (
+            <Badge className="bg-muted text-muted-foreground border-border">
+              {t(`${KEY}.manualValidation.label`)}
+            </Badge>
+          ) : locked ? (
             <Badge
               className={cn(
                 'tabular-nums',
@@ -1381,7 +1363,7 @@ function PartyCard({
                         })}
                       </span>
                     )}
-                    {party.status === 'notSent' && (
+                    {party.status === 'notSent' && !manualValidated && (
                       <span className="inline-flex items-center gap-1 text-foreground/70">
                         <Clock className="w-3.5 h-3.5" />
                         {t(`${KEY}.parties.status.waitingSignatories`)}
@@ -1485,7 +1467,7 @@ function PartyCard({
                   </>
                 )}
 
-                {locked && party.status === 'notSent' && (
+                {locked && party.status === 'notSent' && !manualValidated && (
                   <Badge className="bg-card text-foreground/70 border-border">
                     {t(`${KEY}.parties.status.notSent`)}
                   </Badge>

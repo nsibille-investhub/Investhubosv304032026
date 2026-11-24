@@ -477,26 +477,25 @@ export const mockInitEmails: MockInitEmail[] = [
   },
 ];
 
-export type SignaturePackDocumentKind = 'toSign' | 'annex';
-
 export interface MockSignaturePackDocument {
   id: string;
   name: string;
   file: string;
-  kind: SignaturePackDocumentKind;
   /** 'bulletin' : prevu par le bulletin de souscription, non retirable. 'manual' : ajoute par l'operateur. */
   source: 'bulletin' | 'manual';
+  /** Document deja signe hors plateforme, depose par l'operateur. */
+  signed?: boolean;
 }
 
-/** Pack de signature propose par defaut : documents du bulletin a signer, annexes du fonds. */
+/** Pack de signature propose par defaut : tous les documents sont a signer. */
 export const mockSignaturePack: MockSignaturePackDocument[] = [
-  { id: 'pack-bs', name: 'Bulletin de souscription', file: 'bulletin-souscription.pdf', kind: 'toSign', source: 'bulletin' },
-  { id: 'pack-declaration', name: 'Déclaration de statut professionnel', file: 'declaration-statut-professionnel.pdf', kind: 'toSign', source: 'bulletin' },
-  { id: 'pack-fatca', name: 'Auto-certification FATCA / CRS', file: 'auto-certification-fatca-crs.pdf', kind: 'toSign', source: 'bulletin' },
-  { id: 'pack-side-letter', name: 'Side letter', file: 'side-letter.pdf', kind: 'toSign', source: 'manual' },
-  { id: 'pack-dici', name: 'DICI', file: 'dici.pdf', kind: 'annex', source: 'bulletin' },
-  { id: 'pack-statuts', name: 'Statuts du fonds', file: 'statuts.pdf', kind: 'annex', source: 'bulletin' },
-  { id: 'pack-reglement', name: 'Règlement du fonds', file: 'reglement.pdf', kind: 'annex', source: 'manual' },
+  { id: 'pack-bs', name: 'Bulletin de souscription', file: 'bulletin-souscription.pdf', source: 'bulletin' },
+  { id: 'pack-declaration', name: 'Déclaration de statut professionnel', file: 'declaration-statut-professionnel.pdf', source: 'bulletin' },
+  { id: 'pack-fatca', name: 'Auto-certification FATCA / CRS', file: 'auto-certification-fatca-crs.pdf', source: 'bulletin' },
+  { id: 'pack-side-letter', name: 'Side letter', file: 'side-letter.pdf', source: 'manual' },
+  { id: 'pack-dici', name: 'DICI', file: 'dici.pdf', source: 'bulletin' },
+  { id: 'pack-statuts', name: 'Statuts du fonds', file: 'statuts.pdf', source: 'bulletin' },
+  { id: 'pack-reglement', name: 'Règlement du fonds', file: 'reglement.pdf', source: 'manual' },
 ];
 
 export interface MockCounterSignatory {

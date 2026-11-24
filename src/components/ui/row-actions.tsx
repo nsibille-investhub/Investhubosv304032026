@@ -88,6 +88,59 @@ export interface TableRowAction {
   separatorBefore?: boolean;
 }
 
+interface ActionsMenuProps {
+  actions: TableRowAction[];
+  /** Libellé du bouton, au survol et pour les lecteurs d'écran. Par défaut « Plus d'actions ». */
+  label?: string;
+  icon?: LucideIcon;
+  /** `ghost` dans une ligne de tableau, `outline` dans une barre d'actions. */
+  variant?: 'ghost' | 'outline';
+}
+
+/** Menu d'actions derrière un bouton icône : suite des actions d'une ligne, ou actions groupées d'une barre. */
+export function ActionsMenu({ actions, label, icon: Icon = MoreVertical, variant = 'ghost' }: ActionsMenuProps) {
+  const { t } = useTranslation();
+  const tooltip = label ?? t('common.listing.moreActions');
+  return (
+    <DropdownMenu>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant={variant}
+              size="sm"
+              aria-label={tooltip}
+              className={variant === 'ghost' ? cn('h-8 w-8 p-0', INTENT_CLASS.neutral) : 'h-9 w-9 p-0'}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Icon className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+        </TooltipTrigger>
+        <TooltipContent>{tooltip}</TooltipContent>
+      </Tooltip>
+      <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+        {actions.map((action, index) => (
+          <React.Fragment key={action.label}>
+            {action.separatorBefore && index > 0 && <DropdownMenuSeparator />}
+            <DropdownMenuItem
+              onClick={action.onClick}
+              disabled={Boolean(action.disabledReason)}
+              variant={action.intent === 'danger' ? 'destructive' : 'default'}
+            >
+              <action.icon className="h-4 w-4" />
+              <span className="flex flex-col">
+                <span>{action.label}</span>
+                {action.disabledReason && <span className="text-xs text-muted-foreground">{action.disabledReason}</span>}
+              </span>
+            </DropdownMenuItem>
+          </React.Fragment>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 /** Nombre d'actions affichées en boutons avant de passer au menu ⋮. */
 export const ROW_ACTIONS_VISIBLE = 3;
 
@@ -119,44 +172,7 @@ export function TableRowActions({
           onClick={action.onClick}
         />
       ))}
-      {overflow.length > 0 && (
-        <DropdownMenu>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  aria-label={t('common.listing.moreActions')}
-                  className={cn('h-8 w-8 p-0', INTENT_CLASS.neutral)}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-            </TooltipTrigger>
-            <TooltipContent>{t('common.listing.moreActions')}</TooltipContent>
-          </Tooltip>
-          <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-            {overflow.map((action, index) => (
-              <React.Fragment key={action.label}>
-                {action.separatorBefore && index > 0 && <DropdownMenuSeparator />}
-                <DropdownMenuItem
-                  onClick={action.onClick}
-                  disabled={Boolean(action.disabledReason)}
-                  variant={action.intent === 'danger' ? 'destructive' : 'default'}
-                >
-                  <action.icon className="h-4 w-4" />
-                  <span className="flex flex-col">
-                    <span>{action.label}</span>
-                    {action.disabledReason && <span className="text-xs text-muted-foreground">{action.disabledReason}</span>}
-                  </span>
-                </DropdownMenuItem>
-              </React.Fragment>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )}
+      {overflow.length > 0 && <ActionsMenu actions={overflow} />}
     </div>
   );
 }

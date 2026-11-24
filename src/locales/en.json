@@ -697,7 +697,6 @@
       },
       "signatureStep": {
         "stage": {
-          "draft": "Draft",
           "signing": "Being signed",
           "counterSigning": "Being counter-signed",
           "completed": "Signed"
@@ -711,7 +710,6 @@
           "title": "Signature tracking",
           "notSent": "Pack not sent",
           "sentOn": "Sent on {{date}}",
-          "draftSavedOn": "Draft saved on {{date}}",
           "lastReminder": "Last reminder on {{date}}",
           "remindersOne": "{{count}} reminder",
           "remindersMany": "{{count}} reminders",
@@ -743,12 +741,21 @@
           }
         },
         "actions": {
-          "saveDraft": "Save draft",
+          "validateWithoutESignature": "Validate without e-signature",
           "send": "Send for signature",
           "remindSignatories": "Remind signatories",
           "remindCounterSignatories": "Remind counter-signatories",
           "regenerateLinks": "Regenerate links",
           "toPayment": "Continue to payment"
+        },
+        "manualValidation": {
+          "label": "Without e-signature",
+          "validatedOn": "Validated without e-signature on {{date}}",
+          "title": "Validate without e-signature?",
+          "descriptionOne": "The pack will be considered signed based on {{count}} uploaded signed document. No signature link will be sent.",
+          "descriptionMany": "The pack will be considered signed based on the {{count}} uploaded signed documents. No signature link will be sent.",
+          "blockedCompliance": "Compliance is not validated",
+          "blockedNoSignedDocument": "Add at least one signed document to the pack"
         },
         "blockers": {
           "title": "Cannot send",
@@ -761,33 +768,28 @@
         },
         "pack": {
           "title": "Signature pack",
-          "subtitle": "Documents planned by the subscription form, plus any document to sign or to attach.",
+          "subtitle": "Documents required by the subscription form, plus any added documents.",
           "locked": "Pack locked since it was sent for signature.",
           "documentsCountOne": "{{count}} document",
           "documentsCountMany": "{{count}} documents",
           "addToSign": "Add a document to sign",
-          "addAnnex": "Add an annex",
+          "addSigned": "Add signed document",
+          "downloadAll": "Download subscription pack",
           "toSign": "Documents to sign",
-          "toSignHint": "Signed by the signatories, then counter-signed",
-          "annexes": "Annexes",
-          "annexesHint": "Attached to the pack, not signed",
+          "toSignHint": "Signed by the signatories then countersigned, or uploaded already signed",
           "emptyToSign": "No document to sign. Add at least one document.",
-          "emptyAnnexes": "No annex attached to the pack.",
           "sourceBulletin": "From the subscription form",
           "sourceAdded": "Added",
           "signed": "Signed",
-          "kind": {
-            "toSign": "To sign",
-            "annex": "Annex"
-          },
           "preview": "Preview",
           "remove": "Remove from pack",
           "newDocumentName": "Additional document {{index}}",
           "toast": {
             "added": "Document added to the pack",
+            "addedSigned": "Signed document added to the pack",
+            "downloaded": "Subscription pack downloaded (ZIP)",
             "removed": "Document removed from the pack",
-            "preview": "Document preview",
-            "placed": "Signature boxes placed"
+            "preview": "Document preview"
           },
           "placement": {
             "title": "Place the signature boxes",
@@ -861,13 +863,13 @@
           "middleOffice": "Middle-office manager"
         },
         "toast": {
-          "draftSaved": "Draft saved",
           "sent": "Pack sent for signature",
           "sentDescOne": "Signing link sent to {{count}} signatory",
           "sentDescMany": "Signing link sent to {{count}} signatories",
           "counterSignatureStarted": "Counter-signature started",
           "counterSignatureStartedDescOne": "{{count}} counter-signatory received the signing link.",
           "counterSignatureStartedDescMany": "{{count}} counter-signatories received the signing link.",
+          "manuallyValidated": "Pack validated without e-signature",
           "fullySigned": "Pack fully signed",
           "fullySignedDesc": "You can continue to payment.",
           "toPayment": "Proceeding to payment step"
@@ -953,6 +955,19 @@
           "subscription": "Subscription documents · {{count}}",
           "kyc": "KYC documents · {{count}}"
         },
+        "downloadMenu": {
+          "label": "Download",
+          "all": "Download all",
+          "kyc": "Download KYC documents",
+          "subscription": "Download subscription documents",
+          "custodianPack": "Download custodian pack",
+          "toast": {
+            "all": "All documents downloaded (ZIP)",
+            "kyc": "KYC documents downloaded (ZIP)",
+            "subscription": "Subscription documents downloaded (ZIP)",
+            "custodianPack": "Custodian pack downloaded (ZIP)"
+          }
+        },
         "addDocument": "Add document",
         "searchPlaceholder": "Search a document…",
         "entity": "document",
@@ -982,20 +997,16 @@
           "downloaded": "“{{name}}” downloaded",
           "reminded": "Reminder sent for “{{name}}”",
           "deleted": "“{{name}}” deleted",
-          "packExported": "Subscription file exported (ZIP)",
           "addDocument": "Adding a document: coming soon",
           "validated": "“{{name}}” approved",
           "rejected": "“{{name}}” rejected, the investor will be notified",
           "upload": "Uploading “{{name}}”: coming soon",
-          "requested": "Request sent to the investor for “{{name}}”",
-          "requestedManyOne": "Request sent for {{count}} document",
-          "requestedManyMany": "Request sent for {{count}} documents"
+          "requested": "Request sent to the investor for “{{name}}”"
         },
         "subscription": {
           "fileVersion": "{{category}} · v{{version}} · {{language}}",
           "signersProgress": "{{signed}} / {{total}}",
           "notSignable": "Provided for information",
-          "exportPack": "Export file",
           "deleteLocked": "Document already signed or provided to the investor: it can no longer be deleted",
           "deleteTitle": "Delete document",
           "deleteDescription": "“{{name}}” will be removed from the subscription file. This cannot be undone.",
@@ -1032,15 +1043,6 @@
             "kid": "Key information document (PRIIPs KID)",
             "fundRegulation": "Fund regulations",
             "signatureCertificate": "Signature evidence certificate"
-          },
-          "queues": {
-            "all": "All documents",
-            "awaitingSignature": "To sign",
-            "awaitingCounterSignature": "To countersign",
-            "completed": "Signed",
-            "draft": "Drafts",
-            "signaturesMetric": "Signatures",
-            "perDocument": "{{count}} signer(s) per document"
           }
         },
         "kyc": {
@@ -1061,9 +1063,6 @@
           "maxAgeHintOne": "Valid for {{count}} day after issue",
           "maxAgeHintMany": "Valid for {{count}} days after issue",
           "rejectedBecause": "Reason: {{reason}}",
-          "requestMissingOne": "Request {{count}} document",
-          "requestMissingMany": "Request {{count}} documents",
-          "nothingToRequest": "No missing, rejected or expired document",
           "rejectTitle": "Reject document",
           "rejectDescription": "Give the reason for rejecting “{{name}}”. It will be shared with the investor along with a request for a new document.",
           "rejectReasonLabel": "Rejection reason",
@@ -1111,15 +1110,6 @@
             "uboIds": "Beneficial owners' ID documents",
             "fatcaCrsEntity": "Entity FATCA / CRS self-certification",
             "bankDetailsEntity": "Bank details in the company's name"
-          },
-          "queues": {
-            "all": "All documents",
-            "toReview": "To review",
-            "toRequest": "To request",
-            "expiring": "Expire within {{count}} d",
-            "validated": "Approved",
-            "holdersMetric": "Holders",
-            "perHolder": "{{count}} document(s) per holder"
           }
         }
       },
