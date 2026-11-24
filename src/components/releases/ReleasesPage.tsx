@@ -20,7 +20,13 @@ import { DataPagination } from '../ui/data-pagination';
 import { TableRowActions } from '../ui/row-actions';
 import type { NoticeContext } from '../../utils/noticeActions';
 import { RELEASE_RULES } from '../../utils/noticeFamilies';
-import { useNoticeSelection } from '../notices/noticeListing';
+import {
+  NOTICE_PROGRESS_COLUMNS,
+  isNoticeProgressColumn,
+  useNoticeProgressColumns,
+  useNoticeSelection,
+  type NoticeProgressColumn,
+} from '../notices/noticeListing';
 import { useNoticeLineStore } from '../notices/useNoticeLineStore';
 import { useNoticeParentActions } from '../notices/useNoticeParentActions';
 import { Button } from '../ui/button';
@@ -28,12 +34,13 @@ import { ReleaseDetailPage } from './ReleaseDetailPage';
 
 const K = 'funds.releases';
 
-const COLUMN_KEYS = ['name', 'fund', 'date', 'comments', 'createdAt', 'updatedAt'] as const;
+const COLUMN_KEYS = ['name', 'fund', 'date', 'comments', ...NOTICE_PROGRESS_COLUMNS, 'createdAt', 'updatedAt'] as const;
 type ColumnKey = (typeof COLUMN_KEYS)[number];
+type OwnColumnKey = Exclude<ColumnKey, NoticeProgressColumn>;
 
-const DEFAULT_COLUMNS: ColumnKey[] = ['name', 'fund', 'date'];
+const DEFAULT_COLUMNS: ColumnKey[] = ['name', 'fund', 'date', ...NOTICE_PROGRESS_COLUMNS];
 const UNSORTABLE: ColumnKey[] = ['comments'];
-const COLUMNS_STORAGE_KEY = 'investhub-columns-releases';
+const COLUMNS_STORAGE_KEY = 'investhub-columns-releases-v2';
 const LISTING_STORAGE_KEY = 'investhub-listing-releases';
 
 type Scenario = 'default' | 'limitedScope' | 'noRight';
@@ -199,6 +206,9 @@ export function ReleasesPage({ funds, onOpenFund, onSelectedReleaseChange }: Rel
     canNotify: true,
     canDownload: true,
   });
+  const progress = useNoticeProgressColumns({ rules: RELEASE_RULES, contextOf, linesOf: store.linesOf });
+  const sortValueOf = (item: Release, key: string) =>
+    isNoticeProgressColumn(key) ? progress.sortValue(item, key) : sortValue(item, key);
   const [checkedIds, setCheckedIds] = useState<Set<number>>(() => new Set());
   const parentActions = useNoticeParentActions({
     rules: RELEASE_RULES,
@@ -222,13 +232,13 @@ export function ReleasesPage({ funds, onOpenFund, onSelectedReleaseChange }: Rel
   const sorted = useMemo(() => {
     const factor = sortConfig.direction === 'asc' ? 1 : -1;
     return [...filtered].sort((a, b) => {
-      const left = sortValue(a, sortConfig.key);
-      const right = sortValue(b, sortConfig.key);
+      const left = sortValueOf(a, sortConfig.key);
+      const right = sortValueOf(b, sortConfig.key);
       if (left < right) return -factor;
       if (left > right) return factor;
       return defaultCompare(a, b);
     });
-  }, [filtered, sortConfig]);
+  }, [filtered, sortConfig, store.overrides]);
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
   const currentPage = Math.min(page, totalPages);
@@ -274,7 +284,7 @@ export function ReleasesPage({ funds, onOpenFund, onSelectedReleaseChange }: Rel
     });
   };
 
-  const renderers: Record<ColumnKey, ColumnConfig<Release>['render']> = {
+  const renderers: Record<OwnColumnKey, ColumnConfig<Release>['render']> = {
     name: (item, term) => <ListingNameCell name={item.name} searchTerm={term} id={item.id} />,
     fund: item => (
       <button
@@ -294,12 +304,16 @@ export function ReleasesPage({ funds, onOpenFund, onSelectedReleaseChange }: Rel
     updatedAt: item => dateTime(item.updatedAt),
   };
   const columns: ColumnConfig<Release>[] = [
-    ...visibleColumns.map(key => ({
-      key,
-      label: t(`${K}.columns.${key}`),
-      sortable: !UNSORTABLE.includes(key),
-      render: renderers[key],
-    })),
+    ...visibleColumns.map(key =>
+      isNoticeProgressColumn(key)
+        ? progress.columns[key]
+        : {
+            key,
+            label: t(`${K}.columns.${key}`),
+            sortable: !UNSORTABLE.includes(key),
+            render: renderers[key],
+          },
+    ),
     {
       key: 'actions',
       label: t('funds.notices.common.columns.actions'),
@@ -379,7 +393,10 @@ export function ReleasesPage({ funds, onOpenFund, onSelectedReleaseChange }: Rel
                 onClearAll={resetFilters}
               />
               <ListingColumnsMenu
-                columns={COLUMN_KEYS.map(key => ({ key, label: t(`${K}.columns.${key}`) }))}
+                columns={COLUMN_KEYS.map(key => ({
+                  key,
+                  label: isNoticeProgressColumn(key) ? progress.label(key) : t(`${K}.columns.${key}`),
+                }))}
                 visible={visibleColumns}
                 onToggle={key => toggleColumn(key as ColumnKey)}
                 onReset={() => setVisibleColumns(DEFAULT_COLUMNS)}

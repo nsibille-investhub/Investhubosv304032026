@@ -6696,7 +6696,14 @@
         "externalId": "Identifiant externe",
         "createdAt": "Créé le",
         "updatedAt": "Modifié le",
-        "actions": "Actions"
+        "actions": "Actions",
+        "payment": "Paiement",
+        "paymentsToValidate": "Paiements à valider",
+        "remainingDue": "Restant dû",
+        "directDebits": "Prélèvements",
+        "calledShares": "Parts appelées",
+        "feesAndPremiums": "Frais et primes",
+        "restriction": "Restriction"
       },
       "empty": {
         "title": "Aucun appel de fonds",
@@ -7305,6 +7312,17 @@
         "prepared": "Appel préparé pour {{investor}}",
         "preparedHint": "Fonds, part et souscription sont déjà choisis : saisissez la date et le montant à appeler.",
         "replaced": "La préparation en attente a été remplacée par cet appel ciblé."
+      },
+      "progress": {
+        "payment": {
+          "none": "Pas payé",
+          "partial": "Paiement partiel ({{done}} sur {{total}})",
+          "full": "Totalement payé"
+        },
+        "directDebitsStarted": "Lancés",
+        "fees": "Frais",
+        "premiums": "Primes",
+        "restricted": "Restreint ({{count}})"
       }
     },
     "distributions": {
@@ -7826,6 +7844,27 @@
             "fileName": "cible-deblocages"
           }
         }
+      },
+      "progress": {
+        "columns": {
+          "lines": "Lignes",
+          "notification": "Notification",
+          "sending": "Envoi en cours"
+        },
+        "documents": {
+          "capitalCalls": "Avis",
+          "distributions": "Avis",
+          "capitalAccounts": "Documents",
+          "releases": "Courriers"
+        },
+        "ratio": "{{done}} / {{total}}",
+        "notification": {
+          "none": "Pas notifié",
+          "partial": "Notification partielle ({{done}} sur {{total}})",
+          "full": "Totalement notifié",
+          "immediate": "Publication immédiate"
+        },
+        "sending": "Envoi en cours"
       }
     }
   },

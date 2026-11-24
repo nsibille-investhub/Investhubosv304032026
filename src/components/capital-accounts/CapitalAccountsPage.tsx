@@ -21,7 +21,13 @@ import { DataPagination } from '../ui/data-pagination';
 import { TableRowActions } from '../ui/row-actions';
 import type { NoticeContext } from '../../utils/noticeActions';
 import { CAPITAL_ACCOUNT_RULES } from '../../utils/noticeFamilies';
-import { useNoticeSelection } from '../notices/noticeListing';
+import {
+  NOTICE_PROGRESS_COLUMNS,
+  isNoticeProgressColumn,
+  useNoticeProgressColumns,
+  useNoticeSelection,
+  type NoticeProgressColumn,
+} from '../notices/noticeListing';
 import { useNoticeLineStore } from '../notices/useNoticeLineStore';
 import { useNoticeParentActions } from '../notices/useNoticeParentActions';
 import { Button } from '../ui/button';
@@ -38,14 +44,16 @@ const COLUMN_KEYS = [
   'capitalGains',
   'unrealizedGains',
   'netResult',
+  ...NOTICE_PROGRESS_COLUMNS,
   'createdAt',
   'updatedAt',
 ] as const;
 type ColumnKey = (typeof COLUMN_KEYS)[number];
+type OwnColumnKey = Exclude<ColumnKey, NoticeProgressColumn>;
 
-const DEFAULT_COLUMNS: ColumnKey[] = ['name', 'fund', 'date', 'shares'];
+const DEFAULT_COLUMNS: ColumnKey[] = ['name', 'fund', 'date', 'shares', ...NOTICE_PROGRESS_COLUMNS];
 const UNSORTABLE: ColumnKey[] = ['shares'];
-const COLUMNS_STORAGE_KEY = 'investhub-columns-capital-accounts';
+const COLUMNS_STORAGE_KEY = 'investhub-columns-capital-accounts-v2';
 const LISTING_STORAGE_KEY = 'investhub-listing-capital-accounts';
 
 type Scenario = 'default' | 'limitedScope' | 'noRight';
@@ -219,6 +227,9 @@ export function CapitalAccountsPage({ funds, onOpenFund, onSelectedAccountChange
     canNotify: true,
     canDownload: true,
   });
+  const progress = useNoticeProgressColumns({ rules: CAPITAL_ACCOUNT_RULES, contextOf, linesOf: store.linesOf });
+  const sortValueOf = (item: CapitalAccount, key: string) =>
+    isNoticeProgressColumn(key) ? progress.sortValue(item, key) : sortValue(item, key);
   const [checkedIds, setCheckedIds] = useState<Set<number>>(() => new Set());
   const parentActions = useNoticeParentActions({
     rules: CAPITAL_ACCOUNT_RULES,
@@ -242,13 +253,13 @@ export function CapitalAccountsPage({ funds, onOpenFund, onSelectedAccountChange
   const sorted = useMemo(() => {
     const factor = sortConfig.direction === 'asc' ? 1 : -1;
     return [...filtered].sort((a, b) => {
-      const left = sortValue(a, sortConfig.key);
-      const right = sortValue(b, sortConfig.key);
+      const left = sortValueOf(a, sortConfig.key);
+      const right = sortValueOf(b, sortConfig.key);
       if (left < right) return -factor;
       if (left > right) return factor;
       return defaultCompare(a, b);
     });
-  }, [filtered, sortConfig]);
+  }, [filtered, sortConfig, store.overrides]);
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
   const currentPage = Math.min(page, totalPages);
@@ -302,7 +313,7 @@ export function CapitalAccountsPage({ funds, onOpenFund, onSelectedAccountChange
     });
   };
 
-  const renderers: Record<ColumnKey, ColumnConfig<CapitalAccount>['render']> = {
+  const renderers: Record<OwnColumnKey, ColumnConfig<CapitalAccount>['render']> = {
     name: (item, term) => <ListingNameCell name={item.name} searchTerm={term} id={item.id} />,
     fund: item => (
       <button
@@ -334,15 +345,19 @@ export function CapitalAccountsPage({ funds, onOpenFund, onSelectedAccountChange
     createdAt: item => dateTime(item.createdAt),
     updatedAt: item => dateTime(item.updatedAt),
   };
-  const RIGHT_ALIGNED: ColumnKey[] = ['capitalGains', 'unrealizedGains', 'netResult'];
+  const RIGHT_ALIGNED: OwnColumnKey[] = ['capitalGains', 'unrealizedGains', 'netResult'];
   const columns: ColumnConfig<CapitalAccount>[] = [
-    ...visibleColumns.map(key => ({
-      key,
-      label: t(`${K}.columns.${key}`),
-      sortable: !UNSORTABLE.includes(key),
-      align: RIGHT_ALIGNED.includes(key) ? 'right' : undefined,
-      render: renderers[key],
-    })),
+    ...visibleColumns.map(key =>
+      isNoticeProgressColumn(key)
+        ? progress.columns[key]
+        : {
+            key,
+            label: t(`${K}.columns.${key}`),
+            sortable: !UNSORTABLE.includes(key),
+            align: RIGHT_ALIGNED.includes(key) ? 'right' : undefined,
+            render: renderers[key],
+          },
+    ),
     {
       key: 'actions',
       label: t('funds.notices.common.columns.actions'),
@@ -422,7 +437,10 @@ export function CapitalAccountsPage({ funds, onOpenFund, onSelectedAccountChange
                 onClearAll={resetFilters}
               />
               <ListingColumnsMenu
-                columns={COLUMN_KEYS.map(key => ({ key, label: t(`${K}.columns.${key}`) }))}
+                columns={COLUMN_KEYS.map(key => ({
+                  key,
+                  label: isNoticeProgressColumn(key) ? progress.label(key) : t(`${K}.columns.${key}`),
+                }))}
                 visible={visibleColumns}
                 onToggle={key => toggleColumn(key as ColumnKey)}
                 onReset={() => setVisibleColumns(DEFAULT_COLUMNS)}
