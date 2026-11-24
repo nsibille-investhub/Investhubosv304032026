@@ -282,7 +282,6 @@ export function RiskProfileWidget({
       mockRiskProfile.classes.map(riskClass => ({
         riskClass,
         score: aggregateClassScore(riskClass, scores),
-        manual: typeof manualScores[riskClass.id] === 'number',
         unevaluated: riskClass.components.filter(
           component => componentScore(component, scores) === null,
         ).length,
@@ -467,7 +466,7 @@ export function RiskProfileWidget({
       )}
 
       <ul className="divide-y">
-        {classScores.map(({ riskClass, score, manual: classManual, unevaluated }) => (
+        {classScores.map(({ riskClass, score, unevaluated }) => (
           <li key={riskClass.id} className="px-4 py-2">
             <div className="flex items-center justify-between gap-2">
               <span className="min-w-0 truncate text-sm font-semibold text-foreground">
@@ -486,27 +485,10 @@ export function RiskProfileWidget({
                     </TooltipContent>
                   </Tooltip>
                 )}
-                {classManual && manualMarker(riskClass.id)}
                 <span className="text-sm font-bold text-foreground tabular-nums">
                   {score === null ? '-' : score.toFixed(2)}
                 </span>
-                <RowActionButton
-                  icon={Eye}
-                  tooltip={t('subscriptions.detail.compliance.profile.viewDetail')}
-                  onClick={() =>
-                    setPanel({
-                      target: {
-                        id: riskClass.id,
-                        kind: 'section',
-                        labelKey: riskClass.labelKey,
-                        min: 0,
-                        max: 10,
-                        score,
-                        resettable: classManual,
-                      },
-                    })
-                  }
-                />
+                <span className="w-8" aria-hidden />
               </div>
             </div>
 

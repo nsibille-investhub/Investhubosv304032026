@@ -1301,7 +1301,7 @@
             "notEvaluated": "Not evaluated",
             "scoreHint": "Value between {{min}} and {{max}}, truncated to an integer.",
             "backToComputed": "Back to computed score",
-            "backToComputedDesc": "The entered score is removed and the score is computed again from the level below.",
+            "backToComputedDesc": "The forced score is removed and the overall score is computed again from the sections.",
             "commentTitle": "Comment",
             "commentDesc": "Required for any change to the answer or the score. It can also be added on its own.",
             "comment": "Comment",
@@ -1323,7 +1323,6 @@
               "onboardingAnswer": "Onboarding question",
               "manualQuestion": "Manual question",
               "screening": "Screening",
-              "section": "Section score",
               "profile": "Overall score"
             },
             "answerLocked": {

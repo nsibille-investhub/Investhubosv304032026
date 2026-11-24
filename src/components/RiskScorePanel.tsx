@@ -22,7 +22,7 @@ const T = 'subscriptions.detail.compliance.profile.panel';
 
 export interface ScoreComment {
   id: string;
-  /** Composante, section ou score global concerné. */
+  /** Composante ou score global concerné. */
   targetId: string;
   labelKey: string;
   /** Absent pour un commentaire sans modification de score. `next` null : retour au score calculé. */
@@ -35,7 +35,7 @@ export interface ScoreComment {
 
 export interface RiskScoreTarget {
   id: string;
-  kind: RiskComponentSource | 'section' | 'profile';
+  kind: RiskComponentSource | 'profile';
   labelKey: string;
   /** Réponse retenue pour le calcul, absente pour une section et pour le score global. */
   answer?: string;
@@ -52,7 +52,7 @@ export interface RiskScoreTarget {
   score: number | null;
   min: number;
   max: number;
-  /** Score de section ou score global déjà saisi à la main : le retour au calcul est proposé. */
+  /** Score global déjà forcé : le retour au calcul est proposé. */
   resettable: boolean;
 }
 

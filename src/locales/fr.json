@@ -1301,7 +1301,7 @@
             "notEvaluated": "Non évalué",
             "scoreHint": "Valeur comprise entre {{min}} et {{max}}, tronquée à l'entier.",
             "backToComputed": "Revenir au score calculé",
-            "backToComputedDesc": "Le score saisi est retiré, le calcul reprend à partir du niveau inférieur.",
+            "backToComputedDesc": "Le forçage est retiré, le score global est de nouveau calculé à partir des sections.",
             "commentTitle": "Commentaire",
             "commentDesc": "Obligatoire pour toute modification de la réponse ou du score. Il peut aussi être ajouté seul.",
             "comment": "Commentaire",
@@ -1323,7 +1323,6 @@
               "onboardingAnswer": "Question d'onboarding",
               "manualQuestion": "Question manuelle",
               "screening": "Screening",
-              "section": "Score de section",
               "profile": "Score global"
             },
             "answerLocked": {
