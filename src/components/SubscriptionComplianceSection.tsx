@@ -238,6 +238,8 @@ export interface ScoreComment {
   comment: string;
   by: string;
   at: string;
+  /** Instant exact de l'action, pour l'ordre de l'historique. Absent : `at` fait foi. */
+  ts?: number;
   /** Réponse retenue au moment de la modification. */
   answer?: string;
   /** Réponse précédente, quand c'est le changement de réponse qui a fait bouger le score. */
@@ -252,6 +254,8 @@ export interface ScoreValidationEvent {
   score: number | null;
   by: string;
   at: string;
+  /** Instant exact de l'action, pour l'ordre de l'historique. */
+  ts: number;
 }
 
 /** Historique du score, du plus récent au plus ancien : modifications, validations et réouvertures. */
@@ -264,14 +268,15 @@ function ScoreHistory({ comments, events = [] }: { comments: ScoreComment[]; eve
     mockRiskProfile.classes.flatMap(item => item.components).map(component => [component.labelKey, component.value]),
   );
   const seen = new Set<string>();
-  const changeEntries: DecisionTimelineEntry[] = comments.map(item => {
+  const timeOf = (item: { ts?: number; at: string }) => item.ts ?? stampValue(item.at);
+  const changeEntries = comments.map(item => {
     // La modification la plus récente d'une question porte son score en vigueur.
     const current = !seen.has(item.labelKey);
     seen.add(item.labelKey);
     const rising = item.previous !== null && item.next !== null && item.next > item.previous;
     const falling = item.previous !== null && item.next !== null && item.next < item.previous;
     const answer = item.answer ?? answers.get(item.labelKey);
-    return {
+    const entry: DecisionTimelineEntry = {
       id: item.id,
       badge: (
         <StatusBadge
@@ -295,10 +300,11 @@ function ScoreHistory({ comments, events = [] }: { comments: ScoreComment[]; eve
           : t(`${H}.answer`, { value: answer }),
       comment: item.comment || undefined,
     };
+    return { entry, time: timeOf(item) };
   });
-  const eventEntries: DecisionTimelineEntry[] = events.map(event => {
+  const eventEntries = events.map(event => {
     const tier = findRiskTier(mockRiskProfile.scaleId, event.score);
-    return {
+    const entry: DecisionTimelineEntry = {
       id: event.id,
       badge: (
         <StatusBadge label={t(`${H}.${event.type}`)} variant={event.type === 'validated' ? 'success' : 'info'} />
@@ -311,12 +317,9 @@ function ScoreHistory({ comments, events = [] }: { comments: ScoreComment[]; eve
       date: event.at,
       author: event.by,
     };
+    return { entry, time: timeOf(event) };
   });
-  // À horodatage égal, la validation ou la réouverture passe devant la modification qu'elle suit.
-  const entries = [...eventEntries, ...changeEntries]
-    .map((entry, index) => ({ entry, index }))
-    .sort((a, b) => stampValue(b.entry.date) - stampValue(a.entry.date) || a.index - b.index)
-    .map(item => item.entry);
+  const entries = [...eventEntries, ...changeEntries].sort((a, b) => b.time - a.time).map(item => item.entry);
   return <DecisionTimeline entries={entries} currentLabel={t(`${H}.current`)} emptyLabel={t(`${H}.empty`)} />;
 }
 
@@ -916,6 +919,7 @@ export function SubscriptionComplianceSection({
     score: profileScore,
     by,
     at: now(),
+    ts: Date.now(),
   });
   // Une validation déjà faite avant l'affichage de l'étape ouvre l'historique.
   const [scoreEvents, setScoreEvents] = useState<ScoreValidationEvent[]>(() =>
@@ -965,6 +969,7 @@ export function SubscriptionComplianceSection({
         comment,
         by: CURRENT_OPERATOR,
         at: stamp,
+        ts: Date.now(),
         answer: mockRiskProfile.classes.flatMap(item => item.components).find(item => item.id === change.id)?.value,
       })),
       ...prev,
