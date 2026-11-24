@@ -1299,7 +1299,7 @@
             "currentScore": "Score actuel",
             "newScore": "Nouveau score",
             "notEvaluated": "Non évalué",
-            "scoreHint": "Valeur comprise entre {{min}} et {{max}}.",
+            "scoreHint": "Valeur comprise entre {{min}} et {{max}}, tronquée à l'entier.",
             "backToComputed": "Revenir au score calculé",
             "backToComputedDesc": "Le score saisi est retiré, le calcul reprend à partir du niveau inférieur.",
             "commentTitle": "Commentaire",
@@ -1315,24 +1315,31 @@
             "answerChange": "Réponse : {{previous}} → {{next}}",
             "scoreChange": "Score : {{previous}} → {{next}}",
             "computedValue": "calculé",
-            "afterSave": "Après enregistrement, le profil de risque est recalculé. L'investisseur ne reçoit aucune notification.",
+            "afterSave": "Après enregistrement, le calcul complet est relancé : score de la section, puis score global. L'investisseur ne reçoit aucune notification.",
             "cancel": "Annuler",
             "close": "Fermer",
             "save": "Enregistrer",
             "kind": {
               "onboardingAnswer": "Question d'onboarding",
               "manualQuestion": "Question manuelle",
-              "countryList": "Liste des pays",
               "screening": "Screening",
-              "externalService": "Service externe",
               "section": "Score de section",
               "profile": "Score global"
             },
             "answerLocked": {
-              "countryList": "La valeur vient de la liste des pays. Seul le score se modifie ici.",
-              "screening": "La valeur vient du screening. Seul le score se modifie ici.",
-              "externalService": "La valeur vient d'un service externe. Seul le score se modifie ici."
-            }
+              "onboardingAnswer": "La réponse vient du questionnaire de l'investisseur. Elle ne se modifie pas ici.",
+              "screening": "La valeur vient des correspondances du screening. Elle ne se modifie pas ici."
+            },
+            "scoreLocked": {
+              "notModifiable": "\"Score modifiable\" n'est pas activé sur cette composante : le score ne se corrige pas.",
+              "manualQuestion": "Le score suit la réponse choisie. Il ne se saisit pas."
+            },
+            "defaultAnswer": "[Réponse par défaut]",
+            "answerScore": "Score de la réponse choisie : {{score}}",
+            "optionWithScore": "{{label}} · score {{score}}",
+            "selectScorePlaceholder": "Choisissez un score",
+            "frozen": "Score corrigé à la main : la composante est figée sur cette valeur. Une réponse ou une correspondance modifiée ensuite ne la change plus.",
+            "freezeWarning": "La correction fige la composante et ne se retire pas. Pour revenir en arrière, saisissez une autre valeur."
           }
         },
         "screening": {

@@ -1299,7 +1299,7 @@
             "currentScore": "Current score",
             "newScore": "New score",
             "notEvaluated": "Not evaluated",
-            "scoreHint": "Value between {{min}} and {{max}}.",
+            "scoreHint": "Value between {{min}} and {{max}}, truncated to an integer.",
             "backToComputed": "Back to computed score",
             "backToComputedDesc": "The entered score is removed and the score is computed again from the level below.",
             "commentTitle": "Comment",
@@ -1315,24 +1315,31 @@
             "answerChange": "Answer: {{previous}} → {{next}}",
             "scoreChange": "Score: {{previous}} → {{next}}",
             "computedValue": "computed",
-            "afterSave": "After saving, the risk profile is recomputed. The investor receives no notification.",
+            "afterSave": "After saving, the full computation runs again: section score, then overall score. The investor receives no notification.",
             "cancel": "Cancel",
             "close": "Close",
             "save": "Save",
             "kind": {
               "onboardingAnswer": "Onboarding question",
               "manualQuestion": "Manual question",
-              "countryList": "Country list",
               "screening": "Screening",
-              "externalService": "External service",
               "section": "Section score",
               "profile": "Overall score"
             },
             "answerLocked": {
-              "countryList": "The value comes from the country list. Only the score can be edited here.",
-              "screening": "The value comes from screening. Only the score can be edited here.",
-              "externalService": "The value comes from an external service. Only the score can be edited here."
-            }
+              "onboardingAnswer": "The answer comes from the investor's questionnaire. It cannot be edited here.",
+              "screening": "The value comes from screening matches. It cannot be edited here."
+            },
+            "scoreLocked": {
+              "notModifiable": "\"Editable score\" is not enabled on this component: the score cannot be corrected.",
+              "manualQuestion": "The score follows the selected answer. It cannot be entered."
+            },
+            "defaultAnswer": "[Default answer]",
+            "answerScore": "Score of the selected answer: {{score}}",
+            "optionWithScore": "{{label}} · score {{score}}",
+            "selectScorePlaceholder": "Select a score",
+            "frozen": "Score corrected manually: the component is frozen on this value. An answer or a match changed afterwards no longer affects it.",
+            "freezeWarning": "The correction freezes the component and cannot be removed. To go back, enter another value."
           }
         },
         "screening": {

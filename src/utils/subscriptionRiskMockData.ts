@@ -11,9 +11,13 @@
 export type RiskComponentSource =
   | 'onboardingAnswer'
   | 'manualQuestion'
-  | 'countryList'
-  | 'screening'
-  | 'externalService';
+  | 'screening';
+
+/** Reponse proposee pour une question manuelle, avec le score qu'elle porte. */
+export interface RiskAnswerOption {
+  label: string;
+  score: number;
+}
 
 export interface RiskComponent {
   id: string;
@@ -31,8 +35,14 @@ export interface RiskComponent {
   manualAt?: string;
   /** Commentaire obligatoire qui motive la saisie manuelle. */
   manualComment?: string;
-  /** Valeurs proposees quand la reponse est une liste. */
-  answerOptions?: string[];
+  /** Parametre "Score modifiable" de la composante. Sans effet sur une question manuelle. */
+  scoreModifiable: boolean;
+  /** Question manuelle : reponses parametrees et leur score. */
+  answerOptions?: RiskAnswerOption[];
+  /** Question manuelle sans saisie : la reponse par defaut s'applique. */
+  defaultAnswer?: boolean;
+  /** Screening : scores proposes a la correction, entre le minimum et le maximum, valeurs exclues retirees. */
+  scoreValues?: number[];
 }
 
 export interface RiskClass {
@@ -98,8 +108,9 @@ export const mockRiskProfile: RiskProfile = {
       components: [
         {
           id: 'country-residence',
+          scoreModifiable: true,
           labelKey: 'subscriptions.detail.compliance.components.taxResidence',
-          source: 'countryList',
+          source: 'onboardingAnswer',
           value: 'France',
           score: 1,
           min: 0,
@@ -107,8 +118,9 @@ export const mockRiskProfile: RiskProfile = {
         },
         {
           id: 'country-nationality',
+          scoreModifiable: false,
           labelKey: 'subscriptions.detail.compliance.components.nationality',
-          source: 'countryList',
+          source: 'onboardingAnswer',
           value: 'France',
           score: 1,
           min: 0,
@@ -116,8 +128,9 @@ export const mockRiskProfile: RiskProfile = {
         },
         {
           id: 'country-bank',
+          scoreModifiable: true,
           labelKey: 'subscriptions.detail.compliance.components.bankDomiciliation',
-          source: 'countryList',
+          source: 'onboardingAnswer',
           value: 'Suisse',
           score: 4.8,
           min: 0,
@@ -133,6 +146,8 @@ export const mockRiskProfile: RiskProfile = {
       components: [
         {
           id: 'screening-subscriber',
+          scoreModifiable: true,
+          scoreValues: [0, 2, 3, 4, 5, 6, 7, 8, 10],
           labelKey: 'subscriptions.detail.compliance.components.screeningSubscriber',
           source: 'screening',
           value: '2 correspondances',
@@ -142,6 +157,8 @@ export const mockRiskProfile: RiskProfile = {
         },
         {
           id: 'screening-representative',
+          scoreModifiable: true,
+          scoreValues: [0, 2, 3, 4, 5, 6, 7, 8, 10],
           labelKey: 'subscriptions.detail.compliance.components.screeningRepresentative',
           source: 'screening',
           value: '1 correspondance',
@@ -151,9 +168,10 @@ export const mockRiskProfile: RiskProfile = {
         },
         {
           id: 'screening-bo',
+          scoreModifiable: false,
           labelKey: 'subscriptions.detail.compliance.components.screeningBeneficialOwners',
           source: 'screening',
-          value: '0 correspondance',
+          value: 'No matches',
           score: 0,
           min: 0,
           max: 10,
@@ -168,28 +186,36 @@ export const mockRiskProfile: RiskProfile = {
       components: [
         {
           id: 'client-category',
+          scoreModifiable: false,
           labelKey: 'subscriptions.detail.compliance.components.investorCategory',
           source: 'onboardingAnswer',
           value: 'Professionnel par nature',
-          answerOptions: ['Non professionnel', 'Professionnel par nature', 'Professionnel sur option', 'Contrepartie éligible'],
           score: 2,
           min: 0,
           max: 10,
         },
         {
           id: 'client-relation',
+          scoreModifiable: false,
           labelKey: 'subscriptions.detail.compliance.components.relationOrigin',
-          source: 'onboardingAnswer',
+          source: 'manualQuestion',
           value: 'Apport distributeur',
-          answerOptions: ['Relation directe', 'Apport distributeur', 'Recommandation', 'Sollicitation entrante'],
+          defaultAnswer: true,
+          answerOptions: [
+            { label: 'Relation directe', score: 1 },
+            { label: 'Recommandation', score: 2 },
+            { label: 'Apport distributeur', score: 3 },
+            { label: 'Sollicitation entrante', score: 6 },
+          ],
           score: 3,
           min: 0,
           max: 10,
         },
         {
           id: 'client-funds',
+          scoreModifiable: true,
           labelKey: 'subscriptions.detail.compliance.components.fundsOrigin',
-          source: 'manualQuestion',
+          source: 'onboardingAnswer',
           value: 'Cession de participation',
           score: 5,
           min: 0,
@@ -209,6 +235,7 @@ export const mockRiskProfile: RiskProfile = {
       components: [
         {
           id: 'operation-amount',
+          scoreModifiable: false,
           labelKey: 'subscriptions.detail.compliance.components.subscribedAmount',
           source: 'onboardingAnswer',
           value: '250 000 €',
@@ -218,8 +245,9 @@ export const mockRiskProfile: RiskProfile = {
         },
         {
           id: 'operation-payment',
+          scoreModifiable: true,
           labelKey: 'subscriptions.detail.compliance.components.paymentMode',
-          source: 'externalService',
+          source: 'onboardingAnswer',
           value: 'Virement - compte tiers',
           score: null,
           min: 0,

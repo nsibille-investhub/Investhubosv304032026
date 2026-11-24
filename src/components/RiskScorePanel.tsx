@@ -16,7 +16,7 @@ import {
 } from './ui/side-panel';
 import { Textarea } from './ui/textarea';
 import { useTranslation } from '../utils/languageContext';
-import type { RiskComponentSource } from '../utils/subscriptionRiskMockData';
+import type { RiskAnswerOption, RiskComponentSource } from '../utils/subscriptionRiskMockData';
 
 const T = 'subscriptions.detail.compliance.profile.panel';
 
@@ -39,8 +39,16 @@ export interface RiskScoreTarget {
   labelKey: string;
   /** Réponse retenue pour le calcul, absente pour une section et pour le score global. */
   answer?: string;
-  /** Valeurs proposées quand la question est une liste. */
-  answerOptions?: string[];
+  /** Question manuelle : réponses paramétrées et leur score. */
+  answerOptions?: RiskAnswerOption[];
+  /** Question manuelle sans saisie : la réponse par défaut s'applique. */
+  defaultAnswer?: boolean;
+  /** Paramètre "Score modifiable" de la composante. */
+  scoreModifiable?: boolean;
+  /** Screening : scores proposés à la correction. */
+  scoreValues?: number[];
+  /** Composante déjà corrigée à la main : elle est figée sur son score. */
+  frozen?: boolean;
   score: number | null;
   min: number;
   max: number;
@@ -51,14 +59,13 @@ export interface RiskScoreTarget {
 export interface RiskScoreSave {
   /** Absent quand la réponse n'a pas changé. */
   answer?: string;
+  /** Score porté par la nouvelle réponse d'une question manuelle. */
+  answerScore?: number;
   /** Absent quand le score n'a pas changé, null pour un retour au score calculé. */
   score?: number | null;
   comment: string;
 }
 
-const ANSWER_EDITABLE: ReadonlyArray<RiskScoreTarget['kind']> = ['onboardingAnswer', 'manualQuestion'];
-
-const round1 = (value: number) => Math.round(value * 10) / 10;
 
 /** Un commentaire de score : objet, variation de la réponse et du score, texte, auteur et date. */
 export function ScoreCommentItem({ item, showLabel = true }: { item: ScoreComment; showLabel?: boolean }) {
@@ -134,10 +141,14 @@ export function RiskScorePanel({
 
   const readOnly = Boolean(readOnlyReason);
   const hasAnswer = target?.answer !== undefined;
-  const answerEditable = Boolean(target) && ANSWER_EDITABLE.includes(target!.kind);
+  const isManualQuestion = target?.kind === 'manualQuestion';
+  const answerEditable = isManualQuestion;
+  const isComponent = hasAnswer;
+  const scoreEditable = Boolean(target) && !isManualQuestion && (!isComponent || Boolean(target!.scoreModifiable));
+  const selectedOption = target?.answerOptions?.find(option => option.label === answer);
 
   const parsed = score.trim() === '' ? Number.NaN : Number(score.replace(',', '.'));
-  const scoreTouched = score.trim() !== initialScore;
+  const scoreTouched = scoreEditable && score.trim() !== initialScore;
   const scoreInvalid =
     !reset && scoreTouched && (Number.isNaN(parsed) || parsed < (target?.min ?? 0) || parsed > (target?.max ?? 0));
   const scoreChanged = reset || (scoreTouched && !scoreInvalid);
@@ -156,7 +167,8 @@ export function RiskScorePanel({
     if (!target || saveReason) return;
     onSave(target, {
       answer: answerChanged ? answer.trim() : undefined,
-      score: reset ? null : scoreChanged ? round1(parsed) : undefined,
+      answerScore: answerChanged ? selectedOption?.score : undefined,
+      score: reset ? null : scoreChanged ? Math.trunc(parsed) : undefined,
       comment: comment.trim(),
     });
   };
@@ -176,37 +188,32 @@ export function RiskScorePanel({
                 <div className="space-y-4">
                   <div className="space-y-1">
                     <Label>{t(`${T}.currentValue`)}</Label>
-                    <p className="text-sm text-foreground">{target.answer || t(`${T}.noAnswer`)}</p>
+                    <p className="text-sm text-foreground">
+                      {target.answer || t(`${T}.noAnswer`)}
+                      {target.defaultAnswer && (
+                        <span className="text-muted-foreground"> {t(`${T}.defaultAnswer`)}</span>
+                      )}
+                    </p>
                   </div>
-                  {answerEditable && !readOnly ? (
+                  {answerEditable && !readOnly && (
                     <div className="space-y-2">
                       <Label htmlFor="risk-panel-answer">{t(`${T}.newValue`)}</Label>
-                      {target.answerOptions ? (
-                        <Select value={answer} onValueChange={setAnswer}>
-                          <SelectTrigger id="risk-panel-answer" className="h-11">
-                            <SelectValue placeholder={t(`${T}.selectPlaceholder`)} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {target.answerOptions.map(option => (
-                              <SelectItem key={option} value={option}>
-                                {option}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <Input
-                          id="risk-panel-answer"
-                          className="h-11"
-                          value={answer}
-                          onChange={event => setAnswer(event.target.value)}
-                        />
-                      )}
+                      <Select value={answer} onValueChange={setAnswer}>
+                        <SelectTrigger id="risk-panel-answer" className="h-11">
+                          <SelectValue placeholder={t(`${T}.selectPlaceholder`)} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(target.answerOptions ?? []).map(option => (
+                            <SelectItem key={option.label} value={option.label}>
+                              {t(`${T}.optionWithScore`, { label: option.label, score: option.score })}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                  ) : (
-                    !answerEditable && (
-                      <p className="text-xs text-muted-foreground">{t(`${T}.answerLocked.${target.kind}`)}</p>
-                    )
+                  )}
+                  {!answerEditable && (
+                    <p className="text-xs text-muted-foreground">{t(`${T}.answerLocked.${target.kind}`)}</p>
                   )}
                 </div>
               </SidePanelCard>
@@ -227,24 +234,53 @@ export function RiskScorePanel({
                       {target.score === null ? t(`${T}.notEvaluated`) : target.score}
                     </p>
                   </div>
-                  {!readOnly && (
+                  {target.frozen && <p className="text-xs text-amber-700">{t(`${T}.frozen`)}</p>}
+                  {isManualQuestion && (
+                    <p className="text-xs text-muted-foreground">
+                      {answerChanged && selectedOption
+                        ? t(`${T}.answerScore`, { score: selectedOption.score })
+                        : t(`${T}.scoreLocked.manualQuestion`)}
+                    </p>
+                  )}
+                  {!isManualQuestion && !scoreEditable && (
+                    <p className="text-xs text-muted-foreground">{t(`${T}.scoreLocked.notModifiable`)}</p>
+                  )}
+                  {scoreEditable && !readOnly && (
                     <>
                       <div className="space-y-2">
                         <Label htmlFor="risk-panel-score">{t(`${T}.newScore`)}</Label>
-                        <Input
-                          id="risk-panel-score"
-                          inputMode="decimal"
-                          className="h-11 tabular-nums"
-                          value={reset ? '' : score}
-                          disabled={reset}
-                          onChange={event => setScore(event.target.value)}
-                        />
-                        <p
-                          role={scoreInvalid ? 'alert' : undefined}
-                          className={scoreInvalid ? 'text-xs text-red-600' : 'text-xs text-muted-foreground'}
-                        >
-                          {t(`${T}.scoreHint`, { min: target.min, max: target.max })}
-                        </p>
+                        {target.scoreValues ? (
+                          <Select value={score} onValueChange={setScore}>
+                            <SelectTrigger id="risk-panel-score" className="h-11 tabular-nums">
+                              <SelectValue placeholder={t(`${T}.selectScorePlaceholder`)} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {target.scoreValues.map(value => (
+                                <SelectItem key={value} value={String(value)}>
+                                  {value}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <>
+                            <Input
+                              id="risk-panel-score"
+                              inputMode="decimal"
+                              className="h-11 tabular-nums"
+                              value={reset ? '' : score}
+                              disabled={reset}
+                              onChange={event => setScore(event.target.value)}
+                            />
+                            <p
+                              role={scoreInvalid ? 'alert' : undefined}
+                              className={scoreInvalid ? 'text-xs text-red-600' : 'text-xs text-muted-foreground'}
+                            >
+                              {t(`${T}.scoreHint`, { min: target.min, max: target.max })}
+                            </p>
+                          </>
+                        )}
+                        {isComponent && <p className="text-xs text-muted-foreground">{t(`${T}.freezeWarning`)}</p>}
                       </div>
                       {target.resettable && (
                         <SidePanelSwitchRow

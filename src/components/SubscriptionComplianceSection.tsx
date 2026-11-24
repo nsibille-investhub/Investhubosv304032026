@@ -118,9 +118,7 @@ const TONE_STYLES: Record<RiskTone, { badge: string; text: string; bar: string; 
 const SOURCE_ICONS: Record<RiskComponentSource, typeof Globe> = {
   onboardingAnswer: FileCheck,
   manualQuestion: Pencil,
-  countryList: Globe,
   screening: Radar,
-  externalService: RefreshCw,
 };
 
 const INVESTOR_CATEGORIES: InvestorCategory[] = [
@@ -239,6 +237,8 @@ interface RiskProfileWidgetProps {
   locked: boolean;
   /** Scores saisis à la main, par composante, par section ou pour le score global. */
   manualScores: Record<string, number>;
+  /** Scores des réponses choisies aux questions manuelles, par composante. */
+  answerScores: Record<string, number>;
   /** Réponses modifiées depuis le panneau de détail, par composante. */
   answers: Record<string, string>;
   onScoreSave: (target: RiskScoreTarget, change: RiskScoreSave) => void;
@@ -256,6 +256,7 @@ interface RiskProfileWidgetProps {
 export function RiskProfileWidget({
   locked,
   manualScores,
+  answerScores,
   answers,
   onScoreSave,
   comments,
@@ -274,20 +275,22 @@ export function RiskProfileWidget({
 
   const tc = (key: string, count: number) => t(`${key}${count === 1 ? 'One' : 'Many'}`, { count });
 
+  const scores = useMemo(() => ({ ...answerScores, ...manualScores }), [answerScores, manualScores]);
+
   const classScores = useMemo(
     () =>
       mockRiskProfile.classes.map(riskClass => ({
         riskClass,
-        score: aggregateClassScore(riskClass, manualScores),
+        score: aggregateClassScore(riskClass, scores),
         manual: typeof manualScores[riskClass.id] === 'number',
         unevaluated: riskClass.components.filter(
-          component => componentScore(component, manualScores) === null,
+          component => componentScore(component, scores) === null,
         ).length,
       })),
-    [manualScores],
+    [manualScores, scores],
   );
 
-  const profileScore = useMemo(() => computeProfileScore(manualScores), [manualScores]);
+  const profileScore = useMemo(() => computeProfileScore(scores), [scores]);
   const profileTier = findRiskTier(mockRiskProfile.scaleId, profileScore);
   const tone: RiskTone = profileTier?.tone ?? 'medium';
   const validationRequired = profileTier?.requiresValidation ?? false;
@@ -510,7 +513,8 @@ export function RiskProfileWidget({
             <ul>
               {riskClass.components.map(component => {
                 const SourceIcon = SOURCE_ICONS[component.source];
-                const shown = componentScore(component, manualScores);
+                const shown = componentScore(component, scores);
+                const isDefaultAnswer = Boolean(component.defaultAnswer) && answers[component.id] === undefined;
                 const manual =
                   typeof manualScores[component.id] === 'number' ||
                   typeof component.manualScore === 'number';
@@ -522,6 +526,7 @@ export function RiskProfileWidget({
                       <span className="truncate text-foreground">{t(component.labelKey)}</span>
                       <span className="truncate text-muted-foreground">
                         {answers[component.id] ?? component.value}
+                        {isDefaultAnswer && ` ${t('subscriptions.detail.compliance.profile.panel.defaultAnswer')}`}
                       </span>
                     </span>
 
@@ -542,6 +547,10 @@ export function RiskProfileWidget({
                               labelKey: component.labelKey,
                               answer: answers[component.id] ?? component.value,
                               answerOptions: component.answerOptions,
+                              defaultAnswer: isDefaultAnswer,
+                              scoreModifiable: component.scoreModifiable,
+                              scoreValues: component.scoreValues,
+                              frozen: manual,
                               min: component.min,
                               max: component.max,
                               score: shown,
@@ -624,6 +633,7 @@ export function SubscriptionComplianceSection({
   const [manualScores, setManualScores] = useState<Record<string, number>>({});
   const [computedAt, setComputedAt] = useState(mockRiskProfile.computedAt);
   const [riskAnswers, setRiskAnswers] = useState<Record<string, string>>({});
+  const [answerScores, setAnswerScores] = useState<Record<string, number>>({});
   const [scoreComments, setScoreComments] = useState<ScoreComment[]>(() =>
     mockRiskProfile.classes
       .flatMap(item => item.components)
@@ -657,7 +667,7 @@ export function SubscriptionComplianceSection({
   const handleReportDownloaded = (entity: { name: string }) =>
     logAudit({ type: 'providerReportDownloaded', subject: entity.name });
 
-  const profileScore = computeProfileScore(manualScores);
+  const profileScore = computeProfileScore({ ...answerScores, ...manualScores });
   const profileTier = findRiskTier(mockRiskProfile.scaleId, profileScore);
   const validationRequired = profileTier?.requiresValidation ?? false;
 
@@ -690,6 +700,10 @@ export function SubscriptionComplianceSection({
         reason: change.comment,
       });
       setRiskAnswers(prev => ({ ...prev, [target.id]: change.answer ?? '' }));
+      if (change.answerScore !== undefined) {
+        const answerScore = change.answerScore;
+        setAnswerScores(prev => ({ ...prev, [target.id]: answerScore }));
+      }
     }
     if (scoreChanged) {
       const next = change.score ?? null;
@@ -718,7 +732,11 @@ export function SubscriptionComplianceSection({
         id: `${target.id}-${Date.now()}`,
         targetId: target.id,
         labelKey: target.labelKey,
-        scoreChange: scoreChanged ? { previous: target.score, next: change.score ?? null } : undefined,
+        scoreChange: scoreChanged
+          ? { previous: target.score, next: change.score ?? null }
+          : change.answerScore !== undefined
+            ? { previous: target.score, next: change.answerScore }
+            : undefined,
         answerChange: answerChanged ? { previous: target.answer ?? '', next: change.answer ?? '' } : undefined,
         comment: change.comment,
         by: CURRENT_OPERATOR,
@@ -1160,6 +1178,7 @@ export function SubscriptionComplianceSection({
         <RiskProfileWidget
           locked={locked}
           manualScores={manualScores}
+          answerScores={answerScores}
           answers={riskAnswers}
           onScoreSave={handleScoreSave}
           comments={scoreComments}
