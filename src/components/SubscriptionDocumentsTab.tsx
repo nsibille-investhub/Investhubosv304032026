@@ -1,16 +1,13 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import {
-  AlertTriangle,
-  CalendarX,
-  CheckCircle2,
-  ClipboardCheck,
-  List,
-  PenLine,
+  Archive,
   Check,
   Download,
   Eye,
   FileSignature,
   FileText,
+  Landmark,
+  MoreHorizontal,
   Plus,
   Send,
   ShieldCheck,
@@ -39,12 +36,10 @@ import { FilterBar, type FilterConfig } from './FilterBar';
 import { StatusBadge, type StatusVariant } from './StatusBadge';
 import { Button } from './ui/button';
 import { ConfirmDialog } from './ui/confirm-dialog';
-import { DisabledReason } from './ui/disabled-reason';
 import { ListingCard, ListingNameCell } from './ui/listing';
-import { TableRowActions, type TableRowAction } from './ui/row-actions';
+import { ActionsMenu, TableRowActions, type TableRowAction } from './ui/row-actions';
 import { SegmentedControl } from './ui/segmented-control';
 import { Textarea } from './ui/textarea';
-import { FilterCard, FilterCardGroup } from './ui/filter-card';
 
 const K = 'subscriptions.detail.documentsTab';
 const DAY_MS = 86_400_000;
@@ -85,6 +80,12 @@ const KYC_STATUS_VARIANT: Record<KycDisplayStatus, StatusVariant> = {
 };
 const KYC_CATEGORIES: KycDocumentCategory[] = ['identity', 'address', 'tax', 'funds', 'bank', 'company', 'ubo', 'compliance'];
 
+const DOWNLOAD_SCOPES: { id: 'all' | 'kyc' | 'subscription' | 'custodianPack'; icon: LucideIcon }[] = [
+  { id: 'all', icon: Archive },
+  { id: 'kyc', icon: ShieldCheck },
+  { id: 'subscription', icon: FileSignature },
+  { id: 'custodianPack', icon: Landmark },
+];
 
 const daysFromNow = (days: number) => new Date(Date.now() + days * DAY_MS);
 
@@ -96,21 +97,6 @@ const kycDisplayStatus = (doc: MockKycDocument): KycDisplayStatus => {
   if (doc.status !== 'validated') return doc.status;
   const remaining = remainingDays(doc);
   return remaining !== undefined && remaining < 0 ? 'expired' : 'validated';
-};
-
-type SubscriptionQueue = 'all' | 'awaitingSignature' | 'awaitingCounterSignature' | 'completed' | 'draft';
-const inSubscriptionQueue = (doc: MockSubscriptionDocument, queue: SubscriptionQueue) => queue === 'all' || doc.status === queue;
-
-type KycQueue = 'all' | 'toReview' | 'toRequest' | 'expiring' | 'validated';
-const inKycQueue = (doc: MockKycDocument, queue: KycQueue) => {
-  const status = kycDisplayStatus(doc);
-  if (queue === 'all') return true;
-  if (queue === 'toRequest') return status === 'missing' || status === 'rejected' || status === 'expired';
-  if (queue === 'expiring') {
-    const remaining = remainingDays(doc);
-    return doc.file !== undefined && remaining !== undefined && remaining <= EXPIRY_WARNING_DAYS;
-  }
-  return status === queue;
 };
 
 const sortRows = <T,>(rows: T[], sortConfig: SortConfig, value: (row: T, key: string) => string | number | undefined, lang: string) => {
@@ -162,23 +148,35 @@ export function SubscriptionDocumentsTab({ subscription }: SubscriptionDocuments
 
   return (
     <div className="space-y-4">
-      <SegmentedControl<View>
-        aria-label={t(`${K}.viewSwitch`)}
-        value={view}
-        onValueChange={setView}
-        options={[
-          {
-            value: 'subscription',
-            icon: <FileSignature className="w-4 h-4" />,
-            label: t(`${K}.views.subscription`, { count: mockSubscriptionDocuments.length }),
-          },
-          {
-            value: 'kyc',
-            icon: <ShieldCheck className="w-4 h-4" />,
-            label: t(`${K}.views.kyc`, { count: kycDocuments.length }),
-          },
-        ]}
-      />
+      <div className="flex items-center justify-between gap-3">
+        <SegmentedControl<View>
+          aria-label={t(`${K}.viewSwitch`)}
+          value={view}
+          onValueChange={setView}
+          options={[
+            {
+              value: 'subscription',
+              icon: <FileSignature className="w-4 h-4" />,
+              label: t(`${K}.views.subscription`, { count: mockSubscriptionDocuments.length }),
+            },
+            {
+              value: 'kyc',
+              icon: <ShieldCheck className="w-4 h-4" />,
+              label: t(`${K}.views.kyc`, { count: kycDocuments.length }),
+            },
+          ]}
+        />
+        <ActionsMenu
+          variant="outline"
+          icon={MoreHorizontal}
+          label={t(`${K}.downloadMenu.label`)}
+          actions={DOWNLOAD_SCOPES.map(({ id, icon }) => ({
+            label: t(`${K}.downloadMenu.${id}`),
+            icon,
+            onClick: () => toast.success(t(`${K}.downloadMenu.toast.${id}`)),
+          }))}
+        />
+      </div>
       {view === 'subscription' ? (
         <SubscriptionDocumentsView />
       ) : (
@@ -211,8 +209,6 @@ function SubscriptionDocumentsView() {
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
   const [toDelete, setToDelete] = useState<MockSubscriptionDocument | null>(null);
 
-  const [queue, setQueue] = useState<SubscriptionQueue>('all');
-
   const name = (doc: MockSubscriptionDocument) => t(doc.nameKey);
 
   const rows = useMemo(() => {
@@ -220,7 +216,6 @@ function SubscriptionDocumentsView() {
     const categories = selected(filters, 'category');
     const statuses = selected(filters, 'status');
     const filtered = documents.filter((doc) => {
-      if (!inSubscriptionQueue(doc, queue)) return false;
       if (term && ![t(doc.nameKey), doc.file].some((value) => value.toLowerCase().includes(term))) return false;
       if (categories.length > 0 && !categories.includes(doc.category)) return false;
       if (statuses.length > 0 && !statuses.includes(doc.status)) return false;
@@ -239,7 +234,7 @@ function SubscriptionDocumentsView() {
               : undefined,
       lang,
     );
-  }, [documents, queue, search, filters, sortConfig, lang, t]);
+  }, [documents, search, filters, sortConfig, lang, t]);
 
   const actionsFor = (doc: MockSubscriptionDocument): TableRowAction[] => {
     const actions: TableRowAction[] = [
@@ -331,50 +326,13 @@ function SubscriptionDocumentsView() {
     },
   ];
 
-  const number = new Intl.NumberFormat(lang, { maximumFractionDigits: 1 });
-  const queueCard = (id: SubscriptionQueue, icon: LucideIcon) => {
-    const items = documents.filter((doc) => inSubscriptionQueue(doc, id));
-    const signable = items.filter((doc) => doc.signers);
-    const signed = signable.reduce((sum, doc) => sum + (doc.signers?.signed ?? 0), 0);
-    const expected = signable.reduce((sum, doc) => sum + (doc.signers?.total ?? 0), 0);
-    return (
-      <FilterCard
-        status={id}
-        activeStatus={queue}
-        onStatusChange={(status) => setQueue(status as SubscriptionQueue)}
-        label={t(`${K}.subscription.queues.${id}`)}
-        icon={icon}
-        total={items.length}
-        metricLabel={t(`${K}.subscription.queues.signaturesMetric`)}
-        metricValue={t(`${K}.subscription.signersProgress`, { signed, total: expected })}
-        averageValue={t(`${K}.subscription.queues.perDocument`, { count: number.format(items.length > 0 ? expected / items.length : 0) })}
-      />
-    );
-  };
-
   return (
     <>
-      <FilterCardGroup
-        title={t('subscriptions.detail.queues.title')}
-        hint={t('subscriptions.detail.queues.hint')}
-        columns={5}
-      >
-        {queueCard('all', List)}
-        {queueCard('awaitingSignature', PenLine)}
-        {queueCard('awaitingCounterSignature', FileSignature)}
-        {queueCard('completed', CheckCircle2)}
-        {queueCard('draft', FileText)}
-      </FilterCardGroup>
-
       <ListingCard
         toolbar={
           <Toolbar
             actions={
               <>
-                <Button variant="outline" onClick={() => toast.success(t(`${K}.toast.packExported`))}>
-                  <Download className="w-4 h-4" />
-                  {t(`${K}.subscription.exportPack`)}
-                </Button>
                 <Button onClick={() => toast.info(t(`${K}.toast.addDocument`))}>
                   <Plus className="w-4 h-4" />
                   {t(`${K}.addDocument`)}
@@ -398,13 +356,12 @@ function SubscriptionDocumentsView() {
         {rows.length === 0 ? (
           <EmptyState
             icon={FileText}
-            hasFilters={hasActiveFilters(filters) || queue !== 'all'}
+            hasFilters={hasActiveFilters(filters)}
             hasSearch={Boolean(search.trim())}
             entityName={t(`${K}.entity`)}
             onReset={() => {
               setSearch('');
               setFilters({});
-              setQueue('all');
             }}
           />
         ) : (
@@ -458,7 +415,6 @@ function KycDocumentsView({ subscription, isCorporate, documents, onChange }: Ky
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
   const [toReject, setToReject] = useState<MockKycDocument | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
-  const [queue, setQueue] = useState<KycQueue>('all');
 
   const contrepartie = subscription?.contrepartie ?? {};
   const holderName = (doc: MockKycDocument) => {
@@ -474,7 +430,6 @@ function KycDocumentsView({ subscription, isCorporate, documents, onChange }: Ky
 
   const name = (doc: MockKycDocument) => t(doc.nameKey);
   const statusOf = kycDisplayStatus;
-  const toRequest = documents.filter((doc) => ['missing', 'rejected', 'expired'].includes(statusOf(doc)));
 
 
   const setStatus = (doc: MockKycDocument, status: KycDocumentStatus, rejectionReason?: string) =>
@@ -485,7 +440,6 @@ function KycDocumentsView({ subscription, isCorporate, documents, onChange }: Ky
     const categories = selected(filters, 'category');
     const statuses = selected(filters, 'status');
     const filtered = documents.filter((doc) => {
-      if (!inKycQueue(doc, queue)) return false;
       if (term && ![t(doc.nameKey), holderName(doc) ?? '', doc.file ?? ''].some((value) => value.toLowerCase().includes(term))) return false;
       if (categories.length > 0 && !categories.includes(doc.category)) return false;
       if (statuses.length > 0 && !statuses.includes(statusOf(doc))) return false;
@@ -508,7 +462,7 @@ function KycDocumentsView({ subscription, isCorporate, documents, onChange }: Ky
     );
     // holderName dépend de la souscription, stable pendant la vie de l'onglet.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [documents, queue, search, filters, sortConfig, lang, t]);
+  }, [documents, search, filters, sortConfig, lang, t]);
 
   const request = (doc: MockKycDocument) => toast.success(t(`${K}.toast.requested`, { name: name(doc) }));
 
@@ -643,55 +597,13 @@ function KycDocumentsView({ subscription, isCorporate, documents, onChange }: Ky
     },
   ];
 
-  const requestDisabledReason = toRequest.length === 0 ? t(`${K}.kyc.nothingToRequest`) : undefined;
-  const number = new Intl.NumberFormat(lang, { maximumFractionDigits: 1 });
-  const queueCard = (id: KycQueue, icon: LucideIcon) => {
-    const items = documents.filter((doc) => inKycQueue(doc, id));
-    const holders = new Set(items.map((doc) => doc.holder)).size;
-    return (
-      <FilterCard
-        status={id}
-        activeStatus={queue}
-        onStatusChange={(status) => setQueue(status as KycQueue)}
-        label={id === 'expiring' ? t(`${K}.kyc.queues.expiring`, { count: EXPIRY_WARNING_DAYS }) : t(`${K}.kyc.queues.${id}`)}
-        icon={icon}
-        total={items.length}
-        metricLabel={t(`${K}.kyc.queues.holdersMetric`)}
-        metricValue={String(holders)}
-        averageValue={t(`${K}.kyc.queues.perHolder`, { count: number.format(holders > 0 ? items.length / holders : 0) })}
-      />
-    );
-  };
-
   return (
     <>
-      <FilterCardGroup
-        title={t('subscriptions.detail.queues.title')}
-        hint={t('subscriptions.detail.queues.hint')}
-        columns={5}
-      >
-        {queueCard('all', List)}
-        {queueCard('toReview', ClipboardCheck)}
-        {queueCard('toRequest', AlertTriangle)}
-        {queueCard('expiring', CalendarX)}
-        {queueCard('validated', CheckCircle2)}
-      </FilterCardGroup>
-
       <ListingCard
         toolbar={
           <Toolbar
             actions={
               <>
-                <DisabledReason reason={requestDisabledReason}>
-                  <Button
-                    variant="outline"
-                    disabled={Boolean(requestDisabledReason)}
-                    onClick={() => toast.success(tc(`${K}.toast.requestedMany`, toRequest.length))}
-                  >
-                    <Send className="w-4 h-4" />
-                    {tc(`${K}.kyc.requestMissing`, toRequest.length)}
-                  </Button>
-                </DisabledReason>
                 <Button onClick={() => toast.info(t(`${K}.toast.addDocument`))}>
                   <Plus className="w-4 h-4" />
                   {t(`${K}.addDocument`)}
@@ -715,13 +627,12 @@ function KycDocumentsView({ subscription, isCorporate, documents, onChange }: Ky
         {rows.length === 0 ? (
           <EmptyState
             icon={ShieldCheck}
-            hasFilters={hasActiveFilters(filters) || queue !== 'all'}
+            hasFilters={hasActiveFilters(filters)}
             hasSearch={Boolean(search.trim())}
             entityName={t(`${K}.kyc.entity`)}
             onReset={() => {
               setSearch('');
               setFilters({});
-              setQueue('all');
             }}
           />
         ) : (
