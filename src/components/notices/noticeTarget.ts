@@ -17,7 +17,7 @@ const MAIL_SLUGS: Record<NoticeFamily, Partial<Record<NoticeSendKind, string>>> 
 export function noticeMailPreview(family: NoticeFamily, kind: NoticeSendKind, lang: string, fundName: string) {
   const slug = MAIL_SLUGS[family][kind];
   const template = MAIL_TEMPLATES.find(item => item.slug === slug);
-  return template ? callMailPreview(template, lang, { fund: fundName }) : null;
+  return template ? { ...callMailPreview(template, lang, { fund: fundName }), slug } : null;
 }
 
 export interface TargetGroup<L> {

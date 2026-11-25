@@ -719,7 +719,11 @@
         },
         "template": {
           "label": "Gabarit :",
-          "open": "Ouvrir le gabarit du mail dans un nouvel onglet",
+          "open": "Afficher l'aperçu du mail",
+          "previewTitle": "Aperçu : {{name}}",
+          "previewDescription": "Mail d'envoi du lien de signature, calculé avec des données fictives. Rien n'est envoyé.",
+          "subject": "Objet :",
+          "frameLabel": "Aperçu du mail",
           "none": "Aucun gabarit"
         },
         "target": {
@@ -2889,6 +2893,10 @@
     }
   },
   "common": {
+    "mailPreview": {
+      "editTemplate": "Modifier le gabarit",
+      "editTemplateHint": "Ouvrir le gabarit dans un nouvel onglet"
+    },
     "showMore": "Plus",
     "showLess": "Moins",
     "pagination": {
@@ -8232,8 +8240,8 @@
       },
       "mailPreview": {
         "title": "Aperçu d'un mail",
-        "description": "Panneau latéral d'aperçu d'un mail avant envoi : objet résolu, éléments joints facultatifs, corps HTML rendu dans un cadre sans script, sur toute la hauteur. Rien n'est envoyé. Ouvert depuis un bouton \"Aperçu\" placé dans l'en-tête de la sous-section Communication ou sur la ligne d'un destinataire.",
-        "variants": "Avec ou sans éléments joints sous l'objet (pièces jointes, message d'accompagnement).",
+        "description": "Panneau latéral d'aperçu d'un mail avant envoi : objet résolu, éléments joints facultatifs, corps HTML rendu dans un cadre sans script, sur toute la hauteur. Rien n'est envoyé. Quand le gabarit est connu, l'en-tête porte le lien rapide \"Modifier le gabarit\", qui ouvre sa fiche dans un nouvel onglet. Ouvert depuis un bouton \"Aperçu\" placé dans l'en-tête de la sous-section Communication ou sur la ligne d'un destinataire.",
+        "variants": "Avec ou sans éléments joints sous l'objet (pièces jointes, message d'accompagnement). Avec ou sans lien vers le gabarit.",
         "states": "Ouverte, fermée. Bouton d'ouverture indisponible avec motif quand aucun mail ne part.",
         "exampleLabel": "Aperçu de la notification d'un appel",
         "open": "Aperçu"

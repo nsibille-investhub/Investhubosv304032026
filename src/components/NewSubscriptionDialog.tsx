@@ -3069,6 +3069,7 @@ export function NewSubscriptionDialog({
           html={previewDocument?.html ?? ''}
           subjectLabel={t('subscriptions.newDialog.preview.subject')}
           frameLabel={t('subscriptions.newDialog.preview.frameLabel')}
+          templateSlug={previewRecipient?.template?.slug}
         />
       </BigModalContent>
     </BigModal>

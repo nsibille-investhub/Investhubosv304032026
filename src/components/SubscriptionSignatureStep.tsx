@@ -36,6 +36,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { cn, WIDGET_LABEL_CLASS, WIDGET_SUBTITLE_CLASS, WIDGET_TITLE_CLASS } from './ui/utils';
 import { PRIMARY_BUTTON_GRADIENT } from './ui/page-header';
 import { DetailLink } from './ui/detail-summary';
+import { MailPreviewDialog } from './ui/mail-preview-dialog';
 import { RowActionButton } from './ui/row-actions';
 import { type ComplianceStatus } from './SubscriptionComplianceSection';
 import {
@@ -44,7 +45,7 @@ import {
   type MockSignaturePackDocument,
 } from '../utils/subscriptionDetailMockData';
 import { MAIL_TEMPLATES } from '../utils/mailTemplatesMockData';
-import { downloadCsv } from '../utils/capitalCallRecipients';
+import { callMailPreview, downloadCsv } from '../utils/capitalCallRecipients';
 
 export type SignatureStage = 'draft' | 'signing' | 'counterSigning' | 'completed';
 
@@ -216,9 +217,14 @@ export function SubscriptionSignatureStep({
   onOpenCompliance,
   onProceedToPayment,
 }: SubscriptionSignatureStepProps) {
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
   const tc = (key: string, count: number) => t(`${key}${count === 1 ? 'One' : 'Many'}`, { count });
 
+  const [templatePreviewOpen, setTemplatePreviewOpen] = useState(false);
+  const templatePreview =
+    SIGNATURE_TEMPLATE && templatePreviewOpen
+      ? callMailPreview(SIGNATURE_TEMPLATE, lang, { fund: subscription?.fund?.name })
+      : null;
   const [stage, setStage] = useState<SignatureStage>('draft');
   const [sentAt, setSentAt] = useState<string | null>(null);
   const [lastReminderAt, setLastReminderAt] = useState<string | null>(null);
@@ -544,7 +550,7 @@ export function SubscriptionSignatureStep({
           <span className="shrink-0">{t(`${KEY}.template.label`)}</span>
           {SIGNATURE_TEMPLATE ? (
             <DetailLink
-              href={`#/settings/mail-templates?template=${SIGNATURE_TEMPLATE.slug}`}
+              onClick={() => setTemplatePreviewOpen(true)}
               icon={Mail}
               title={t(`${KEY}.template.open`)}
               className="min-w-0 text-xs"
@@ -927,6 +933,18 @@ export function SubscriptionSignatureStep({
         description={tc(`${KEY}.manualValidation.description`, signedDocs.length)}
         confirmLabel={t(`${KEY}.actions.validateWithoutESignature`)}
         onConfirm={handleManualValidation}
+      />
+
+      <MailPreviewDialog
+        open={Boolean(templatePreview)}
+        onOpenChange={setTemplatePreviewOpen}
+        title={t(`${KEY}.template.previewTitle`, { name: SIGNATURE_TEMPLATE?.name ?? '' })}
+        description={t(`${KEY}.template.previewDescription`)}
+        subject={templatePreview?.subject ?? ''}
+        html={templatePreview?.html ?? ''}
+        subjectLabel={t(`${KEY}.template.subject`)}
+        frameLabel={t(`${KEY}.template.frameLabel`)}
+        templateSlug={SIGNATURE_TEMPLATE?.slug}
       />
     </div>
   );

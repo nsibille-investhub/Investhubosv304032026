@@ -129,6 +129,7 @@ export function CapitalCallNotificationPanel({
         html={preview?.html ?? ''}
         subjectLabel={t(`${K}.subject`)}
         frameLabel={t(`${K}.frameLabel`)}
+        templateSlug={template?.slug}
         details={
           <div className="space-y-2 rounded-md border border-border px-3 py-2 text-sm">
             <p>

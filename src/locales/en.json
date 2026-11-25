@@ -719,7 +719,11 @@
         },
         "template": {
           "label": "Template:",
-          "open": "Open the email template in a new tab",
+          "open": "Show the email preview",
+          "previewTitle": "Preview: {{name}}",
+          "previewDescription": "Email sending the signature link, computed with sample data. Nothing is sent.",
+          "subject": "Subject:",
+          "frameLabel": "Email preview",
           "none": "No template"
         },
         "target": {
@@ -2889,6 +2893,10 @@
     }
   },
   "common": {
+    "mailPreview": {
+      "editTemplate": "Edit template",
+      "editTemplateHint": "Open the template in a new tab"
+    },
     "showMore": "More",
     "showLess": "Less",
     "pagination": {
@@ -8232,8 +8240,8 @@
       },
       "mailPreview": {
         "title": "Email preview",
-        "description": "Side panel previewing an email before sending: resolved subject, optional attached items, HTML body rendered in a script-free frame, full height. Nothing is sent. Opened from a \"Preview\" button in the header of the Communication subsection or on a recipient row.",
-        "variants": "With or without attached items under the subject (attachments, accompanying message).",
+        "description": "Side panel previewing an email before sending: resolved subject, optional attached items, HTML body rendered in a script-free frame, full height. Nothing is sent. When the template is known, the header carries the \"Edit template\" quick link, which opens its page in a new tab. Opened from a \"Preview\" button in the header of the Communication subsection or on a recipient row.",
+        "variants": "With or without attached items under the subject (attachments, accompanying message). With or without the link to the template.",
         "states": "Open, closed. Opening button unavailable with a reason when no email is sent.",
         "exampleLabel": "Preview of a capital call notification",
         "open": "Preview"
